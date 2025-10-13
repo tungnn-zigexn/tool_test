@@ -32,7 +32,5 @@ class CreateTasks < ActiveRecord::Migration[8.0]
     add_index :tasks, :assignee_id
     add_index :tasks, :parent_id
     add_index :tasks, :status
-    add_index :tasks, :user_story_id
-    add_index :tasks, :related_issue_id
   end
 end

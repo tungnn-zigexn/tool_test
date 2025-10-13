@@ -10,7 +10,19 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_05_130609) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_12_235135) do
+  create_table "bug_comments", force: :cascade do |t|
+    t.integer "bug_id", null: false
+    t.integer "user_id", null: false
+    t.text "content", null: false
+    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["bug_id"], name: "index_bug_comments_on_bug_id"
+    t.index ["deleted_at"], name: "index_bug_comments_on_deleted_at"
+    t.index ["user_id"], name: "index_bug_comments_on_user_id"
+  end
+
   create_table "bug_evidences", force: :cascade do |t|
     t.integer "bug_id", null: false
     t.string "content_type", null: false
@@ -30,15 +42,23 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_05_130609) do
     t.string "category", null: false
     t.string "priority", null: false
     t.string "status", default: "new", null: false
+    t.text "content"
+    t.string "application"
+    t.string "image_video_url"
+    t.text "notes"
+    t.string "clock"
+    t.integer "test_result_id"
     t.datetime "deleted_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["application"], name: "index_bugs_on_application"
     t.index ["category"], name: "index_bugs_on_category"
     t.index ["deleted_at"], name: "index_bugs_on_deleted_at"
     t.index ["dev_id"], name: "index_bugs_on_dev_id"
     t.index ["priority"], name: "index_bugs_on_priority"
     t.index ["status"], name: "index_bugs_on_status"
     t.index ["task_id"], name: "index_bugs_on_task_id"
+    t.index ["test_result_id"], name: "index_bugs_on_test_result_id"
     t.index ["tester_id"], name: "index_bugs_on_tester_id"
   end
 
@@ -75,6 +95,12 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_05_130609) do
     t.integer "percent_done"
     t.date "start_date"
     t.date "due_date"
+    t.string "testcase_link"
+    t.string "bug_link"
+    t.string "description_link"
+    t.string "created_by_name"
+    t.string "reviewed_by_name"
+    t.integer "number_of_test_cases", default: 0
     t.datetime "deleted_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -103,12 +129,19 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_05_130609) do
     t.string "title", null: false
     t.text "description"
     t.text "expected_result"
+    t.string "test_type", default: "feature"
+    t.string "function"
+    t.string "target", default: "pc_sp_app"
+    t.string "acceptance_criteria_url"
+    t.string "user_story_url"
     t.datetime "deleted_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["created_by_id"], name: "index_test_cases_on_created_by_id"
     t.index ["deleted_at"], name: "index_test_cases_on_deleted_at"
+    t.index ["target"], name: "index_test_cases_on_target"
     t.index ["task_id"], name: "index_test_cases_on_task_id"
+    t.index ["test_type"], name: "index_test_cases_on_test_type"
   end
 
   create_table "test_environments", force: :cascade do |t|
@@ -164,11 +197,15 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_05_130609) do
     t.string "content_type", null: false
     t.text "content_value", null: false
     t.boolean "is_expected", default: false, null: false
+    t.string "content_category", default: "action", null: false
+    t.integer "display_order", default: 0
     t.datetime "deleted_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["content_category"], name: "index_test_step_contents_on_content_category"
     t.index ["content_type"], name: "index_test_step_contents_on_content_type"
     t.index ["deleted_at"], name: "index_test_step_contents_on_deleted_at"
+    t.index ["display_order"], name: "index_test_step_contents_on_display_order"
     t.index ["is_expected"], name: "index_test_step_contents_on_is_expected"
     t.index ["step_id"], name: "index_test_step_contents_on_step_id"
   end
@@ -177,11 +214,14 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_05_130609) do
     t.integer "case_id", null: false
     t.integer "step_number", null: false
     t.text "description"
+    t.string "function"
+    t.integer "display_order", default: 0
     t.datetime "deleted_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["case_id"], name: "index_test_steps_on_case_id"
     t.index ["deleted_at"], name: "index_test_steps_on_deleted_at"
+    t.index ["display_order"], name: "index_test_steps_on_display_order"
     t.index ["step_number"], name: "index_test_steps_on_step_number"
   end
 
