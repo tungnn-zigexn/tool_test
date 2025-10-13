@@ -1,0 +1,51 @@
+# syntax=docker/dockerfile:1
+
+# Development Dockerfile for local usage
+ARG RUBY_VERSION=3.4.6
+FROM docker.io/library/ruby:$RUBY_VERSION-slim
+
+WORKDIR /rails
+
+# Base packages for Rails + sqlite3
+RUN apt-get update -qq && \
+    apt-get install --no-install-recommends -y \
+      curl \
+      git \
+      build-essential \
+      libyaml-dev \
+      pkg-config \
+      libsqlite3-dev \
+      sqlite3 \
+      libvips \
+      libjemalloc2 && \
+    rm -rf /var/lib/apt/lists /var/cache/apt/archives
+
+ENV RAILS_ENV=development \
+    BUNDLE_PATH=/usr/local/bundle \
+    BUNDLE_WITHOUT="" \
+    BUNDLE_JOBS=4 \
+    BUNDLE_RETRY=3
+
+# Cache gems
+COPY Gemfile Gemfile.lock ./
+RUN bundle install && \
+    rm -rf ~/.bundle/ "$BUNDLE_PATH"/ruby/*/cache "$BUNDLE_PATH"/ruby/*/bundler/gems/*/.git
+
+# App source
+COPY . .
+
+# Ensure gems are available in the mounted volume
+RUN bundle install
+
+# Use the standard entrypoint to prepare DB etc.
+ENTRYPOINT ["/rails/bin/docker-entrypoint"]
+
+EXPOSE 3000
+
+CMD ["bash", "-lc", "./bin/rails server -b 0.0.0.0 -p 3000"]
+
+
+
+
+
+
