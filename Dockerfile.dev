@@ -1,51 +1,43 @@
-# syntax=docker/dockerfile:1
+# Dockerfile for Development
+FROM ruby:3.4.6-slim
 
-# Development Dockerfile for local usage
-ARG RUBY_VERSION=3.4.6
-FROM docker.io/library/ruby:$RUBY_VERSION-slim
+# Install dependencies
+RUN apt-get update -qq && \
+    apt-get install -y --no-install-recommends \
+    build-essential libyaml-dev pkg-config\
+    libsqlite3-dev \
+    nodejs \
+    npm \
+    curl \
+    git \
+    vim \
+    && rm -rf /var/lib/apt/lists/*
 
+# Set working directory
 WORKDIR /rails
 
-# Base packages for Rails + sqlite3
-RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y \
-      curl \
-      git \
-      build-essential \
-      libyaml-dev \
-      pkg-config \
-      libsqlite3-dev \
-      sqlite3 \
-      libvips \
-      libjemalloc2 && \
-    rm -rf /var/lib/apt/lists /var/cache/apt/archives
+# Set development environment
+ENV RAILS_ENV="development" \
+    BUNDLE_PATH="/usr/local/bundle"
 
-ENV RAILS_ENV=development \
-    BUNDLE_PATH=/usr/local/bundle \
-    BUNDLE_WITHOUT="" \
-    BUNDLE_JOBS=4 \
-    BUNDLE_RETRY=3
-
-# Cache gems
+# Install application gems
 COPY Gemfile Gemfile.lock ./
-RUN bundle install && \
-    rm -rf ~/.bundle/ "$BUNDLE_PATH"/ruby/*/cache "$BUNDLE_PATH"/ruby/*/bundler/gems/*/.git
-
-# App source
-COPY . .
-
-# Ensure gems are available in the mounted volume
 RUN bundle install
 
-# Use the standard entrypoint to prepare DB etc.
-ENTRYPOINT ["/rails/bin/docker-entrypoint"]
+# Install node packages
+COPY package.json package-lock.json ./
+RUN npm install
 
-EXPOSE 3000
+# Copy application code
+COPY . .
 
-CMD ["bash", "-lc", "./bin/rails server -b 0.0.0.0 -p 3000"]
+# Create necessary directories
+RUN mkdir -p storage tmp/pids tmp/sockets log
 
+# Expose port
+EXPOSE 4000
 
-
-
+# Start the server
+CMD ["bin/dev"]
 
 

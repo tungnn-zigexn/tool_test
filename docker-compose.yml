@@ -1,31 +1,38 @@
+version: '3.8'
+
 services:
   web:
     build:
       context: .
       dockerfile: Dockerfile.dev
-    image: tool_test:dev
+    command: bundle exec rails server -b 0.0.0.0 -p 4000
+    volumes:
+      - .:/rails
+      - bundle_cache:/usr/local/bundle
+      - node_modules:/rails/node_modules
     ports:
-      - "3000:3000"
+      - "4000:4000"
     environment:
       - RAILS_ENV=development
-      - RAILS_LOG_TO_STDOUT=1
+      - RAILS_MAX_THREADS=5
+    stdin_open: true
+    tty: true
+    depends_on:
+      - css
+
+  css:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    command: npm run build:css:watch
     volumes:
-      # Mount specific directories for live-reload and persistence
-      - ./app:/rails/app
-      - ./config:/rails/config
-      - ./db:/rails/db
-      - ./lib:/rails/lib
-      - ./public:/rails/public
-      - ./storage:/rails/storage
-      - ./log:/rails/log
-      - ./test:/rails/test
-      - ./tmp:/rails/tmp
-      - ./vendor:/rails/vendor
-      - bundle_cache:/usr/local/bundle
-    working_dir: /rails
-    command: bash -lc "./bin/rails server -b 0.0.0.0 -p 3000"
-    restart: unless-stopped
+      - .:/rails
+      - node_modules:/rails/node_modules
+    environment:
+      - NODE_ENV=development
 
 volumes:
   bundle_cache:
+  node_modules:
+
 

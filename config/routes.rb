@@ -9,14 +9,22 @@ Rails.application.routes.draw do
   # get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
   # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
 
-  # Root path
-  resources :projects
-  root "projects#index"
+  # Root
+  root "dashboard#index"
 
-  # Sessions
-  get  "/login",  to: "sessions#new",    as: :login
-  post "/login",  to: "sessions#create"
-  delete "/logout", to: "sessions#destroy", as: :logout
+  # Authentication
+  namespace :auth do
+    get "login", to: "sessions#new"
+    post "login", to: "sessions#create"
+    delete "logout", to: "sessions#destroy"
+
+    # Google OAuth
+    get "google/callback", to: "google#callback"
+    post "google/callback", to: "google#callback"
+  end
+
+  # Dashboard
+  get "dashboard", to: "dashboard#index"
 
   # Main resources
   resources :users do
@@ -27,7 +35,8 @@ Rails.application.routes.draw do
 
   resources :projects do
     member do
-      patch :soft_delete
+      delete :soft_delete
+      patch :restore
     end
     resources :tasks, except: [ :index ] do
       member do
