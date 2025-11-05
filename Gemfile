@@ -24,6 +24,7 @@ gem "devise", "~> 4.9"
 gem "grape", "~> 2.0"
 gem "cssbundling-rails"
 gem "faraday"
+gem "google-api-client"
 
 # Use Active Model has_secure_password [https://guides.rubyonrails.org/active_model_basics.html#securepassword]
 # gem "bcrypt", "~> 3.1.7"
