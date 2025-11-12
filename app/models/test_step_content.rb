@@ -1,13 +1,6 @@
 class TestStepContent < ApplicationRecord
   belongs_to :test_step, foreign_key: "step_id"
 
-  enum content_type: { text: "text", link: "link", image: "image" }
-
-  enum content_category: {
-    action: "action",           # Hành động cần thực hiện
-    expectation: "expectation"  # Kết quả mong đợi
-  }
-
   validates :step_id, presence: true
   validates :content_type, presence: true
   validates :content_value, presence: true

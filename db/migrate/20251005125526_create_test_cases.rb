@@ -2,15 +2,15 @@ class CreateTestCases < ActiveRecord::Migration[8.0]
   def change
     create_table :test_cases do |t|
       t.integer :task_id, null: false
-      t.integer :created_by_id, null: false
+      t.integer :created_by_id
       t.string :title, null: false
       t.text :description
       t.text :expected_result
 
       # Các trường mới cho spreadsheet import
-      t.string :test_type, default: "feature" # feature, ui
+      t.string :test_type
       t.string :function
-      t.string :target, default: "pc_sp_app" # pc, sp, app, pc_sp, pc_sp_app
+      t.string :target
       t.string :acceptance_criteria_url
       t.string :user_story_url
 

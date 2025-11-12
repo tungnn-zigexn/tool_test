@@ -8,8 +8,6 @@ class Task < ApplicationRecord
   has_many :test_runs, dependent: :destroy
   has_many :bugs, dependent: :destroy
 
-  enum status: { in_progress: "in_progress", testing: "testing", resolved: "resolved" }
-
   validates :title, presence: true
   validates :status, presence: true
 

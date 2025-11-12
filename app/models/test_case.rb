@@ -1,26 +1,13 @@
 class TestCase < ApplicationRecord
   belongs_to :task
-  belongs_to :created_by, class_name: "User", foreign_key: "created_by_id"
+  belongs_to :created_by, class_name: "User", foreign_key: "created_by_id", optional: true
 
-  has_many :test_steps, dependent: :destroy
-  has_many :test_results, dependent: :destroy
+  has_many :test_steps, foreign_key: "case_id", dependent: :destroy
+  has_many :test_results, foreign_key: "case_id", dependent: :destroy
 
-  enum test_type: {
-    feature: "Feature",
-    ui: "UI"
-  }
-
-  enum target: {
-    pc_sp: "PC・SP",
-    pc_sp_app: "PC・SP・APP",
-    app: "APP",
-    pc: "PC",
-    sp: "SP"
-  }
 
   validates :title, presence: true
   validates :task_id, presence: true
-  validates :created_by_id, presence: true
 
   scope :active, -> { where(deleted_at: nil) }
   scope :deleted, -> { where.not(deleted_at: nil) }
@@ -53,7 +40,11 @@ class TestCase < ApplicationRecord
 
   # Helper cho display
   def test_type_display
-    test_type&.titleize || "N/A"
+    case test_type
+    when "feature" then "Feature"
+    when "ui" then "UI"
+    else test_type&.titleize || "N/A"
+    end
   end
 
   def target_display
@@ -65,6 +56,45 @@ class TestCase < ApplicationRecord
     when "sp" then "SP"
     else target&.upcase || "N/A"
     end
+  end
+
+  # Device results helpers
+  def parsed_device_results
+    return [] if device_results.blank?
+
+    begin
+      JSON.parse(device_results, symbolize_names: true)
+    rescue JSON::ParserError
+      []
+    end
+  end
+
+  def has_device_results?
+    parsed_device_results.any?
+  end
+
+  def device_status_counts
+    results = parsed_device_results
+    return {} if results.empty?
+
+    {
+      pass: results.count { |r| r[:status] == "pass" },
+      failed: results.count { |r| r[:status] == "failed" },
+      not_run: results.count { |r| r[:status] == "not_run" },
+      blocked: results.count { |r| r[:status] == "blocked" },
+      unknown: results.count { |r| r[:status] == "unknown" }
+    }
+  end
+
+  def overall_status
+    return "not_tested" unless has_device_results?
+
+    counts = device_status_counts
+    return "failed" if counts[:failed] > 0
+    return "blocked" if counts[:blocked] > 0
+    return "not_run" if counts[:not_run] > 0 && counts[:pass] == 0
+    return "pass" if counts[:pass] > 0 && counts[:failed] == 0
+    "unknown"
   end
 
   # Export to sheet format

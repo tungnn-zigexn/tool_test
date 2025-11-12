@@ -7,25 +7,6 @@ class Bug < ApplicationRecord
   has_many :bug_evidences, dependent: :destroy
   has_many :bug_comments, dependent: :nullify
 
-  enum category: {
-    stg_vn: "STG Bugs (VN)",
-    stg_jp: "STG Bugs (JP)",
-    new_requirement: "New Requirement",
-    prod: "Prod Bugs"
-  }
-
-  enum priority: { high: "high", normal: "normal", low: "low" }
-  enum status: { new: "new", fixing: "fixing", testing: "testing", done: "done", pending: "pending" }
-
-  # Application type enum (từ sheet Bug)
-  enum application: {
-    sp_pc: "SP + PC",
-    app: "APP",
-    sp: "SP",
-    pc: "PC",
-    all: "SP + PC + APP"
-  }
-
   validates :title, presence: true
   validates :task_id, presence: true
   validates :category, presence: true

@@ -5,8 +5,6 @@ class TestResult < ApplicationRecord
   belongs_to :test_environment, foreign_key: "environment_id", optional: true
   has_one :bug, dependent: :nullify
 
-  enum status: { pass: "pass", fail: "fail", not_run: "not run", blocked: "blocked" }
-
   validates :run_id, presence: true
   validates :case_id, presence: true
   validates :status, presence: true

@@ -4,13 +4,6 @@ class TestRun < ApplicationRecord
 
   has_many :test_results, foreign_key: "run_id", dependent: :destroy
 
-  enum status: {
-    pending: "pending",      # Chưa bắt đầu
-    running: "running",      # Đang chạy
-    completed: "completed",  # Hoàn thành
-    aborted: "aborted"       # Bị hủy
-  }
-
   validates :name, presence: true
   validates :task_id, presence: true
   validates :status, presence: true

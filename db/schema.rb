@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_12_235135) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_11_142252) do
   create_table "bug_comments", force: :cascade do |t|
     t.integer "bug_id", null: false
     t.integer "user_id", null: false
@@ -84,12 +84,14 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_12_235135) do
   end
 
   create_table "tasks", force: :cascade do |t|
+    t.integer "redmine_id"
     t.integer "project_id", null: false
     t.integer "assignee_id"
     t.integer "parent_id"
+    t.integer "subtask_id"
     t.string "title", null: false
     t.text "description"
-    t.string "status", default: "in_progress"
+    t.string "status"
     t.decimal "estimated_time", precision: 5, scale: 2
     t.decimal "spent_time", precision: 5, scale: 2
     t.integer "percent_done"
@@ -97,10 +99,12 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_12_235135) do
     t.date "due_date"
     t.string "testcase_link"
     t.string "bug_link"
-    t.string "description_link"
     t.string "created_by_name"
     t.string "reviewed_by_name"
     t.integer "number_of_test_cases", default: 0
+    t.integer "stg_bugs_vn", default: 0
+    t.integer "stg_bugs_jp", default: 0
+    t.integer "prod_bugs", default: 0
     t.datetime "deleted_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -125,13 +129,13 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_12_235135) do
 
   create_table "test_cases", force: :cascade do |t|
     t.integer "task_id", null: false
-    t.integer "created_by_id", null: false
+    t.integer "created_by_id"
     t.string "title", null: false
     t.text "description"
     t.text "expected_result"
-    t.string "test_type", default: "feature"
+    t.string "test_type"
     t.string "function"
-    t.string "target", default: "pc_sp_app"
+    t.string "target"
     t.string "acceptance_criteria_url"
     t.string "user_story_url"
     t.datetime "deleted_at"
