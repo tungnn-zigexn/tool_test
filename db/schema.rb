@@ -141,6 +141,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_11_142252) do
     t.datetime "deleted_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.text "device_results"
     t.index ["created_by_id"], name: "index_test_cases_on_created_by_id"
     t.index ["deleted_at"], name: "index_test_cases_on_deleted_at"
     t.index ["target"], name: "index_test_cases_on_target"
