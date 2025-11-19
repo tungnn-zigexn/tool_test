@@ -1,0 +1,103 @@
+css:
+  /* Custom scrollbar for task list */
+  .task-scroll::-webkit-scrollbar {
+    width: 6px;
+  }
+  .task-scroll::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+  }
+  .task-scroll::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+  }
+  .task-scroll::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }
+
+.container.mx-auto.px-4.py-8
+  .mb-8
+    h1.text-4xl.font-bold.text-gray-800.mb-2 📊 Test Management System
+    p.text-gray-600 Quản lý test cases từ Redmine và Google Sheet
+
+  / Projects Grid
+  .grid.grid-cols-1.md:grid-cols-2.gap-6
+    - @projects.each do |project|
+      .bg-white.rounded-lg.shadow-md.hover:shadow-xl.transition-shadow.duration-300.overflow-hidden.border.border-gray-200
+        / Project Header
+        .bg-gradient-to-r.from-blue-500.to-blue-600.text-white.p-6
+          h2.text-2xl.font-bold.mb-2= project.name
+          p.text-blue-100.text-sm
+            | Created: #{project.created_at.strftime("%Y-%m-%d %H:%M")}
+
+        / Project Stats
+        .p-6
+          .grid.grid-cols-2.gap-4.mb-6
+            .bg-blue-50.rounded-lg.p-4.text-center
+              .text-3xl.font-bold.text-blue-600= project.tasks.count
+              .text-sm.text-gray-600 Tasks
+            .bg-green-50.rounded-lg.p-4.text-center
+              .text-3xl.font-bold.text-green-600= project.tasks.sum(:number_of_test_cases)
+              .text-sm.text-gray-600 Test Cases
+
+          / Tasks List
+          .mb-4
+            h3.text-lg.font-semibold.text-gray-700.mb-3 📝 Recent Tasks
+            - all_tasks = project.tasks.includes(:subtasks, :test_cases).order(created_at: :desc)
+            - displayed_tasks = all_tasks.limit(6)
+            - has_more = all_tasks.count > 6
+
+            / Scrollable container with max height
+            .space-y-2.max-h-96.overflow-y-auto.pr-2.task-scroll
+              - displayed_tasks.each do |task|
+                .border.border-gray-200.rounded-lg.p-3.hover:border-blue-400.hover:bg-blue-50.transition-all.cursor-pointer onclick="window.location.href='#{project_task_path(project, task)}'"
+                  .flex.justify-between.items-start.mb-2
+                    .flex-1
+                      .font-medium.text-gray-800.line-clamp-2
+                        - if task.parent_id
+                          span.text-purple-600.text-xs.mr-1 ↳
+                        = task.title
+                      .text-xs.text-gray-500.mt-1
+                        | Redmine ##{task.redmine_id}
+                        - if task.parent_id
+                          span.text-purple-600 (Subtask)
+                    span.ml-2.px-2.py-1.text-xs.rounded-full class=(task.status == 'Closed' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700')
+                      = task.status
+
+                  .flex.items-center.text-sm.text-gray-600.space-x-4
+                    span.flex.items-center
+                      svg.w-4.h-4.mr-1 fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                      = "#{task.test_cases.count} TCs"
+
+                    - if task.subtasks.any?
+                      span.flex.items-center.text-purple-600
+                        svg.w-4.h-4.mr-1 fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                          path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"
+                        = "#{task.subtasks.count} subtasks"
+
+            - if has_more
+              .mt-3.text-center
+                p.text-sm.text-gray-500
+                  | Showing 6 of #{all_tasks.count} tasks
+                  span.text-blue-600  • Click "View All" below to see more
+
+          / View All Button
+          .text-center.pt-4.border-t.border-gray-200
+            = link_to project_path(project), class: "inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-200" do
+              svg.w-5.h-5.mr-2 fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+              | View All Tasks & Details
+
+  / Empty State
+  - if @projects.empty?
+    .text-center.py-16
+      .text-6xl.mb-4 📦
+      h3.text-2xl.font-bold.text-gray-700.mb-2 No Projects Yet
+      p.text-gray-500 Import data from Redmine to get started
+      .mt-6
+        code.bg-gray-100.px-4.py-2.rounded.text-sm
+          | rails demo:import_project_1
+
+

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_11_142252) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_17_235351) do
   create_table "bug_comments", force: :cascade do |t|
     t.integer "bug_id", null: false
     t.integer "user_id", null: false
@@ -141,7 +141,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_11_142252) do
     t.datetime "deleted_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.text "device_results"
     t.index ["created_by_id"], name: "index_test_cases_on_created_by_id"
     t.index ["deleted_at"], name: "index_test_cases_on_deleted_at"
     t.index ["target"], name: "index_test_cases_on_target"
@@ -149,37 +148,20 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_11_142252) do
     t.index ["test_type"], name: "index_test_cases_on_test_type"
   end
 
-  create_table "test_environments", force: :cascade do |t|
-    t.string "name", null: false
-    t.string "version"
-    t.string "os"
-    t.text "description"
-    t.datetime "deleted_at"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["deleted_at"], name: "index_test_environments_on_deleted_at"
-    t.index ["name"], name: "index_test_environments_on_name"
-  end
-
   create_table "test_results", force: :cascade do |t|
-    t.integer "run_id", null: false
+    t.integer "run_id"
     t.integer "case_id", null: false
-    t.string "status", null: false
-    t.text "actual_result"
+    t.string "status"
+    t.text "device"
     t.integer "executed_by_id"
     t.datetime "executed_at"
-    t.integer "environment_id"
-    t.integer "bug_id"
     t.datetime "deleted_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["bug_id"], name: "index_test_results_on_bug_id"
     t.index ["case_id"], name: "index_test_results_on_case_id"
     t.index ["deleted_at"], name: "index_test_results_on_deleted_at"
-    t.index ["environment_id"], name: "index_test_results_on_environment_id"
     t.index ["executed_by_id"], name: "index_test_results_on_executed_by_id"
     t.index ["run_id"], name: "index_test_results_on_run_id"
-    t.index ["status"], name: "index_test_results_on_status"
   end
 
   create_table "test_runs", force: :cascade do |t|

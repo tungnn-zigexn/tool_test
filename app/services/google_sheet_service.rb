@@ -23,7 +23,7 @@ class GoogleSheetService
     puts "Found #{all_sheet_names.length} sheets: #{all_sheet_names.join(', ')}"
 
     filter_options = {
-      header_rows_count: 3,
+      header_rows_count: 4,
       filter_column_index: 1,
       valid_filter_values: [ "Feature", "Data", "UI" ]
     }
@@ -75,7 +75,7 @@ class GoogleSheetService
   end
 
   def get_filtered_sheet_data(spreadsheet_id, sheet_name, columns_range, options = {})
-    header_rows_count = options.fetch(:header_rows_count, 3)
+    header_rows_count = options.fetch(:header_rows_count, 4)
     filter_column_index = options.fetch(:filter_column_index, 1)
     valid_filter_values = options.fetch(:valid_filter_values, [ "Feature", "Data", "UI" ])
 
@@ -95,10 +95,20 @@ class GoogleSheetService
 
     clean_data = []
 
+    # Include header rows (1-4)
     header_rows = raw_rows.first(header_rows_count)
     clean_data.concat(header_rows)
 
-    data_rows = raw_rows.drop(header_rows_count)
+    # Include row 5 (device names row) if it exists
+    device_names_row = raw_rows[header_rows_count] if raw_rows.length > header_rows_count
+    if device_names_row
+      puts "Device names row: #{device_names_row.inspect}"
+      clean_data << device_names_row
+      puts "Including device names row (row #{header_rows_count + 1})"
+    end
+
+    # Filter data rows starting from row 6
+    data_rows = raw_rows.drop(header_rows_count + 1) # Skip rows 1-5
 
     filtered_rows = data_rows.filter do |row|
       cell_value = row[filter_column_index]
@@ -107,7 +117,7 @@ class GoogleSheetService
 
     clean_data.concat(filtered_rows)
 
-    puts "Filtering completed. Total #{clean_data.length} rows (including header)."
+    puts "Filtering completed. Total #{clean_data.length} rows (including #{header_rows_count} header rows + 1 device names row)."
     clean_data
 
   rescue => e

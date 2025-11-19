@@ -10,7 +10,7 @@ Rails.application.routes.draw do
   # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
 
   # Root
-  root "dashboard#index"
+  root "projects#index"
 
   # Authentication
   namespace :auth do
@@ -42,9 +42,15 @@ Rails.application.routes.draw do
       member do
         patch :soft_delete
       end
+      collection do
+        post :import_from_redmine
+      end
       resources :test_cases do
         member do
           patch :soft_delete
+        end
+        collection do
+          post :import_from_sheet
         end
       end
       resources :bugs, except: [ :index ] do

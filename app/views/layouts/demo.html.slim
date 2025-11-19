@@ -1,0 +1,54 @@
+doctype html
+html lang="en"
+  head
+    title= content_for(:title) || "Test Management Demo"
+    meta name="viewport" content="width=device-width,initial-scale=1"
+    = csrf_meta_tags
+    = csp_meta_tag
+
+    / Tailwind CSS
+    script src="https://cdn.tailwindcss.com"
+
+    css:
+      .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+  body.bg-gray-50
+    / Header
+    header.bg-white.shadow-sm.border-b.border-gray-200
+      .container.mx-auto.px-4.py-4
+        .flex.items-center.justify-between
+          .flex.items-center.space-x-4
+            svg.w-8.h-8.text-blue-600 fill="none" stroke="currentColor" viewBox="0 0 24 24"
+              path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+            = link_to root_path, class: "text-xl font-bold text-gray-800 hover:text-blue-600" do
+              | Test Management System
+
+          nav.flex.items-center.space-x-6
+            = link_to "Projects", projects_path, class: "text-gray-600 hover:text-blue-600 font-medium transition-colors"
+            = link_to "Tasks", tasks_path, class: "text-gray-600 hover:text-blue-600 font-medium transition-colors"
+            = link_to "Test Cases", test_cases_path, class: "text-gray-600 hover:text-blue-600 font-medium transition-colors"
+
+    / Flash Messages
+    - if flash.any?
+      .container.mx-auto.px-4.py-4
+        - flash.each do |type, message|
+          div class="rounded-lg p-4 mb-4 #{type == 'notice' ? 'bg-blue-50 text-blue-800 border border-blue-200' : 'bg-red-50 text-red-800 border border-red-200'}"
+            = message
+
+    / Main Content
+    main.min-h-screen
+      = yield
+
+    / Footer
+    footer.bg-white.border-t.border-gray-200.mt-12
+      .container.mx-auto.px-4.py-6
+        .text-center.text-gray-600.text-sm
+          p
+            | &copy; #{Time.current.year} Test Management System. Built with Ruby on Rails.
+
+
