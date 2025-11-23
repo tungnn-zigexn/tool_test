@@ -164,12 +164,8 @@ class TestCasesController < ApplicationController
   end
 
   def current_user_or_default
-    # Giả sử bạn có authentication với current_user
-    # Nếu chưa có, tạo user mặc định
-    User.first || User.create!(
-      name: "Admin",
-      email: "admin@example.com"
-    )
+    # Sử dụng current_user từ Devise
+    current_user
   end
 
   def test_case_params

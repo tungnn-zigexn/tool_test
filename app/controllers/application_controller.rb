@@ -2,23 +2,24 @@ class ApplicationController < ActionController::Base
   # Only allow modern browsers supporting webp images, web push, badges, import maps, CSS nesting, and CSS :has.
   allow_browser versions: :modern
 
-  helper_method :current_user, :user_signed_in?
+  # Devise authentication
+  before_action :authenticate_user!
+
+  # CanCanCan authorization
+  load_and_authorize_resource unless: :devise_controller?
+
+  # Xử lý lỗi CanCan::AccessDenied
+  rescue_from CanCan::AccessDenied do |exception|
+    respond_to do |format|
+      format.html { redirect_to root_path, alert: exception.message }
+      format.json { render json: { error: exception.message }, status: :forbidden }
+    end
+  end
 
   private
 
-  def current_user
-    return @current_user if defined?(@current_user)
-
-    @current_user = User.find_by(id: session[:user_id])
-  end
-
-  def user_signed_in?
-    current_user.present?
-  end
-
-  def authenticate_user!
-    return if user_signed_in?
-
-    redirect_to login_path, alert: "You need to sign in first"
+  # Override Devise helper để dùng current_user
+  def current_ability
+    @current_ability ||= Ability.new(current_user)
   end
 end

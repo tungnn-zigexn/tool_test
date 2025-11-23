@@ -21,6 +21,7 @@ gem "bcrypt", "~> 3.1"
 
 # Auth and API
 gem "devise", "~> 4.9"
+gem "cancancan", "~> 3.5"
 gem "grape", "~> 2.0"
 gem "cssbundling-rails"
 gem "faraday"

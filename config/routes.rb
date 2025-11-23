@@ -12,12 +12,11 @@ Rails.application.routes.draw do
   # Root
   root "projects#index"
 
-  # Authentication
-  namespace :auth do
-    get "login", to: "sessions#new"
-    post "login", to: "sessions#create"
-    delete "logout", to: "sessions#destroy"
+  # Devise routes for User authentication
+  devise_for :users
 
+  # Authentication (Google OAuth - có thể giữ lại nếu cần)
+  namespace :auth do
     # Google OAuth
     get "google/callback", to: "google#callback"
     post "google/callback", to: "google#callback"
