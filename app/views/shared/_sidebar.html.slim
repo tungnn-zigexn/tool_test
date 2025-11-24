@@ -1,0 +1,71 @@
+.d-flex.flex-column.p-3.bg-light style="min-height: calc(100vh - 56px);"
+  / Dashboard Links
+  ul.nav.nav-pills.flex-column.mb-auto
+    - if current_user&.admin?
+      / Admin Menu
+      li.nav-item.mb-2
+        = link_to admin_dashboard_path, class: "nav-link #{controller_name == 'dashboard' && action_name == 'admin' ? 'active' : 'text-dark'}" do
+          i.bi.bi-speedometer2.me-2
+          | Dashboard
+
+      li.nav-item.mb-2
+        = link_to users_path, class: "nav-link #{controller_name == 'users' ? 'active' : 'text-dark'}" do
+          i.bi.bi-people-fill.me-2
+          | Quản lý Users
+
+      li.nav-item.mb-2
+        = link_to projects_path, class: "nav-link #{controller_name == 'projects' ? 'active' : 'text-dark'}" do
+          i.bi.bi-folder-fill.me-2
+          | Quản lý Projects
+
+      li
+        hr.my-3
+
+      / Quick Actions for Admin
+      li.nav-item.mb-2
+        = link_to new_user_path, class: "nav-link text-primary" do
+          i.bi.bi-person-plus-fill.me-2
+          | Tạo User mới
+
+      li.nav-item.mb-2
+        = link_to new_project_path, class: "nav-link text-success" do
+          i.bi.bi-folder-plus.me-2
+          | Tạo Project mới
+
+    - else
+      / User Menu
+      li.nav-item.mb-2
+        = link_to user_dashboard_path, class: "nav-link #{controller_name == 'dashboard' && action_name == 'user' ? 'active' : 'text-dark'}" do
+          i.bi.bi-house-fill.me-2
+          | Trang chủ
+
+      li.nav-item.mb-2
+        = link_to projects_path, class: "nav-link #{controller_name == 'projects' ? 'active' : 'text-dark'}" do
+          i.bi.bi-folder-fill.me-2
+          | Projects
+
+      li.nav-item.mb-2
+        = link_to tasks_path, class: "nav-link #{controller_name == 'tasks' ? 'active' : 'text-dark'}" do
+          i.bi.bi-list-task.me-2
+          | Tasks
+
+      li.nav-item.mb-2
+        = link_to test_cases_path, class: "nav-link #{controller_name == 'test_cases' ? 'active' : 'text-dark'}" do
+          i.bi.bi-clipboard-check.me-2
+          | Test Cases
+
+css:
+  .nav-link {
+    border-radius: 8px;
+    transition: all 0.2s;
+  }
+  .nav-link:hover {
+    background-color: rgba(102, 126, 234, 0.1);
+    transform: translateX(5px);
+  }
+  .nav-link.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white !important;
+  }
+
+

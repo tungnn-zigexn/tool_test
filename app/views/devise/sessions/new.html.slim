@@ -1,0 +1,44 @@
+.min-vh-100.d-flex.align-items-center.justify-content-center style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"
+  .container
+    .row.justify-content-center
+      .col-md-5.col-lg-4
+        .card.shadow-lg.border-0.rounded-3
+          .card-body.p-5
+            / Logo or Title
+            .text-center.mb-4
+              h2.fw-bold.text-primary 🔐 Tool Test
+              p.text-muted Đăng nhập vào hệ thống
+
+            / Login Form
+            = form_for(resource, as: resource_name, url: session_path(resource_name), html: { class: 'needs-validation' }) do |f|
+              / Email field
+              .mb-3
+                = f.label :email, class: 'form-label fw-semibold'
+                .input-group
+                  span.input-group-text
+                    i.bi.bi-envelope
+                  = f.email_field :email, autofocus: true, autocomplete: "email", class: 'form-control', placeholder: 'user@zigexn.vn', required: true
+
+              / Password field
+              .mb-3
+                = f.label :password, "Mật khẩu", class: 'form-label fw-semibold'
+                .input-group
+                  span.input-group-text
+                    i.bi.bi-lock
+                  = f.password_field :password, autocomplete: "current-password", class: 'form-control', placeholder: '••••••••', required: true
+
+              / Remember me
+              .mb-3.form-check
+                = f.check_box :remember_me, class: 'form-check-input'
+                = f.label :remember_me, "Ghi nhớ đăng nhập", class: 'form-check-label'
+
+              / Submit button
+              .d-grid
+                = f.submit "Đăng nhập", class: 'btn btn-primary btn-lg'
+
+            / Links
+            .mt-4.text-center
+              - if devise_mapping.recoverable?
+                = link_to "Quên mật khẩu?", new_password_path(resource_name), class: 'text-decoration-none'
+
+

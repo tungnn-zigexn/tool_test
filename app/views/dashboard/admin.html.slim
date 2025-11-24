@@ -1,0 +1,128 @@
+.container-fluid.px-4.py-4
+  / Header
+  .row.mb-4
+    .col
+      h1.display-5.fw-bold.text-dark
+        | 👨‍💼 Admin Dashboard
+      p.text-muted Chào mừng, #{current_user.name || current_user.email}
+
+  / Stats Cards
+  .row.g-4.mb-4
+    .col-md-4
+      .card.border-0.shadow-sm.bg-primary.bg-gradient.text-white
+        .card-body
+          .d-flex.justify-content-between.align-items-center
+            div
+              h6.text-white-50.mb-1 Tổng Users
+              h2.fw-bold.mb-0 = @users_count
+            .fs-1
+              i.bi.bi-people-fill
+
+    .col-md-4
+      .card.border-0.shadow-sm.bg-success.bg-gradient.text-white
+        .card-body
+          .d-flex.justify-content-between.align-items-center
+            div
+              h6.text-white-50.mb-1 Tổng Projects
+              h2.fw-bold.mb-0 = @projects_count
+            .fs-1
+              i.bi.bi-folder-fill
+
+    .col-md-4
+      .card.border-0.shadow-sm.bg-info.bg-gradient.text-white
+        .card-body
+          .d-flex.justify-content-between.align-items-center
+            div
+              h6.text-white-50.mb-1 Tổng Tasks
+              h2.fw-bold.mb-0 = @tasks_count
+            .fs-1
+              i.bi.bi-list-check
+
+  / Quick Actions
+  .row.mb-4
+    .col
+      .card.border-0.shadow-sm
+        .card-header.bg-white.border-0.py-3
+          h5.mb-0.fw-bold 🚀 Thao tác nhanh
+        .card-body
+          .row.g-3
+            .col-md-6
+              = link_to new_user_path, class: "btn btn-primary btn-lg w-100 d-flex align-items-center justify-content-center" do
+                i.bi.bi-person-plus-fill.me-2
+                | Tạo User mới
+            .col-md-6
+              = link_to new_project_path, class: "btn btn-success btn-lg w-100 d-flex align-items-center justify-content-center" do
+                i.bi.bi-folder-plus.me-2
+                | Tạo Project mới
+
+  / Recent Users and Projects
+  .row.g-4
+    / Recent Users
+    .col-md-6
+      .card.border-0.shadow-sm
+        .card-header.bg-white.border-bottom.py-3
+          .d-flex.justify-content-between.align-items-center
+            h5.mb-0.fw-bold 👥 Users gần đây
+            = link_to "Xem tất cả", users_path, class: "btn btn-sm btn-outline-primary"
+        .card-body.p-0
+          .table-responsive
+            table.table.table-hover.mb-0
+              thead.table-light
+                tr
+                  th Email
+                  th Tên
+                  th Role
+                  th Ngày tạo
+              tbody
+                - if @recent_users.any?
+                  - @recent_users.each do |user|
+                    tr style="cursor: pointer;" onclick="window.location='#{user_path(user)}'"
+                      td
+                        i.bi.bi-envelope.me-2.text-muted
+                        = user.email
+                      td = user.name || "-"
+                      td
+                        - case user.role
+                        - when "admin"
+                          span.badge.bg-danger Admin
+                        - when "developer"
+                          span.badge.bg-warning.text-dark Developer
+                        - else
+                          span.badge.bg-secondary User
+                      td.text-muted = user.created_at.strftime("%d/%m/%Y")
+                - else
+                  tr
+                    td.text-center.py-4 colspan="4"
+                      .text-muted Chưa có user nào
+
+    / Recent Projects
+    .col-md-6
+      .card.border-0.shadow-sm
+        .card-header.bg-white.border-bottom.py-3
+          .d-flex.justify-content-between.align-items-center
+            h5.mb-0.fw-bold 📁 Projects gần đây
+            = link_to "Xem tất cả", projects_path, class: "btn btn-sm btn-outline-success"
+        .card-body.p-0
+          .table-responsive
+            table.table.table-hover.mb-0
+              thead.table-light
+                tr
+                  th Tên Project
+                  th Tasks
+                  th Ngày tạo
+              tbody
+                - if @recent_projects.any?
+                  - @recent_projects.each do |project|
+                    tr style="cursor: pointer;" onclick="window.location='#{project_path(project)}'"
+                      td
+                        i.bi.bi-folder.me-2.text-primary
+                        = project.name
+                      td
+                        span.badge.bg-info.text-dark = project.tasks.root_tasks.count
+                      td.text-muted = project.created_at.strftime("%d/%m/%Y")
+                - else
+                  tr
+                    td.text-center.py-4 colspan="3"
+                      .text-muted Chưa có project nào
+
+

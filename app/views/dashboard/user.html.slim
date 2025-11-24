@@ -2,23 +2,16 @@
   / Header
   .row.mb-4
     .col
-      .d-flex.justify-content-between.align-items-center
-        div
-          h1.display-6.fw-bold.text-dark
-            i.bi.bi-folder-fill.me-2
-            | Danh sách Projects
-          p.text-muted Tất cả projects trong hệ thống
-        - if current_user&.admin?
-          = link_to new_project_path, class: "btn btn-success btn-lg" do
-            i.bi.bi-folder-plus.me-2
-            | Tạo Project mới
+      h1.display-5.fw-bold.text-dark
+        | 🏠 Trang chủ
+      p.text-muted Chào mừng, #{current_user.name || current_user.email}
 
   / Projects Grid
   - if @projects.any?
     .row.g-4
       - @projects.each do |project|
         .col-md-6.col-lg-4
-          .card.border-0.shadow-sm.h-100.hover-card style="cursor: pointer; transition: all 0.3s;" onclick="window.location='#{project_path(project)}'"
+          .card.border-0.shadow-sm.h-100.hover-shadow style="cursor: pointer; transition: all 0.3s;" onclick="window.location='#{project_path(project)}'"
             .card-header.bg-gradient.text-white.border-0 style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"
               h5.mb-0.fw-bold
                 i.bi.bi-folder-fill.me-2
@@ -39,7 +32,7 @@
                       i.bi.bi-list-check.text-primary
                     div
                       .small.text-muted Tasks
-                      .fw-bold = project.task_count
+                      .fw-bold = project.tasks.root_tasks.active.count
 
                 .col-6
                   .d-flex.align-items-center
@@ -49,16 +42,23 @@
                       .small.text-muted Ngày tạo
                       .fw-bold.small = project.created_at.strftime("%d/%m/%Y")
 
-            .card-footer.bg-transparent.border-0
-              .d-flex.gap-2
-                = link_to project_path(project), class: "btn btn-outline-primary flex-grow-1", onclick: "event.stopPropagation();" do
-                  i.bi.bi-eye.me-1
-                  | Xem
-                - if current_user&.admin?
-                  = link_to edit_project_path(project), class: "btn btn-outline-warning", onclick: "event.stopPropagation();" do
-                    i.bi.bi-pencil
-                  = button_to soft_delete_project_path(project), method: :delete, data: { turbo_confirm: "Bạn có chắc muốn xóa project này?" }, class: "btn btn-outline-danger", onclick: "event.stopPropagation();" do
-                    i.bi.bi-trash
+              / Progress bar (if needed)
+              - total_tasks = project.tasks.root_tasks.active.count
+              - if total_tasks > 0
+                - completed_tasks = project.completed_task_count
+                - progress = ((completed_tasks.to_f / total_tasks) * 100).round
+                .mb-2
+                  .d-flex.justify-content-between.small.mb-1
+                    span Tiến độ
+                    span.fw-bold #{completed_tasks}/#{total_tasks}
+                  .progress style="height: 8px;"
+                    .progress-bar.bg-success role="progressbar" style="width: #{progress}%"
+
+            .card-footer.bg-transparent.border-0.pt-0
+              .d-grid
+                = link_to project_path(project), class: "btn btn-outline-primary" do
+                  i.bi.bi-arrow-right-circle.me-2
+                  | Xem chi tiết
 
   - else
     / Empty State
@@ -68,14 +68,12 @@
           .mb-4
             i.bi.bi-folder-x.display-1.text-muted
           h3.text-muted Chưa có project nào
-          p.text-muted
-            - if current_user&.admin?
-              | Tạo project mới để bắt đầu
-            - else
-              | Liên hệ admin để được thêm vào project
+          p.text-muted Liên hệ admin để được thêm vào project
 
 css:
-  .hover-card:hover {
+  .hover-shadow:hover {
     transform: translateY(-5px);
     box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
   }
+
+

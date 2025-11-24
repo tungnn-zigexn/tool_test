@@ -1,7 +1,7 @@
 class ProjectsController < ApplicationController
-  layout "demo"
-
-  before_action :set_project, only: [:show, :edit, :update, :destroy, :soft_delete, :restore]
+  skip_load_and_authorize_resource
+  before_action :set_project, only: [ :show, :edit, :update, :destroy, :soft_delete, :restore ]
+  before_action :authorize_admin, only: [ :new, :create, :edit, :update, :destroy, :soft_delete, :restore ]
 
   def index
     @projects = Project.all.order(created_at: :desc)
@@ -59,5 +59,9 @@ class ProjectsController < ApplicationController
 
   def project_params
     params.require(:project).permit(:name, :description)
+  end
+
+  def authorize_admin
+    authorize! :manage, Project
   end
 end

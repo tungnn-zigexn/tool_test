@@ -14,11 +14,12 @@ class Project < ApplicationRecord
     deleted_at.nil?
   end
 
+  # Đếm tasks (không tính subtask)
   def task_count
-    tasks.active.count
+    tasks.root_tasks.active.count
   end
 
   def completed_task_count
-    tasks.where(status: "resolved").count
+    tasks.root_tasks.where(status: "resolved").count
   end
 end

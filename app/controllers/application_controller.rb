@@ -22,4 +22,13 @@ class ApplicationController < ActionController::Base
   def current_ability
     @current_ability ||= Ability.new(current_user)
   end
+
+  # Redirect after sign in
+  def after_sign_in_path_for(resource)
+    if resource.admin?
+      admin_dashboard_path
+    else
+      user_dashboard_path
+    end
+  end
 end

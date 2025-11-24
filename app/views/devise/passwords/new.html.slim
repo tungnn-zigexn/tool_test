@@ -1,0 +1,30 @@
+.min-vh-100.d-flex.align-items-center.justify-content-center style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"
+  .container
+    .row.justify-content-center
+      .col-md-5.col-lg-4
+        .card.shadow-lg.border-0.rounded-3
+          .card-body.p-5
+            / Logo or Title
+            .text-center.mb-4
+              h2.fw-bold.text-primary 🔑 Quên mật khẩu
+              p.text-muted Nhập email để đặt lại mật khẩu
+
+            / Reset Password Form
+            = form_for(resource, as: resource_name, url: password_path(resource_name), html: { method: :post, class: 'needs-validation' }) do |f|
+              / Email field
+              .mb-4
+                = f.label :email, class: 'form-label fw-semibold'
+                .input-group
+                  span.input-group-text
+                    i.bi.bi-envelope
+                  = f.email_field :email, autofocus: true, autocomplete: "email", class: 'form-control', placeholder: 'user@zigexn.vn', required: true
+
+              / Submit button
+              .d-grid
+                = f.submit "Gửi hướng dẫn đặt lại", class: 'btn btn-primary btn-lg'
+
+            / Links
+            .mt-4.text-center
+              = link_to "← Quay lại đăng nhập", new_session_path(resource_name), class: 'text-decoration-none'
+
+

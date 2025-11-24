@@ -10,10 +10,14 @@ Rails.application.routes.draw do
   # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
 
   # Root
-  root "projects#index"
+  root "dashboard#index"
 
-  # Devise routes for User authentication
-  devise_for :users
+  # Devise routes for User authentication (must be BEFORE resources :users to avoid conflict)
+  devise_for :users, path: "", path_names: {
+    sign_in: "login",
+    sign_out: "logout",
+    sign_up: "register"
+  }
 
   # Authentication (Google OAuth - có thể giữ lại nếu cần)
   namespace :auth do
@@ -24,6 +28,8 @@ Rails.application.routes.draw do
 
   # Dashboard
   get "dashboard", to: "dashboard#index"
+  get "admin/dashboard", to: "dashboard#admin", as: :admin_dashboard
+  get "user/dashboard", to: "dashboard#user", as: :user_dashboard
 
   # Main resources
   resources :users do

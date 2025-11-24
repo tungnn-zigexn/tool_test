@@ -1,0 +1,41 @@
+.container-fluid.px-4.py-4
+  / Header
+  .row.mb-4
+    .col
+      nav aria-label="breadcrumb"
+        ol.breadcrumb
+          li.breadcrumb-item
+            = link_to "Projects", projects_path
+          li.breadcrumb-item.active aria-current="page" Tạo Project mới
+
+      h1.display-6.fw-bold.text-dark
+        i.bi.bi-folder-plus.me-2
+        | Tạo Project mới
+
+  / Form
+  .row.justify-content-center
+    .col-lg-8
+      .card.border-0.shadow-sm
+        .card-body.p-4
+          = form_for @project, html: { class: 'needs-validation' } do |f|
+            / Name
+            .mb-3
+              = f.label :name, "Tên Project *", class: 'form-label fw-semibold'
+              = f.text_field :name, class: 'form-control form-control-lg', placeholder: 'Ví dụ: Project Management System', required: true
+              - if @project.errors[:name].any?
+                .invalid-feedback.d-block = @project.errors[:name].join(', ')
+
+            / Description
+            .mb-4
+              = f.label :description, "Mô tả", class: 'form-label fw-semibold'
+              = f.text_area :description, class: 'form-control', rows: 6, placeholder: 'Mô tả chi tiết về project...'
+              .form-text Mô tả về mục đích, phạm vi của project
+              - if @project.errors[:description].any?
+                .invalid-feedback.d-block = @project.errors[:description].join(', ')
+
+            / Buttons
+            .d-flex.gap-2
+              = f.submit "Tạo Project", class: 'btn btn-success btn-lg px-5'
+              = link_to "Hủy", projects_path, class: 'btn btn-outline-secondary btn-lg'
+
+

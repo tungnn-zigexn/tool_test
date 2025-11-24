@@ -1,0 +1,67 @@
+.container-fluid.px-4.py-4
+  / Header
+  .row.mb-4
+    .col
+      nav aria-label="breadcrumb"
+        ol.breadcrumb
+          li.breadcrumb-item
+            = link_to "Users", users_path
+          li.breadcrumb-item.active aria-current="page" Tạo User mới
+
+      h1.display-6.fw-bold.text-dark
+        i.bi.bi-person-plus-fill.me-2
+        | Tạo User mới
+
+  / Form
+  .row.justify-content-center
+    .col-lg-8
+      .card.border-0.shadow-sm
+        .card-body.p-4
+          = form_for @user, html: { class: 'needs-validation' } do |f|
+            / Email
+            .mb-3
+              = f.label :email, "Email *", class: 'form-label fw-semibold'
+              = f.email_field :email, class: 'form-control form-control-lg', placeholder: 'user@zigexn.vn', required: true
+              .form-text Phải có đuôi @zigexn.vn
+              - if @user.errors[:email].any?
+                .invalid-feedback.d-block = @user.errors[:email].join(', ')
+
+            / Name
+            .mb-3
+              = f.label :name, "Tên", class: 'form-label fw-semibold'
+              = f.text_field :name, class: 'form-control form-control-lg', placeholder: 'Nguyễn Văn A'
+              - if @user.errors[:name].any?
+                .invalid-feedback.d-block = @user.errors[:name].join(', ')
+
+            / Password
+            .mb-3
+              = f.label :password, "Mật khẩu *", class: 'form-label fw-semibold'
+              = f.password_field :password, class: 'form-control form-control-lg', placeholder: '••••••••', required: true, autocomplete: 'new-password'
+              .form-text Tối thiểu 6 ký tự
+              - if @user.errors[:password].any?
+                .invalid-feedback.d-block = @user.errors[:password].join(', ')
+
+            / Password Confirmation
+            .mb-3
+              = f.label :password_confirmation, "Xác nhận mật khẩu *", class: 'form-label fw-semibold'
+              = f.password_field :password_confirmation, class: 'form-control form-control-lg', placeholder: '••••••••', required: true, autocomplete: 'new-password'
+              - if @user.errors[:password_confirmation].any?
+                .invalid-feedback.d-block = @user.errors[:password_confirmation].join(', ')
+
+            / Role
+            .mb-4
+              = f.label :role, "Role", class: 'form-label fw-semibold'
+              = f.select :role, options_for_select([['User (Mặc định)', 'user'], ['Developer', 'developer'], ['Admin', 'admin']], @user.role || 'user'), {}, class: 'form-select form-select-lg'
+              .form-text User mặc định có role = 1 (User)
+              - if @user.errors[:role].any?
+                .invalid-feedback.d-block = @user.errors[:role].join(', ')
+
+            / Provider (hidden, automatically set to 'local')
+            = f.hidden_field :provider, value: 'local'
+
+            / Buttons
+            .d-flex.gap-2
+              = f.submit "Tạo User", class: 'btn btn-primary btn-lg px-5'
+              = link_to "Hủy", users_path, class: 'btn btn-outline-secondary btn-lg'
+
+

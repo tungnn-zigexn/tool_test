@@ -1,0 +1,74 @@
+.container-fluid.px-4.py-4
+  / Header
+  .row.mb-4
+    .col
+      .d-flex.justify-content-between.align-items-center
+        div
+          h1.display-6.fw-bold.text-dark
+            i.bi.bi-people-fill.me-2
+            | Quản lý Users
+          p.text-muted Danh sách tất cả users trong hệ thống
+        = link_to new_user_path, class: "btn btn-primary btn-lg" do
+          i.bi.bi-person-plus-fill.me-2
+          | Tạo User mới
+
+  / Users Table
+  .row
+    .col-12
+      .card.border-0.shadow-sm
+        .card-body.p-0
+          .table-responsive
+            table.table.table-hover.mb-0
+              thead.table-light
+                tr
+                  th.px-4 #
+                  th Email
+                  th Tên
+                  th Role
+                  th Provider
+                  th Ngày tạo
+                  th.text-center Thao tác
+              tbody
+                - if @users.any?
+                  - @users.each_with_index do |user, index|
+                    tr
+                      td.px-4 = index + 1
+                      td
+                        i.bi.bi-envelope.me-2.text-muted
+                        = user.email
+                      td = user.name || "-"
+                      td
+                        - case user.role
+                        - when "admin"
+                          span.badge.bg-danger Admin
+                        - when "developer"
+                          span.badge.bg-warning.text-dark Developer
+                        - else
+                          span.badge.bg-secondary User
+                      td
+                        - if user.provider == "local"
+                          span.badge.bg-info Local
+                        - else
+                          span.badge.bg-success = user.provider.capitalize
+                      td.text-muted = user.created_at.strftime("%d/%m/%Y %H:%M")
+                      td.text-center
+                        .btn-group role="group"
+                          = link_to user_path(user), class: "btn btn-sm btn-outline-primary", title: "Xem chi tiết" do
+                            i.bi.bi-eye
+                          = link_to edit_user_path(user), class: "btn btn-sm btn-outline-warning", title: "Chỉnh sửa" do
+                            i.bi.bi-pencil
+                          = link_to soft_delete_user_path(user), data: { turbo_method: :patch, turbo_confirm: "Bạn có chắc muốn xóa user này?" }, class: "btn btn-sm btn-outline-danger", title: "Xóa mềm" do
+                            i.bi.bi-trash
+                - else
+                  tr
+                    td.text-center.py-5 colspan="7"
+                      .text-muted
+                        i.bi.bi-inbox.display-4.d-block.mb-3
+                        | Chưa có user nào trong hệ thống
+
+  / Pagination (if needed later)
+  / .row.mt-4
+    .col-12
+      / Add pagination here
+
+

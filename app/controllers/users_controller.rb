@@ -1,8 +1,6 @@
 class UsersController < ApplicationController
-  # Load and authorize resource will be handled by ApplicationController
-  # Admin can manage :all
-  # User and Developer cannot destroy User
-
+  skip_load_and_authorize_resource
+  before_action :authorize_admin
   before_action :set_user, only: [ :show, :edit, :update, :destroy, :soft_delete ]
 
   def index
@@ -31,7 +29,14 @@ class UsersController < ApplicationController
   end
 
   def update
-    if @user.update(user_params)
+    # Remove password params if blank
+    params_to_update = user_params
+    if params_to_update[:password].blank?
+      params_to_update.delete(:password)
+      params_to_update.delete(:password_confirmation)
+    end
+
+    if @user.update(params_to_update)
       redirect_to @user, notice: "User updated successfully."
     else
       render :edit, status: :unprocessable_entity
@@ -55,11 +60,10 @@ class UsersController < ApplicationController
   end
 
   def user_params
-    # Admin can set role, user cannot set role
-    if current_user&.admin?
-      params.require(:user).permit(:email, :name, :password, :password_confirmation, :role, :avatar)
-    else
-      params.require(:user).permit(:email, :name, :password, :password_confirmation, :avatar)
-    end
+    params.require(:user).permit(:email, :name, :password, :password_confirmation, :role, :avatar)
+  end
+
+  def authorize_admin
+    authorize! :manage, User
   end
 end
