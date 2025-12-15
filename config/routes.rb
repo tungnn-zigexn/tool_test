@@ -40,10 +40,10 @@ Rails.application.routes.draw do
 
   resources :projects do
     member do
-      delete :soft_delete
+      patch :soft_delete
       patch :restore
     end
-    resources :tasks, except: [ :index ] do
+    resources :tasks do
       member do
         patch :soft_delete
       end
@@ -57,6 +57,11 @@ Rails.application.routes.draw do
         collection do
           post :import_from_sheet
         end
+        resources :test_results, only: [ :new, :create, :edit, :update, :destroy ] do
+          member do
+            patch :soft_delete
+          end
+        end
       end
       resources :bugs, except: [ :index ] do
         member do
@@ -66,6 +71,9 @@ Rails.application.routes.draw do
       resources :test_runs, except: [ :index ] do
         member do
           patch :soft_delete
+          post :start
+          post :complete
+          post :abort
         end
       end
     end
@@ -76,6 +84,7 @@ Rails.application.routes.draw do
   resources :test_cases, only: [ :index ]
   resources :bugs, only: [ :index ]
   resources :test_runs, only: [ :index ]
+  resources :test_results, only: [ :index, :show ]
 
   # Test environments
   resources :test_environments do

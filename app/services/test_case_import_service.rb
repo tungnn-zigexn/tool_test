@@ -53,7 +53,22 @@ class TestCaseImportService
     # Row 5 might contain device names (check if it's not a test case row)
     device_names_row = sheet_data[4] if sheet_data.length > 4
 
-    data_rows = sheet_data.drop(5) # Skip rows 1-5, data starts from row 6
+    # Check if Row 5 is a data row or device names row
+    row_5_is_data = is_data_row?(device_names_row, header_rows.last)
+
+    # Determine how many rows to skip
+    if row_5_is_data
+      # Row 5 is TC01 (first test case) - only skip 4 header rows
+      data_rows = sheet_data.drop(4)
+      starting_row_number = 5
+      device_names_row = nil # Don't use row 5 as device names
+      Rails.logger.info "Row 5 is data row (TC01) - starting from row 5"
+    else
+      # Row 5 is device names - skip 5 rows
+      data_rows = sheet_data.drop(5)
+      starting_row_number = 6
+      Rails.logger.info "Row 5 is device names row - starting from row 6"
+    end
 
     # Parse header to get column positions and device names
     column_mapping = parse_header(header_rows, device_names_row)
@@ -61,13 +76,71 @@ class TestCaseImportService
     # Process each data row
     data_rows.each_with_index do |row, index|
       begin
-        process_test_case_row(row, column_mapping, sheet_name, index + 6) # +6 because we skipped 5 rows (4 headers + 1 device names) and index starts from 0
+        actual_row_number = starting_row_number + index
+        process_test_case_row(row, column_mapping, sheet_name, actual_row_number)
       rescue => e
-        @errors << "Lỗi dòng #{index + 6} trong sheet '#{sheet_name}': #{e.message}"
+        actual_row_number = starting_row_number + index
+        @errors << "Lỗi dòng #{actual_row_number} trong sheet '#{sheet_name}': #{e.message}"
         @skipped_count += 1
-        Rails.logger.warn "Bỏ qua dòng #{index + 6}: #{e.message}"
+        Rails.logger.warn "Bỏ qua dòng #{actual_row_number}: #{e.message}"
       end
     end
+  end
+
+  # Check if a row is a data row (contains test case data) or device names row
+  def is_data_row?(row, header_row)
+    return false if row.nil? || row.empty?
+    return false if header_row.nil?
+
+    # Find the Target column index
+    target_col_index = nil
+    header_row.each_with_index do |col_name, index|
+      next if col_name.nil? || col_name.strip.empty?
+      normalized_name = col_name.strip.downcase
+      if normalized_name.match?(/^target$|^対象$|^đối.*tượng$/)
+        target_col_index = index
+        break
+      end
+    end
+
+    return false if target_col_index.nil?
+
+    # Check if row contains test status values in columns after Target
+    # If yes, it's a data row (test case row)
+    # If no, it's a device names row
+    ((target_col_index + 1)...header_row.length).each do |col_idx|
+      val = row[col_idx]
+      next if val.nil?
+
+      val_normalized = val.to_s.strip.downcase
+      # Check if value is a test status (Pass/Fail/OK/NG/etc.)
+      if val_normalized.match?(/^(pass|fail|failed|ok|ng|not.*run|skip|pending|block|blocked)$/i)
+        Rails.logger.info "Row 5 contains test status '#{val}' at column #{col_idx} - treating as data row"
+        return true
+      end
+
+      # Check if value looks like a test case ID (TC01, TC02, etc.)
+      if val_normalized.match?(/^tc\d+$/i)
+        Rails.logger.info "Row 5 contains test case ID '#{val}' - treating as data row"
+        return true
+      end
+    end
+
+    # Also check first few columns for test case identifiers
+    # Column 0-3 usually contain: ID, Type, Function, Test Case
+    row.first(4).each_with_index do |val, idx|
+      next if val.nil?
+      val_normalized = val.to_s.strip.downcase
+
+      # If any of first 4 columns contain TC ID pattern, it's likely a data row
+      if val_normalized.match?(/^tc\d+$/i) || val_normalized.match?(/^\d+$/)
+        Rails.logger.info "Row 5 column #{idx} contains identifier '#{val}' - treating as data row"
+        return true
+      end
+    end
+
+    Rails.logger.info "Row 5 does not contain test data markers - treating as device names row"
+    false
   end
 
   def parse_header(header_rows, device_names_row = nil)

@@ -1,8 +1,10 @@
 class TestStep < ApplicationRecord
-  belongs_to :test_case, foreign_key: "case_id"
-  has_many :test_step_contents, foreign_key: "step_id", dependent: :destroy
+  belongs_to :test_case, foreign_key: "case_id", inverse_of: :test_steps
+  has_many :test_step_contents, foreign_key: "step_id", dependent: :destroy, inverse_of: :test_step
 
-  validates :case_id, presence: true
+  # Nested attributes for creating step contents
+  accepts_nested_attributes_for :test_step_contents, allow_destroy: true
+
   validates :step_number, presence: true, numericality: { greater_than: 0 }
 
   scope :ordered, -> { order(:step_number) }

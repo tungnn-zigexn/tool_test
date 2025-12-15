@@ -1,14 +1,25 @@
 class ProjectsController < ApplicationController
   skip_load_and_authorize_resource
   before_action :set_project, only: [ :show, :edit, :update, :destroy, :soft_delete, :restore ]
-  before_action :authorize_admin, only: [ :new, :create, :edit, :update, :destroy, :soft_delete, :restore ]
-
+  # before_action :authorize_admin, only: [ :new, :create, :edit, :update, :destroy, :soft_delete, :restore ]
+  skip_before_action :verify_authenticity_token
+  skip_before_action :authenticate_user!
   def index
     @projects = Project.all.order(created_at: :desc)
+
+    respond_to do |format|
+      format.html
+      format.json { render json: @projects }
+    end
   end
 
   def show
     @tasks = @project.tasks.includes(:test_cases, :subtasks).order(created_at: :desc)
+
+    respond_to do |format|
+      format.html
+      format.json { render json: @project.as_json(include: { tasks: { include: :test_cases } }) }
+    end
   end
 
   def new
@@ -18,10 +29,14 @@ class ProjectsController < ApplicationController
   def create
     @project = Project.new(project_params)
 
-    if @project.save
-      redirect_to @project, notice: "Project đã được tạo thành công."
-    else
-      render :new, status: :unprocessable_entity
+    respond_to do |format|
+      if @project.save
+        format.html { redirect_to @project, notice: 'Project has been created successfully.' }
+        format.json { render json: @project, status: :created, location: @project }
+      else
+        format.html { render :new, status: :unprocessable_entity }
+        format.json { render json: @project.errors, status: :unprocessable_entity }
+      end
     end
   end
 
@@ -29,26 +44,42 @@ class ProjectsController < ApplicationController
   end
 
   def update
-    if @project.update(project_params)
-      redirect_to @project, notice: "Project đã được cập nhật."
-    else
-      render :edit, status: :unprocessable_entity
+    respond_to do |format|
+      if @project.update(project_params)
+        format.html { redirect_to @project, notice: 'Project has been updated successfully.' }
+        format.json { render json: @project }
+      else
+        format.html { render :edit, status: :unprocessable_entity }
+        format.json { render json: @project.errors, status: :unprocessable_entity }
+      end
     end
   end
 
   def destroy
     @project.destroy
-    redirect_to projects_path, notice: "Project đã được xóa."
+
+    respond_to do |format|
+      format.html { redirect_to projects_path, notice: 'Project has been deleted successfully.' }
+      format.json { head :no_content }
+    end
   end
 
   def soft_delete
     @project.update(deleted_at: Time.current)
-    redirect_to projects_path, notice: "Project đã được xóa mềm."
+
+    respond_to do |format|
+      format.html { redirect_to projects_path, notice: 'Project has been soft deleted successfully.' }
+      format.json { render json: @project }
+    end
   end
 
   def restore
     @project.update(deleted_at: nil)
-    redirect_to projects_path, notice: "Project đã được khôi phục."
+
+    respond_to do |format|
+      format.html { redirect_to projects_path, notice: 'Project has been restored successfully.' }
+      format.json { render json: @project }
+    end
   end
 
   private

@@ -1,7 +1,6 @@
 class TestStepContent < ApplicationRecord
-  belongs_to :test_step, foreign_key: "step_id"
+  belongs_to :test_step, foreign_key: "step_id", inverse_of: :test_step_contents
 
-  validates :step_id, presence: true
   validates :content_type, presence: true
   validates :content_value, presence: true
   validates :content_category, presence: true

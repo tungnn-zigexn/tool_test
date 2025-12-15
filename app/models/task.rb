@@ -9,7 +9,6 @@ class Task < ApplicationRecord
   has_many :bugs, dependent: :destroy
 
   validates :title, presence: true
-  validates :status, presence: true
 
   scope :active, -> { where(deleted_at: nil) }
   scope :deleted, -> { where.not(deleted_at: nil) }

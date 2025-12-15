@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_19_115946) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_24_041522) do
   create_table "bug_comments", force: :cascade do |t|
     t.integer "bug_id", null: false
     t.integer "user_id", null: false
@@ -108,6 +108,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_19_115946) do
     t.datetime "deleted_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "issue_link"
     t.index ["assignee_id"], name: "index_tasks_on_assignee_id"
     t.index ["parent_id"], name: "index_tasks_on_parent_id"
     t.index ["project_id"], name: "index_tasks_on_project_id"

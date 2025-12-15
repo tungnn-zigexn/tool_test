@@ -1,0 +1,167 @@
+class TestResultsController < ApplicationController
+  skip_load_and_authorize_resource
+  before_action :set_test_case, except: [ :index ]
+  before_action :set_test_result, only: [ :show, :edit, :update, :destroy, :soft_delete ]
+  skip_before_action :verify_authenticity_token
+  skip_before_action :authenticate_user!
+
+  # GET /test_results
+  def index
+    @test_results = TestResult.active.includes(:test_case, :test_run, :executed_by).order(executed_at: :desc)
+
+    # Filters
+    @test_results = @test_results.where(status: params[:status]) if params[:status].present?
+    @test_results = @test_results.where(run_id: params[:run_id]) if params[:run_id].present?
+    @test_results = @test_results.where(case_id: params[:case_id]) if params[:case_id].present?
+
+    # Filter by task_id
+    if params[:task_id].present?
+      @test_results = @test_results.joins(:test_case).where(test_cases: { task_id: params[:task_id] })
+    end
+
+    # Filter by project_id
+    if params[:project_id].present?
+      @test_results = @test_results.joins(test_case: :task).where(tasks: { project_id: params[:project_id] })
+    end
+
+    respond_to do |format|
+      format.html
+      format.json do
+        render json: @test_results.as_json(
+          include: {
+            test_case: {
+              only: [ :id, :title ],
+              include: {
+                task: { only: [ :id, :title, :project_id ] }
+              }
+            },
+            test_run: { only: [ :id, :name ] },
+            executed_by: { only: [ :id, :name, :email ] }
+          }
+        )
+      end
+    end
+  end
+
+  # GET /test_cases/:test_case_id/test_results/:id
+  def show
+    respond_to do |format|
+      format.html
+      format.json do
+        render json: @test_result.as_json(
+          include: {
+            test_case: {
+              include: {
+                test_steps: {
+                  include: :test_step_contents
+                }
+              }
+            },
+            test_run: { only: [ :id, :name, :status ] },
+            executed_by: { only: [ :id, :name, :email ] }
+          }
+        )
+      end
+    end
+  end
+
+  # GET /test_cases/:test_case_id/test_results/new
+  def new
+    @test_result = @test_case.test_results.build
+    @test_result.device = params[:device] if params[:device].present?
+  end
+
+  # GET /test_cases/:test_case_id/test_results/:id/edit
+  def edit
+  end
+
+  # POST /test_cases/:test_case_id/test_results
+  def create
+    @test_result = @test_case.test_results.build(test_result_params)
+    @test_result.executed_by = current_user
+    @test_result.executed_at = Time.current
+
+    if @test_result.save
+      respond_to do |format|
+        format.html do
+          redirect_to [ @test_case.task.project, @test_case.task, @test_case ],
+                      notice: "Test result created successfully."
+        end
+        format.json { render json: @test_result, status: :created }
+      end
+    else
+      respond_to do |format|
+        format.html { render :new, status: :unprocessable_entity }
+        format.json do
+          render json: { errors: @test_result.errors.full_messages },
+                 status: :unprocessable_entity
+        end
+      end
+    end
+  end
+
+  # PATCH/PUT /test_cases/:test_case_id/test_results/:id
+  def update
+    if @test_result.update(test_result_params)
+      respond_to do |format|
+        format.html do
+          redirect_to [ @test_case.task.project, @test_case.task, @test_case ],
+                      notice: "Test result updated successfully."
+        end
+        format.json { render json: @test_result }
+      end
+    else
+      respond_to do |format|
+        format.html { render :edit, status: :unprocessable_entity }
+        format.json do
+          render json: { errors: @test_result.errors.full_messages },
+                 status: :unprocessable_entity
+        end
+      end
+    end
+  end
+
+  # DELETE /test_cases/:test_case_id/test_results/:id
+  def destroy
+    @test_result.destroy
+    respond_to do |format|
+      format.html do
+        redirect_to [ @test_case.task.project, @test_case.task, @test_case ],
+                    notice: "Test result deleted successfully."
+      end
+      format.json { head :no_content }
+    end
+  end
+
+  # PATCH /test_cases/:test_case_id/test_results/:id/soft_delete
+  def soft_delete
+    @test_result.soft_delete!
+    respond_to do |format|
+      format.html do
+        redirect_to [ @test_case.task.project, @test_case.task, @test_case ],
+                    notice: "Test result soft deleted successfully."
+      end
+      format.json { head :no_content }
+    end
+  end
+
+  private
+
+  def set_test_case
+    @test_case = TestCase.find(params[:test_case_id]) if params[:test_case_id]
+  end
+
+  def set_test_result
+    @test_result = TestResult.find(params[:id])
+    @test_case ||= @test_result.test_case
+  end
+
+  def test_result_params
+    params.require(:test_result).permit(
+      :run_id,
+      :status,
+      :device,
+      :executed_at
+    )
+  end
+end

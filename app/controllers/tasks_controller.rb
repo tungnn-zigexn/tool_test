@@ -1,7 +1,9 @@
 class TasksController < ApplicationController
-  layout "demo"
+  skip_load_and_authorize_resource
   before_action :set_project, only: [ :new, :create, :import_from_redmine ]
   before_action :set_task, only: [ :show, :edit, :update, :destroy, :soft_delete ]
+  skip_before_action :verify_authenticity_token
+  skip_before_action :authenticate_user!
 
   # GET /tasks or /projects/:project_id/tasks
   def index
@@ -155,7 +157,7 @@ class TasksController < ApplicationController
       :due_date,
       :testcase_link,
       :bug_link,
-      :description_link
+      :issue_link
     )
   end
 end

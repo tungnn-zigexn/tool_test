@@ -8,7 +8,7 @@ class ApplicationController < ActionController::Base
   # CanCanCan authorization
   load_and_authorize_resource unless: :devise_controller?
 
-  # Xử lý lỗi CanCan::AccessDenied
+  # Handle exception CanCan::AccessDenied
   rescue_from CanCan::AccessDenied do |exception|
     respond_to do |format|
       format.html { redirect_to root_path, alert: exception.message }
@@ -18,7 +18,7 @@ class ApplicationController < ActionController::Base
 
   private
 
-  # Override Devise helper để dùng current_user
+  # Override Devise helper to use current_user
   def current_ability
     @current_ability ||= Ability.new(current_user)
   end
