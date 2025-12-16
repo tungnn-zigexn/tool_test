@@ -5,8 +5,11 @@ class TestCase < ApplicationRecord
   has_many :test_steps, foreign_key: "case_id", dependent: :destroy, inverse_of: :test_case
   has_many :test_results, foreign_key: "case_id", dependent: :destroy
 
-  # Nested attributes for creating test steps
-  accepts_nested_attributes_for :test_steps, allow_destroy: true
+  # Nested attributes for creating test steps - reject blank steps
+  accepts_nested_attributes_for :test_steps, allow_destroy: true, reject_if: ->(attrs) {
+    # Reject if step_number is blank or description is blank and no contents
+    attrs[:step_number].blank? && attrs[:description].blank?
+  }
 
   validates :title, presence: true
   validates :task_id, presence: true
@@ -18,6 +21,10 @@ class TestCase < ApplicationRecord
 
   def soft_delete!
     update!(deleted_at: Time.current)
+  end
+
+  def restore!
+    update!(deleted_at: nil)
   end
 
   def active?

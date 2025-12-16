@@ -60,7 +60,7 @@ class TestCasesController < ApplicationController
     if @test_case.save
       respond_to do |format|
         format.html do
-          redirect_to [ @task.project, @task, @test_case ],
+          redirect_to project_task_path(@task.project, @task),
                       notice: "Test case created successfully."
         end
         format.json { render json: @test_case, status: :created }
@@ -102,7 +102,7 @@ class TestCasesController < ApplicationController
     @test_case.destroy
     respond_to do |format|
       format.html do
-        redirect_to project_task_test_cases_path(@task.project, @task),
+        redirect_to project_task_path(@task.project, @task),
                     notice: "Test case deleted successfully."
       end
       format.json { head :no_content }
@@ -114,8 +114,20 @@ class TestCasesController < ApplicationController
     @test_case.soft_delete!
     respond_to do |format|
       format.html do
-        redirect_to project_task_test_cases_path(@task.project, @task),
+        redirect_to project_task_path(@task.project, @task),
                     notice: "Test case soft deleted successfully."
+      end
+      format.json { head :no_content }
+    end
+  end
+
+  # PATCH /projects/:project_id/tasks/:task_id/test_cases/:id/restore
+  def restore
+    @test_case.restore!
+    respond_to do |format|
+      format.html do
+        redirect_to project_task_path(@task.project, @task),
+                    notice: "Test case restored successfully."
       end
       format.json { head :no_content }
     end

@@ -1,0 +1,102 @@
+.container-fluid.px-4.py-4
+  / Header
+  .row.mb-4
+    .col
+      nav aria-label="breadcrumb"
+        ol.breadcrumb
+          li.breadcrumb-item
+            = link_to "Projects", projects_path
+          li.breadcrumb-item
+            = link_to @task.project.name, project_path(@task.project)
+          li.breadcrumb-item
+            = link_to @task.title, project_task_path(@task.project, @task)
+          li.breadcrumb-item.active aria-current="page" Chỉnh sửa
+
+      h1.display-6.fw-bold.text-dark
+        i.bi.bi-pencil-square.me-2
+        | Chỉnh sửa Task
+
+  / Form
+  .row.justify-content-center
+    .col-lg-10
+      .card.border-0.shadow-sm
+        .card-body.p-4
+          = form_for [@task.project, @task], html: { class: 'needs-validation' } do |f|
+            .row
+              / Left Column
+              .col-md-6
+                / Title
+                .mb-3
+                  = f.label :title, "Tiêu đề Task *", class: 'form-label fw-semibold'
+                  = f.text_field :title, class: 'form-control form-control-lg', required: true
+                  - if @task.errors[:title].any?
+                    .invalid-feedback.d-block = @task.errors[:title].join(', ')
+
+                / Description
+                .mb-3
+                  = f.label :description, "Mô tả", class: 'form-label fw-semibold'
+                  = f.text_area :description, class: 'form-control', rows: 4
+
+                / Status
+                .mb-3
+                  = f.label :status, "Trạng thái", class: 'form-label fw-semibold'
+                  = f.select :status, options_for_select([['New', 'new'], ['In Progress', 'in_progress'], ['Resolved', 'resolved'], ['Closed', 'closed']], @task.status), {}, class: 'form-select'
+
+                / Assignee
+                .mb-3
+                  = f.label :assignee_id, "Giao cho", class: 'form-label fw-semibold'
+                  = f.collection_select :assignee_id, User.active.order(:name), :id, :name, { include_blank: '-- Chọn user --' }, class: 'form-select'
+
+              / Right Column
+              .col-md-6
+                / Issue Link
+                .mb-3
+                  = f.label :issue_link, "Issue Link", class: 'form-label fw-semibold'
+                  = f.url_field :issue_link, class: 'form-control'
+                  .form-text Link đến JIRA, GitHub Issue, Linear, etc.
+
+                / TestCase Link
+                .mb-3
+                  = f.label :testcase_link, "TestCase Link (Google Sheet)", class: 'form-label fw-semibold'
+                  = f.url_field :testcase_link, class: 'form-control'
+
+                / Bug Link
+                .mb-3
+                  = f.label :bug_link, "Bug Link", class: 'form-label fw-semibold'
+                  = f.url_field :bug_link, class: 'form-control'
+
+                / Time Fields
+                .row
+                  .col-6
+                    .mb-3
+                      = f.label :estimated_time, "Ước tính (giờ)", class: 'form-label fw-semibold'
+                      = f.number_field :estimated_time, class: 'form-control', step: 0.5
+                  .col-6
+                    .mb-3
+                      = f.label :spent_time, "Đã dùng (giờ)", class: 'form-label fw-semibold'
+                      = f.number_field :spent_time, class: 'form-control', step: 0.5
+
+                / Percent Done
+                .mb-3
+                  = f.label :percent_done, "Hoàn thành (%)", class: 'form-label fw-semibold'
+                  = f.number_field :percent_done, class: 'form-control', min: 0, max: 100
+
+                / Dates
+                .row
+                  .col-6
+                    .mb-3
+                      = f.label :start_date, "Ngày bắt đầu", class: 'form-label fw-semibold'
+                      = f.date_field :start_date, class: 'form-control'
+                  .col-6
+                    .mb-3
+                      = f.label :due_date, "Deadline", class: 'form-label fw-semibold'
+                      = f.date_field :due_date, class: 'form-control'
+
+            / Buttons
+            .d-flex.gap-2.mt-4
+              = f.submit "Cập nhật", class: 'btn btn-primary btn-lg px-5'
+              = link_to "Hủy", project_task_path(@task.project, @task), class: 'btn btn-outline-secondary btn-lg'
+
+
+
+

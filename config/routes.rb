@@ -53,10 +53,12 @@ Rails.application.routes.draw do
       resources :test_cases do
         member do
           patch :soft_delete
+          patch :restore
         end
         collection do
           post :import_from_sheet
         end
+        resources :test_steps, only: [:edit, :update, :destroy]
         resources :test_results, only: [ :new, :create, :edit, :update, :destroy ] do
           member do
             patch :soft_delete

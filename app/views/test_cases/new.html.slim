@@ -1,0 +1,171 @@
+.container-fluid.px-4.py-4
+  / Header
+  .row.mb-4
+    .col
+      nav aria-label="breadcrumb"
+        ol.breadcrumb
+          li.breadcrumb-item
+            = link_to "Projects", projects_path
+          li.breadcrumb-item
+            = link_to @task.project.name, project_path(@task.project)
+          li.breadcrumb-item
+            = link_to @task.title, project_task_path(@task.project, @task)
+          li.breadcrumb-item.active aria-current="page" Tạo Test Case mới
+
+      h1.display-6.fw-bold.text-dark
+        i.bi.bi-clipboard-check.me-2
+        | Tạo Test Case mới
+
+  / Form
+  .row
+    .col-12
+      .card.border-0.shadow-sm
+        .card-body.p-4
+          = form_for [@task.project, @task, @test_case], html: { class: 'needs-validation', id: 'test-case-form' } do |f|
+            / Basic Information
+            .card.mb-4
+              .card-header.bg-light
+                h5.mb-0.fw-bold
+                  i.bi.bi-info-circle.me-2
+                  | Thông tin cơ bản
+              .card-body
+                .row
+                  .col-md-6
+                    / Title
+                    .mb-3
+                      = f.label :title, "Tiêu đề Test Case *", class: 'form-label fw-semibold'
+                      = f.text_field :title, class: 'form-control', placeholder: 'Ví dụ: Test login with valid credentials', required: true
+                      - if @test_case.errors[:title].any?
+                        .invalid-feedback.d-block = @test_case.errors[:title].join(', ')
+
+                    / Test Type
+                    .mb-3
+                      = f.label :test_type, "Loại Test", class: 'form-label fw-semibold'
+                      = f.select :test_type, options_for_select([['Feature', 'feature'], ['UI', 'ui']], @test_case.test_type || 'feature'), {}, class: 'form-select'
+
+                    / Function
+                    .mb-3
+                      = f.label :function, "Chức năng", class: 'form-label fw-semibold'
+                      = f.text_field :function, class: 'form-control', placeholder: 'Ví dụ: Authentication'
+
+                  .col-md-6
+                    / Target
+                    .mb-3
+                      = f.label :target, "Đối tượng test", class: 'form-label fw-semibold'
+                      = f.select :target, options_for_select([['PC + SP + APP', 'pc_sp_app'], ['PC + SP', 'pc_sp'], ['PC', 'pc'], ['SP', 'sp'], ['APP', 'app']], @test_case.target || 'pc_sp_app'), {}, class: 'form-select'
+
+                    / Description
+                    .mb-3
+                      = f.label :description, "Mô tả", class: 'form-label fw-semibold'
+                      = f.text_area :description, class: 'form-control', rows: 3, placeholder: 'Mô tả chi tiết...'
+
+                .row
+                  .col-md-6
+                    .mb-3
+                      = f.label :acceptance_criteria_url, "Acceptance Criteria URL", class: 'form-label fw-semibold'
+                      = f.url_field :acceptance_criteria_url, class: 'form-control', placeholder: 'https://...'
+                  .col-md-6
+                    .mb-3
+                      = f.label :user_story_url, "User Story URL", class: 'form-label fw-semibold'
+                      = f.url_field :user_story_url, class: 'form-control', placeholder: 'https://...'
+
+            / Test Steps
+            .card.mb-4
+              .card-header.bg-light.d-flex.justify-content-between.align-items-center
+                h5.mb-0.fw-bold
+                  i.bi.bi-list-ol.me-2
+                  | Test Steps
+                button.btn.btn-sm.btn-success type="button" onclick="addTestStep()"
+                  i.bi.bi-plus-circle.me-1
+                  | Thêm Step
+
+              .card-body#test-steps-container
+                / Initial step will be added by JavaScript or from form builder
+
+            / Buttons
+            .d-flex.gap-2
+              = f.submit "Tạo Test Case", class: 'btn btn-primary btn-lg px-5'
+              = link_to "Hủy", project_task_path(@task.project, @task), class: 'btn btn-outline-secondary btn-lg'
+
+script type="text/javascript"
+  |
+    (function() {
+      // Unique ID counter for form field names
+      var uniqueIdCounter = 0;
+
+      function getNextUniqueId() {
+        return uniqueIdCounter++;
+      }
+
+      window.addTestStep = function() {
+        var container = document.getElementById('test-steps-container');
+        var currentStepCount = container.querySelectorAll('.test-step').length;
+        var displayStepNumber = currentStepCount + 1;
+        var uniqueId = getNextUniqueId();
+
+        var stepHtml = '<div class="card mb-3 test-step" data-unique-id="' + uniqueId + '">' +
+          '<div class="card-header bg-white d-flex justify-content-between align-items-center">' +
+          '<h6 class="mb-0 fw-bold step-title">Step ' + displayStepNumber + '</h6>' +
+          '<button type="button" class="btn btn-sm btn-outline-danger" onclick="removeTestStep(this)">' +
+          '<i class="bi bi-trash"></i> Xóa</button></div>' +
+          '<div class="card-body">' +
+          '<input type="hidden" class="step-number-input" name="test_case[test_steps_attributes][' + uniqueId + '][step_number]" value="' + displayStepNumber + '" />' +
+          '<div class="mb-3">' +
+          '<label class="form-label fw-semibold">Mô tả Step</label>' +
+          '<input type="text" name="test_case[test_steps_attributes][' + uniqueId + '][description]" class="form-control" placeholder="Step ' + displayStepNumber + ' description" />' +
+          '</div>' +
+          '<div class="row">' +
+          '<div class="col-md-6">' +
+          '<label class="form-label fw-semibold">Actions (thao tác)</label>' +
+          '<textarea name="test_case[test_steps_attributes][' + uniqueId + '][test_step_contents_attributes][0][content_value]" class="form-control mb-2" rows="3" placeholder="1. Mở trang login&#10;2. Nhập email&#10;3. Nhập password"></textarea>' +
+          '<input type="hidden" name="test_case[test_steps_attributes][' + uniqueId + '][test_step_contents_attributes][0][content_type]" value="text" />' +
+          '<input type="hidden" name="test_case[test_steps_attributes][' + uniqueId + '][test_step_contents_attributes][0][content_category]" value="action" />' +
+          '<input type="hidden" name="test_case[test_steps_attributes][' + uniqueId + '][test_step_contents_attributes][0][display_order]" value="0" />' +
+          '</div>' +
+          '<div class="col-md-6">' +
+          '<label class="form-label fw-semibold">Expected Results</label>' +
+          '<textarea name="test_case[test_steps_attributes][' + uniqueId + '][test_step_contents_attributes][1][content_value]" class="form-control mb-2" rows="3" placeholder="Kết quả mong đợi"></textarea>' +
+          '<input type="hidden" name="test_case[test_steps_attributes][' + uniqueId + '][test_step_contents_attributes][1][content_type]" value="text" />' +
+          '<input type="hidden" name="test_case[test_steps_attributes][' + uniqueId + '][test_step_contents_attributes][1][content_category]" value="expectation" />' +
+          '<input type="hidden" name="test_case[test_steps_attributes][' + uniqueId + '][test_step_contents_attributes][1][display_order]" value="0" />' +
+          '<label class="form-label fw-semibold mt-2">Evidence URL (Gyazo)</label>' +
+          '<input type="url" name="test_case[test_steps_attributes][' + uniqueId + '][test_step_contents_attributes][2][content_value]" class="form-control" placeholder="https://gyazo.com/..." />' +
+          '<input type="hidden" name="test_case[test_steps_attributes][' + uniqueId + '][test_step_contents_attributes][2][content_type]" value="image" />' +
+          '<input type="hidden" name="test_case[test_steps_attributes][' + uniqueId + '][test_step_contents_attributes][2][content_category]" value="expectation" />' +
+          '<input type="hidden" name="test_case[test_steps_attributes][' + uniqueId + '][test_step_contents_attributes][2][display_order]" value="1" />' +
+          '</div></div></div></div>';
+
+        container.insertAdjacentHTML('beforeend', stepHtml);
+        renumberSteps();
+      };
+
+      window.removeTestStep = function(button) {
+        var stepCard = button.closest('.test-step');
+        stepCard.remove();
+        renumberSteps();
+      };
+
+      function renumberSteps() {
+        var container = document.getElementById('test-steps-container');
+        var steps = container.querySelectorAll('.test-step');
+
+        steps.forEach(function(step, index) {
+          var newNumber = index + 1;
+
+          var title = step.querySelector('.step-title');
+          if (title) {
+            title.textContent = 'Step ' + newNumber;
+          }
+
+          var stepNumberInput = step.querySelector('.step-number-input');
+          if (stepNumberInput) {
+            stepNumberInput.value = newNumber;
+          }
+        });
+      }
+
+      document.addEventListener('DOMContentLoaded', function() {
+        window.addTestStep();
+      });
+    })();
+

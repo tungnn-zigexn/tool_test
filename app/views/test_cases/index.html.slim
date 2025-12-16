@@ -1,0 +1,69 @@
+.container.py-4
+  / Header
+  .mb-4
+    .d-flex.justify-content-between.align-items-center
+      div
+        h1.h2.fw-bold.text-dark.mb-2 🧪 Test Cases
+        p.text-muted
+          - if @task
+            | Test cases for task: #{@task.title}
+          - else
+            | All test cases
+
+      - if @task && current_user
+        = link_to new_project_task_test_case_path(@task.project, @task), class: "btn btn-primary" do
+          i.bi.bi-plus-circle.me-2
+          | Tạo Test Case mới
+
+  / Stats
+  .row.mb-4.g-3
+    .col-md-3
+      .card.shadow-sm.h-100.border-0.text-center
+        .card-body
+          .h2.fw-bold.text-primary= @test_cases.count
+          .text-muted.small Total Test Cases
+    .col-md-3
+      .card.shadow-sm.h-100.border-0.text-center
+        .card-body
+          .h2.fw-bold.text-success= @test_cases.where(test_type: 'feature').count
+          .text-muted.small Feature Tests
+    .col-md-3
+      .card.shadow-sm.h-100.border-0.text-center
+        .card-body
+          .h2.fw-bold.text-info= @test_cases.where(test_type: 'ui').count
+          .text-muted.small UI Tests
+    .col-md-3
+      .card.shadow-sm.h-100.border-0.text-center
+        .card-body
+          .h2.fw-bold.text-warning= @test_cases.sum { |tc| tc.test_steps.count }
+          .text-muted.small Total Steps
+
+  / Test Cases List
+  .d-flex.flex-column.gap-3
+    - @test_cases.each do |test_case|
+      .card.shadow-sm.border-0.hover-shadow.cursor-pointer onclick="window.location.href='#{project_task_test_case_path(test_case.task.project, test_case.task, test_case)}'" style="transition: all 0.2s;"
+        .card-body.p-4
+          .d-flex.justify-content-between.align-items-start.mb-3
+            .flex-grow-1
+              h5.card-title.fw-bold.text-dark.mb-2= test_case.title
+              .d-flex.align-items-center.gap-2.text-muted.small
+                span.badge.bg-light.text-primary.border
+                  = test_case.test_type_display
+                span.badge.bg-light.text-success.border
+                  = test_case.target_display
+                - if test_case.function.present?
+                  span= test_case.function
+                span •
+                span #{test_case.test_steps.count} steps
+
+          - if test_case.description.present?
+            p.text-muted.small.mb-3= truncate(test_case.description, length: 150)
+
+          / Device Results
+          - if test_case.has_device_results?
+            .d-flex.flex-wrap.gap-2
+              - test_case.parsed_device_results.each do |result|
+                - status_colors = { 'pass' => 'bg-success', 'fail' => 'bg-danger', 'not_run' => 'bg-secondary', 'blocked' => 'bg-warning text-dark' }
+                - status_class = status_colors[result[:status].to_s] || 'bg-secondary'
+                span.badge class=status_class
+                  = result[:device]

@@ -1,0 +1,130 @@
+.container-fluid.px-4.py-4
+  / Breadcrumb
+  nav.mb-4 aria-label="breadcrumb"
+    ol.breadcrumb
+      li.breadcrumb-item
+        = link_to "Tasks", tasks_path
+      - if @test_case.task
+        li.breadcrumb-item
+          = link_to @test_case.task.title.truncate(30), project_task_path(@test_case.task.project, @test_case.task)
+      li.breadcrumb-item.active aria-current="page"
+        = @test_case.title.truncate(40)
+
+  / TestCase Header
+  .card.border-0.shadow-sm.mb-4
+    .card-header.text-white.p-4 style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);"
+      .d-flex.justify-content-between.align-items-start
+        div
+          h1.h3.fw-bold.mb-2= @test_case.title
+          .d-flex.align-items-center.gap-3.text-white-50
+            span
+              i.bi.bi-check2-circle.me-1
+              = @test_case.test_type_display
+            span •
+            span= @test_case.target_display
+            - if @test_case.function.present?
+              span •
+              span= @test_case.function
+
+        / Test Case Actions Dropdown
+        .dropdown
+          button.btn.btn-light.dropdown-toggle type="button" data-bs-toggle="dropdown" aria-expanded="false"
+            i.bi.bi-gear.me-1
+            | Tùy chọn
+          ul.dropdown-menu.dropdown-menu-end
+            li
+              = link_to edit_project_task_test_case_path(@test_case.task.project, @test_case.task, @test_case), class: "dropdown-item" do
+                i.bi.bi-pencil.me-2.text-primary
+                | Chỉnh sửa
+            li
+              hr.dropdown-divider
+            li
+              = button_to soft_delete_project_task_test_case_path(@test_case.task.project, @test_case.task, @test_case), method: :patch, class: "dropdown-item text-warning", data: { turbo_confirm: "Bạn có chắc chắn muốn soft delete test case này?" } do
+                i.bi.bi-archive.me-2
+                | Soft Delete
+            li
+              = button_to project_task_test_case_path(@test_case.task.project, @test_case.task, @test_case), method: :delete, class: "dropdown-item text-danger", data: { turbo_confirm: "Bạn có chắc chắn muốn XÓA VĨNH VIỄN test case này?" } do
+                i.bi.bi-trash.me-2
+                | Xóa vĩnh viễn
+
+    / Stats
+    .card-body.bg-light.border-bottom
+      .row.g-3.text-center
+        .col-4
+          .h4.fw-bold.text-primary.mb-0= @test_case.test_steps.count
+          small.text-muted Test Steps
+        .col-4
+          .h4.fw-bold.text-success.mb-0= @test_case.test_results.where(status: 'pass').count
+          small.text-muted Pass
+        .col-4
+          .h4.fw-bold.text-danger.mb-0= @test_case.test_results.where(status: 'fail').count
+          small.text-muted Fail
+
+  / Description
+  - if @test_case.description.present?
+    .card.border-0.shadow-sm.mb-4
+      .card-body
+        h5.fw-semibold.mb-2 Mô tả
+        p.text-muted.mb-0 style="white-space: pre-wrap;"
+          = @test_case.description
+
+  / Test Steps
+  .card.border-0.shadow-sm
+    .card-header.bg-white.border-bottom.d-flex.justify-content-between.align-items-center
+      h5.mb-0.fw-bold
+        i.bi.bi-list-ol.me-2
+        | Test Steps (#{@test_case.test_steps.count})
+      = link_to new_project_task_test_case_path(@test_case.task.project, @test_case.task), class: "btn btn-sm btn-success" do
+        i.bi.bi-plus-circle.me-1
+        | Thêm Step
+
+    .card-body
+      .vstack.gap-3
+        - @test_case.test_steps.ordered.each do |step|
+          .card.border
+            .card-body
+              .d-flex.justify-content-between.align-items-start.mb-3
+                .d-flex.align-items-start
+                  span.badge.bg-primary.rounded-circle.me-3.d-flex.align-items-center.justify-content-center style="width: 32px; height: 32px;"
+                    = step.step_number
+                  h6.fw-semibold.mb-0= step.description || "Step #{step.step_number}"
+
+                / Step Actions
+                .d-flex.gap-2
+                  = link_to edit_project_task_test_case_test_step_path(@test_case.task.project, @test_case.task, @test_case, step), class: "btn btn-sm btn-outline-primary" do
+                    i.bi.bi-pencil
+                  = button_to project_task_test_case_test_step_path(@test_case.task.project, @test_case.task, @test_case, step), method: :delete, class: "btn btn-sm btn-outline-danger", form: { data: { turbo_confirm: "Xóa step này? Các step còn lại sẽ được đánh số lại." } } do
+                    i.bi.bi-trash
+
+              .row.g-4
+                / Actions
+                .col-md-6
+                  h6.fw-semibold.text-muted.mb-2
+                    i.bi.bi-play-circle.me-2.text-primary
+                    | Actions
+                  - if step.action_contents.any?
+                    ul.list-unstyled.mb-0
+                      - step.action_contents.each do |content|
+                        li.small.text-muted.mb-1= content.content_value
+                  - else
+                    p.small.text-muted.fst-italic.mb-0 No actions defined
+
+                / Expected Results
+                .col-md-6
+                  h6.fw-semibold.text-muted.mb-2
+                    i.bi.bi-check-circle.me-2.text-success
+                    | Expected Results
+                  - if step.expected_contents.any?
+                    .vstack.gap-2
+                      - step.expected_contents.each do |content|
+                        - if content.content_type == 'text'
+                          p.small.text-muted.mb-0= content.content_value
+                        - elsif content.content_type == 'image' && content.content_value.present?
+                          div
+                            img.rounded.shadow-sm src=gyazo_to_image_url(content.content_value) alt="Evidence" style="max-width: 400px;"
+                            .small.text-muted.mt-1
+                              a href=content.content_value target="_blank" View full size
+                  - else
+                    p.small.text-muted.fst-italic.mb-0 No expected results defined
+
+

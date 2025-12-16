@@ -2,12 +2,18 @@ class TestStep < ApplicationRecord
   belongs_to :test_case, foreign_key: "case_id", inverse_of: :test_steps
   has_many :test_step_contents, foreign_key: "step_id", dependent: :destroy, inverse_of: :test_step
 
-  # Nested attributes for creating step contents
-  accepts_nested_attributes_for :test_step_contents, allow_destroy: true
+  # Nested attributes for creating step contents - reject blank contents
+  accepts_nested_attributes_for :test_step_contents, allow_destroy: true, reject_if: ->(attrs) {
+    attrs[:content_value].blank?
+  }
 
   validates :step_number, presence: true, numericality: { greater_than: 0 }
 
+  # Auto-renumber siblings after destroy
+  after_destroy :renumber_sibling_steps
+
   scope :ordered, -> { order(:step_number) }
+  scope :active, -> { where(deleted_at: nil) }
 
   # Thêm các scope để lấy contents theo category
   def action_contents
@@ -44,5 +50,17 @@ class TestStep < ApplicationRecord
   # Full summary
   def summary
     "Step #{step_number}: #{action_summary} → Expected: #{expected_summary}"
+  end
+
+  private
+
+  # Renumber remaining steps in the same test case after deletion
+  def renumber_sibling_steps
+    return unless test_case
+
+    test_case.test_steps.ordered.each_with_index do |step, index|
+      new_number = index + 1
+      step.update_column(:step_number, new_number) if step.step_number != new_number
+    end
   end
 end

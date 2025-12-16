@@ -1,189 +1,306 @@
-.container.mx-auto.px-4.py-8
+.container-fluid.px-4.py-4
   / Breadcrumb
-  nav.mb-6.text-sm
-    = link_to "← Back to Projects", projects_path, class: "text-blue-600 hover:text-blue-800"
-    - if @task.project
-      span.mx-2.text-gray-400 ›
-      = link_to @task.project.name, project_path(@task.project), class: "text-blue-600 hover:text-blue-800"
+  nav.mb-4 aria-label="breadcrumb"
+    ol.breadcrumb
+      li.breadcrumb-item
+        = link_to "Projects", projects_path
+      - if @task.project
+        li.breadcrumb-item
+          = link_to @task.project.name, project_path(@task.project)
+      li.breadcrumb-item.active aria-current="page"
+        = @task.title.truncate(50)
 
   / Task Header
-  .bg-white.rounded-lg.shadow-lg.overflow-hidden.mb-6
-    .bg-gradient-to-r.from-indigo-500.to-purple-600.text-white.p-8
-      .flex.justify-between.items-start
-        .flex-1
-          h1.text-3xl.font-bold.mb-3= @task.title
-          .flex.items-center.space-x-4.text-indigo-100
-            span.flex.items-center
-              svg.w-5.h-5.mr-1 fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
+  .card.border-0.shadow-sm.mb-4
+    .card-header.text-white.p-4 style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"
+      .d-flex.justify-content-between.align-items-start
+        div
+          h1.h3.fw-bold.mb-2= @task.title
+          .d-flex.align-items-center.gap-3.text-white-50
+            span
+              i.bi.bi-tag.me-1
               | Redmine ##{@task.redmine_id}
             span •
             span Created by: #{@task.created_by_name || 'N/A'}
-        span.px-4.py-2.rounded-full.text-sm.font-medium class=(@task.status == 'Closed' ? 'bg-green-500' : 'bg-yellow-400 text-gray-800')
-          = @task.status
+        .d-flex.gap-2.align-items-center
+          / Test Case Actions
+          = link_to new_project_task_test_case_path(@task.project, @task), class: "btn btn-light btn-sm" do
+            i.bi.bi-plus-circle.me-1
+            | Tạo Test Case
+          button.btn.btn-light.btn-sm data-bs-toggle="modal" data-bs-target="#importTestCasesModal"
+            i.bi.bi-cloud-download.me-1
+            | Import từ Sheet
+
+          / Task Actions Dropdown
+          .dropdown
+            button.btn.btn-light.btn-sm.dropdown-toggle type="button" data-bs-toggle="dropdown" aria-expanded="false"
+              i.bi.bi-gear.me-1
+              | Tùy chọn
+            ul.dropdown-menu.dropdown-menu-end
+              li
+                = link_to edit_project_task_path(@task.project, @task), class: "dropdown-item" do
+                  i.bi.bi-pencil.me-2.text-primary
+                  | Chỉnh sửa Task
+              li
+                hr.dropdown-divider
+              li
+                button.dropdown-item.text-warning type="button" data-bs-toggle="modal" data-bs-target="#softDeleteModal"
+                  i.bi.bi-archive.me-2
+                  | Soft Delete
+              li
+                button.dropdown-item.text-danger type="button" data-bs-toggle="modal" data-bs-target="#deleteModal"
+                  i.bi.bi-trash.me-2
+                  | Xóa vĩnh viễn
+
+          / Status Badge
+          span.badge.rounded-pill.fs-6.ms-2 class=((@task.status == 'Closed' || @task.status == 'resolved') ? 'bg-success' : 'bg-warning text-dark')
+            = @task.status
 
     / Task Stats
-    .p-6.bg-gray-50.border-b.border-gray-200
-      .grid.grid-cols-2.md:grid-cols-5.gap-4
-        .text-center
-          .text-2xl.font-bold.text-blue-600= "#{@task.estimated_time || 0}h"
-          .text-xs.text-gray-600 Estimated Time
-        .text-center
-          .text-2xl.font-bold.text-green-600= "#{@task.spent_time || 0}h"
-          .text-xs.text-gray-600 Spent Time
-        .text-center
-          .text-2xl.font-bold.text-purple-600= "#{@task.percent_done || 0}%"
-          .text-xs.text-gray-600 Progress
-        .text-center
-          .text-2xl.font-bold.text-orange-600= @task.test_cases.count
-          .text-xs.text-gray-600 Test Cases
-        .text-center
-          .text-2xl.font-bold.text-indigo-600= @task.subtasks.count
-          .text-xs.text-gray-600 Subtasks
+    .card-body.bg-light.border-bottom
+      .row.g-3.text-center
+        .col-6.col-md
+          .h4.fw-bold.text-primary.mb-0= "#{@task.estimated_time || 0}h"
+          small.text-muted Estimated Time
+        .col-6.col-md
+          .h4.fw-bold.text-success.mb-0= "#{@task.spent_time || 0}h"
+          small.text-muted Spent Time
+        .col-6.col-md
+          .h4.fw-bold.text-info.mb-0= "#{@task.percent_done || 0}%"
+          small.text-muted Progress
+        .col-6.col-md
+          .h4.fw-bold.text-warning.mb-0= @task.test_cases.count
+          small.text-muted Test Cases
+        .col-6.col-md
+          .h4.fw-bold.text-secondary.mb-0= @task.subtasks.count
+          small.text-muted Subtasks
 
     / Task Details
-    .p-6
+    .card-body
       - if @task.description.present?
-        .mb-6
-          h2.text-lg.font-semibold.text-gray-800.mb-2 Description
-          .bg-gray-50.rounded-lg.p-4
-            p.text-gray-700.whitespace-pre-wrap= @task.description
+        .mb-4
+          h5.fw-semibold.mb-2 Description
+          .bg-light.rounded.p-3
+            p.mb-0.text-muted style="white-space: pre-wrap;"
+              = @task.description
 
-      .grid.grid-cols-1.md:grid-cols-2.gap-6.mb-6
-        div
-          h3.text-sm.font-semibold.text-gray-600.mb-2 Timeline
-          .space-y-2.text-sm
-            .flex.justify-between
-              span.text-gray-600 Start Date:
-              span.font-medium= @task.start_date&.strftime("%Y-%m-%d") || 'N/A'
-            .flex.justify-between
-              span.text-gray-600 Due Date:
-              span.font-medium= @task.due_date&.strftime("%Y-%m-%d") || 'N/A'
+      .row.g-4.mb-4
+        .col-md-6
+          h6.fw-semibold.text-muted.mb-2 Timeline
+          ul.list-unstyled.mb-0
+            li.d-flex.justify-content-between.mb-1
+              span.text-muted Start Date:
+              span.fw-medium= @task.start_date&.strftime("%Y-%m-%d") || 'N/A'
+            li.d-flex.justify-content-between
+              span.text-muted Due Date:
+              span.fw-medium= @task.due_date&.strftime("%Y-%m-%d") || 'N/A'
 
-        div
-          h3.text-sm.font-semibold.text-gray-600.mb-2 Links
-          .space-y-2.text-sm
+        .col-md-6
+          h6.fw-semibold.text-muted.mb-2 Links
+          ul.list-unstyled.mb-0
             - if @task.testcase_link.present?
-              div
-                span.text-gray-600 Testcase:
-                a.text-blue-600.hover:underline.ml-2 href=@task.testcase_link target="_blank"
+              li.mb-1
+                span.text-muted Testcase:
+                a.ms-2 href=@task.testcase_link target="_blank"
                   | View Sheet →
             - if @task.bug_link.present?
-              div
-                span.text-gray-600 Bug:
-                a.text-blue-600.hover:underline.ml-2 href=@task.bug_link target="_blank"
+              li
+                span.text-muted Bug:
+                a.ms-2 href=@task.bug_link target="_blank"
                   | View Link →
 
-      - if @task.stg_bugs_vn > 0 || @task.stg_bugs_jp > 0 || @task.prod_bugs > 0
-        .mb-6
-          h3.text-sm.font-semibold.text-gray-600.mb-2 Bug Statistics
-          .flex.space-x-4.text-sm
-            .bg-yellow-50.px-4.py-2.rounded-lg
-              span.text-gray-600 STG VN:
-              span.font-bold.text-yellow-700.ml-1= @task.stg_bugs_vn
-            .bg-orange-50.px-4.py-2.rounded-lg
-              span.text-gray-600 STG JP:
-              span.font-bold.text-orange-700.ml-1= @task.stg_bugs_jp
-            .bg-red-50.px-4.py-2.rounded-lg
-              span.text-gray-600 Production:
-              span.font-bold.text-red-700.ml-1= @task.prod_bugs
+      - if @task.stg_bugs_vn.to_i > 0 || @task.stg_bugs_jp.to_i > 0 || @task.prod_bugs.to_i > 0
+        .mb-4
+          h6.fw-semibold.text-muted.mb-2 Bug Statistics
+          .d-flex.gap-3.flex-wrap
+            .bg-warning.bg-opacity-10.px-3.py-2.rounded
+              span.text-muted STG VN:
+              span.fw-bold.text-warning.ms-1= @task.stg_bugs_vn
+            .bg-warning.bg-opacity-25.px-3.py-2.rounded
+              span.text-muted STG JP:
+              span.fw-bold.text-warning.ms-1= @task.stg_bugs_jp
+            .bg-danger.bg-opacity-10.px-3.py-2.rounded
+              span.text-muted Production:
+              span.fw-bold.text-danger.ms-1= @task.prod_bugs
 
   / Subtasks Section
   - if @task.subtasks.any?
-    .bg-white.rounded-lg.shadow-lg.p-6.mb-6
-      h2.text-2xl.font-bold.text-gray-800.mb-4.flex.items-center
-        svg.w-6.h-6.mr-2.text-purple-600 fill="none" stroke="currentColor" viewBox="0 0 24 24"
-          path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"
-        | Subtasks (#{@task.subtasks.count})
+    .card.border-0.shadow-sm.mb-4
+      .card-header.bg-white.border-bottom
+        h5.mb-0.fw-bold.d-flex.align-items-center
+          i.bi.bi-list-task.me-2.text-purple
+          | Subtasks (#{@task.subtasks.count})
 
-      .grid.grid-cols-1.md:grid-cols-2.lg:grid-cols-3.gap-4
-        - @task.subtasks.each do |subtask|
-          div data-controller="navigation" data-navigation-url-value=project_task_path(@task.project, subtask)
-            .border.border-gray-200.rounded-lg.p-4.hover:border-purple-400.hover:shadow-md.transition-all.cursor-pointer data-action="click->navigation#click"
-              .flex.justify-between.items-start.mb-2
-                h4.font-medium.text-gray-800.text-sm.line-clamp-2
-                  = subtask.title.gsub(@task.title, '').gsub(' - ', '').strip
-                span.ml-2.px-2.py-1.text-xs.rounded-full.bg-purple-100.text-purple-700.whitespace-nowrap
-                  = "#{subtask.number_of_test_cases} TCs"
-              .text-xs.text-gray-500
-                | Status: #{subtask.status}
+      .card-body
+        .row.g-3
+          - @task.subtasks.each do |subtask|
+            .col-md-6.col-lg-4
+              div data-controller="navigation" data-navigation-url-value=project_task_path(@task.project, subtask)
+                .card.h-100.border.hover-shadow style="cursor: pointer;" data-action="click->navigation#click"
+                  .card-body
+                    .d-flex.justify-content-between.align-items-start.mb-2
+                      h6.card-title.mb-0.text-truncate style="max-width: 200px;"
+                        = subtask.title.gsub(@task.title, '').gsub(' - ', '').strip
+                      span.badge.bg-primary.bg-opacity-10.text-primary
+                        = "#{subtask.number_of_test_cases} TCs"
+                    small.text-muted
+                      | Status: #{subtask.status}
 
   / Test Cases Section
   - if @task.test_cases.any?
-    .bg-white.rounded-lg.shadow-lg.p-6
-      h2.text-2xl.font-bold.text-gray-800.mb-4.flex.items-center
-        svg.w-6.h-6.mr-2.text-green-600 fill="none" stroke="currentColor" viewBox="0 0 24 24"
-          path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-        | Test Cases (#{@task.test_cases.count})
+    .card.border-0.shadow-sm
+      .card-header.bg-white.border-bottom
+        h5.mb-0.fw-bold.d-flex.align-items-center
+          i.bi.bi-check2-circle.me-2.text-success
+          | Test Cases (#{@task.test_cases.count})
 
-      .space-y-3
-        - @task.test_cases.includes(:test_steps).each_with_index do |tc, index|
-          .border.border-gray-200.rounded-lg.p-4.hover:border-blue-400.hover:bg-blue-50.transition-all
-            .flex.justify-between.items-start.mb-3
-              .flex-1
-                h4.font-semibold.text-gray-800.text-lg.mb-1
-                  = "#{index + 1}. #{tc.title}"
-                - if tc.function.present?
-                  p.text-sm.text-gray-600.mb-2
-                    strong Function:
-                    = " #{tc.function}"
-              .flex.flex-col.items-end.space-y-1
-                span.px-3.py-1.text-xs.rounded-full.font-medium class=(tc.test_type == 'feature' ? 'bg-blue-100 text-blue-700' : tc.test_type == 'ui' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700')
-                  = tc.test_type.upcase
-                span.text-xs.text-gray-500
-                  = tc.target_display
+      .card-body
+        .vstack.gap-3
+          - @task.test_cases.includes(:test_steps).each_with_index do |tc, index|
+            .card.border.hover-shadow style="cursor: pointer; transition: all 0.2s;"
+              .card-body
+                .d-flex.justify-content-between.align-items-start.mb-2
+                  div
+                    h6.fw-semibold.mb-1
+                      = link_to project_task_test_case_path(@task.project, @task, tc), class: "text-decoration-none text-dark" do
+                        = "#{index + 1}. #{tc.title}"
+                    - if tc.function.present?
+                      p.small.text-muted.mb-0
+                        strong Function:
+                        = " #{tc.function}"
+                  .d-flex.flex-column.align-items-end.gap-1
+                    span.badge.rounded-pill class=(tc.test_type == 'feature' ? 'bg-primary' : tc.test_type == 'ui' ? 'bg-success' : 'bg-warning text-dark')
+                      = tc.test_type.upcase
+                    small.text-muted= tc.target_display
 
-            / Device Test Results
-            - if tc.has_device_results?
-              .mb-3.pb-3.border-b.border-gray-200
-                .text-xs.font-semibold.text-gray-600.mb-2 📱 Device Test Results:
-                .flex.flex-wrap.gap-2
-                  - tc.parsed_device_results.each do |result|
-                    - device_name = result[:device].to_s.split(' ').first
-                    - status_class = case result[:status].to_s
-                    - when 'pass' then 'bg-green-500 text-white border-green-600'
-                    - when 'fail', 'failed' then 'bg-red-500 text-white border-red-600'
-                    - when 'not_run' then 'bg-gray-400 text-white border-gray-500'
-                    - when 'blocked' then 'bg-yellow-500 text-white border-yellow-600'
-                    - else 'bg-gray-400 text-white border-gray-500'
-                    - icon = case result[:status].to_s
-                    - when 'pass' then '✓'
-                    - when 'fail', 'failed' then '✗'
-                    - when 'not_run' then '○'
-                    - when 'blocked' then '△'
-                    - else '?'
-                    span.inline-flex.items-center.px-3.py-1\.5.rounded-lg.text-sm.font-semibold.border-2 class=status_class title="#{result[:device]} - #{result[:status].upcase}"
-                      span.mr-1\.5= icon
-                      span= device_name
+                / Device Test Results
+                - if tc.has_device_results?
+                  .mb-3.pb-3.border-bottom
+                    small.fw-semibold.text-muted.d-block.mb-2 📱 Device Test Results:
+                    .d-flex.flex-wrap.gap-2
+                      - tc.parsed_device_results.each do |result|
+                        - device_name = result[:device].to_s.split(' ').first
+                        - status_class = case result[:status].to_s
+                        - when 'pass' then 'bg-success'
+                        - when 'fail', 'failed' then 'bg-danger'
+                        - when 'not_run' then 'bg-secondary'
+                        - when 'blocked' then 'bg-warning text-dark'
+                        - else 'bg-secondary'
+                        - icon = case result[:status].to_s
+                        - when 'pass' then '✓'
+                        - when 'fail', 'failed' then '✗'
+                        - when 'not_run' then '○'
+                        - when 'blocked' then '△'
+                        - else '?'
+                        span.badge.rounded-pill class=status_class title="#{result[:device]} - #{result[:status].upcase}"
+                          = "#{icon} #{device_name}"
 
-            / Test Steps
-            - if tc.test_steps.any?
-              .border-t.border-gray-200.pt-3.mt-3
-                .text-sm.font-semibold.text-gray-700.mb-2
-                  | Test Steps (#{tc.test_steps.count})
-                - tc.test_steps.ordered.each_with_index do |step, step_idx|
-                  .mb-4.pl-4.border-l-2.border-blue-200
-                    .font-medium.text-gray-700.mb-2 Step #{step.step_number}
+                / Test Steps
+                - if tc.test_steps.any?
+                  .border-top.pt-3.mt-3
+                    small.fw-semibold.text-muted.d-block.mb-2
+                      | Test Steps (#{tc.test_steps.count})
+                    - tc.test_steps.ordered.each_with_index do |step, step_idx|
+                      .mb-3.ps-3.border-start.border-primary.border-2
+                        .fw-medium.text-dark.mb-2 Step #{step.step_number}
 
-                    - if step.action_contents.any?
-                      .mb-2
-                        .text-xs.font-semibold.text-gray-600.mb-1 Actions:
-                        ul.list-disc.list-inside.text-sm.text-gray-600.space-y-1.ml-2
-                          - step.action_contents.each do |content|
-                            li.text-xs.leading-relaxed= content.content_value
+                        - if step.action_contents.any?
+                          .mb-2
+                            small.fw-semibold.text-muted Actions:
+                            ul.list-unstyled.ms-3.mb-0
+                              - step.action_contents.each do |content|
+                                li.small.text-muted= content.content_value
 
-                    - if step.expected_contents.any?
-                      div
-                        .text-xs.font-semibold.text-green-700.mb-1 Expected Results:
-                        ul.list-disc.list-inside.text-sm.text-gray-600.space-y-1.ml-2
-                          - step.expected_contents.each do |content|
-                            li.text-xs.leading-relaxed.text-green-700= content.content_value
-            - else
-              p.text-sm.text-gray-500.italic No test steps defined
+                        - if step.expected_contents.any?
+                          div
+                            small.fw-semibold.text-success Expected Results:
+                            ul.list-unstyled.ms-3.mb-0
+                              - step.expected_contents.each do |content|
+                                li.small.text-success= content.content_value
+                - else
+                  p.small.text-muted.fst-italic.mb-0 No test steps defined
   - else
-    .bg-white.rounded-lg.shadow-lg.p-8.text-center
-      .text-gray-400.text-4xl.mb-4 📋
-      h3.text-xl.font-semibold.text-gray-700.mb-2 No Test Cases
-      p.text-gray-500 This task doesn't have any test cases yet.
+    .card.border-0.shadow-sm
+      .card-body.text-center.py-5
+        .display-4.text-muted.mb-3 📋
+        h5.text-muted No Test Cases
+        p.text-muted.mb-3 This task doesn't have any test cases yet.
+        .d-flex.gap-2.justify-content-center
+          = link_to new_project_task_test_case_path(@task.project, @task), class: "btn btn-primary" do
+            i.bi.bi-plus-circle.me-2
+            | Tạo Test Case thủ công
+          button.btn.btn-success data-bs-toggle="modal" data-bs-target="#importTestCasesModal"
+            i.bi.bi-cloud-download.me-2
+            | Import từ Google Sheet
+
+/ Import Test Cases Modal
+.modal.fade#importTestCasesModal tabindex="-1" aria-hidden="true"
+  .modal-dialog
+    .modal-content
+      .modal-header.bg-success.text-white
+        h5.modal-title
+          i.bi.bi-cloud-download.me-2
+          | Import Test Cases từ Google Sheet
+        button.btn-close.btn-close-white type="button" data-bs-dismiss="modal" aria-label="Close"
+      = form_with url: import_from_sheet_project_task_test_cases_path(@task.project, @task), method: :post, local: true do |f|
+        .modal-body
+          .mb-3
+            label.form-label.fw-bold Google Sheet URL hoặc Spreadsheet ID *
+            = text_field_tag :spreadsheet_id, @task.testcase_link, class: 'form-control', placeholder: 'https://docs.google.com/spreadsheets/d/xxx/edit hoặc spreadsheet_id', required: true
+            .form-text Nhập URL hoặc ID của Google Sheet chứa test cases
+          .alert.alert-info.d-flex.align-items-start
+            i.bi.bi-info-circle.me-2.mt-1
+            div
+              strong Lưu ý:
+              ul.mb-0.mt-1.small
+                li Google Sheet phải được chia sẻ với service account
+                li Định dạng sheet phải theo template chuẩn
+        .modal-footer
+          button.btn.btn-secondary type="button" data-bs-dismiss="modal" Hủy
+          = f.submit "Import", class: 'btn btn-success'
+
+/ Soft Delete Confirmation Modal
+.modal.fade#softDeleteModal tabindex="-1" aria-hidden="true"
+  .modal-dialog.modal-dialog-centered
+    .modal-content
+      .modal-header.bg-warning
+        h5.modal-title
+          i.bi.bi-archive.me-2
+          | Xác nhận Soft Delete
+        button.btn-close type="button" data-bs-dismiss="modal" aria-label="Close"
+      .modal-body
+        p Bạn có chắc chắn muốn soft delete task này?
+        .alert.alert-warning.d-flex.align-items-center
+          i.bi.bi-exclamation-triangle.me-2
+          div
+            strong Task:
+            = @task.title
+        p.text-muted.small.mb-0 Task sẽ bị ẩn khỏi danh sách nhưng vẫn có thể khôi phục.
+      .modal-footer
+        button.btn.btn-secondary type="button" data-bs-dismiss="modal" Hủy
+        = button_to "Soft Delete", soft_delete_project_task_path(@task.project, @task), method: :patch, class: "btn btn-warning"
+
+/ Delete Confirmation Modal
+.modal.fade#deleteModal tabindex="-1" aria-hidden="true"
+  .modal-dialog.modal-dialog-centered
+    .modal-content
+      .modal-header.bg-danger.text-white
+        h5.modal-title
+          i.bi.bi-trash.me-2
+          | Xác nhận Xóa vĩnh viễn
+        button.btn-close.btn-close-white type="button" data-bs-dismiss="modal" aria-label="Close"
+      .modal-body
+        p Bạn có chắc chắn muốn <strong>XÓA VĨNH VIỄN</strong> task này?
+        .alert.alert-danger.d-flex.align-items-center
+          i.bi.bi-exclamation-octagon.me-2
+          div
+            strong Task:
+            = @task.title
+        p.text-danger.small.mb-0
+          i.bi.bi-exclamation-triangle.me-1
+          | Hành động này không thể hoàn tác! Tất cả test cases và dữ liệu liên quan sẽ bị xóa.
+      .modal-footer
+        button.btn.btn-secondary type="button" data-bs-dismiss="modal" Hủy
+        = button_to "Xóa vĩnh viễn", project_task_path(@task.project, @task), method: :delete, class: "btn btn-danger"
 
 

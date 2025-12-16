@@ -1,0 +1,174 @@
+.container-fluid.px-4.py-4
+  / Header
+  .row.mb-4
+    .col
+      nav aria-label="breadcrumb"
+        ol.breadcrumb
+          li.breadcrumb-item
+            = link_to "Projects", projects_path
+          li.breadcrumb-item
+            = link_to @project.name, project_path(@project)
+          li.breadcrumb-item.active aria-current="page" Tạo Task mới
+
+      h1.display-6.fw-bold.text-dark
+        i.bi.bi-clipboard-plus.me-2
+        | Tạo Task mới
+
+  / Toggle Buttons
+  .row.mb-4
+    .col-lg-10
+      .btn-group.w-100 role="group" aria-label="Chọn phương thức tạo task"
+        input#btn-manual.btn-check type="radio" name="task-mode" autocomplete="off" checked=true
+        label.btn.btn-outline-primary.py-3 for="btn-manual"
+          i.bi.bi-pencil-square.me-2
+          | Tạo thủ công
+        input#btn-redmine.btn-check type="radio" name="task-mode" autocomplete="off"
+        label.btn.btn-outline-success.py-3 for="btn-redmine"
+          i.bi.bi-cloud-download.me-2
+          | Import từ Redmine
+
+  / Manual Form
+  #manual-form.row.justify-content-center
+    .col-lg-10
+      .card.border-0.shadow-sm
+        .card-header.bg-primary.text-white
+          h5.mb-0
+            i.bi.bi-pencil-square.me-2
+            | Tạo Task thủ công
+        .card-body.p-4
+          = form_for [@project, @task], html: { class: 'needs-validation' } do |f|
+            .row
+              / Left Column
+              .col-md-6
+                / Title
+                .mb-3
+                  = f.label :title, "Tiêu đề Task *", class: 'form-label fw-semibold'
+                  = f.text_field :title, class: 'form-control form-control-lg', placeholder: 'Ví dụ: Implement login feature', required: true
+                  - if @task.errors[:title].any?
+                    .invalid-feedback.d-block = @task.errors[:title].join(', ')
+
+                / Description
+                .mb-3
+                  = f.label :description, "Mô tả", class: 'form-label fw-semibold'
+                  = f.text_area :description, class: 'form-control', rows: 4, placeholder: 'Mô tả chi tiết về task...'
+
+                / Status
+                .mb-3
+                  = f.label :status, "Trạng thái", class: 'form-label fw-semibold'
+                  = f.select :status, options_for_select([['New', 'new'], ['In Progress', 'in_progress'], ['Resolved', 'resolved'], ['Closed', 'closed']], @task.status || 'new'), {}, class: 'form-select'
+
+                / Assignee
+                .mb-3
+                  = f.label :assignee_id, "Giao cho", class: 'form-label fw-semibold'
+                  = f.collection_select :assignee_id, User.active.order(:name), :id, :name, { include_blank: '-- Chọn user --' }, class: 'form-select'
+
+              / Right Column
+              .col-md-6
+                / Issue Link
+                .mb-3
+                  = f.label :issue_link, "Issue Link", class: 'form-label fw-semibold'
+                  = f.url_field :issue_link, class: 'form-control', placeholder: 'https://jira.company.com/browse/PROJ-123'
+                  .form-text Link đến JIRA, GitHub Issue, Linear, etc.
+
+                / TestCase Link
+                .mb-3
+                  = f.label :testcase_link, "TestCase Link (Google Sheet)", class: 'form-label fw-semibold'
+                  = f.url_field :testcase_link, class: 'form-control', placeholder: 'https://docs.google.com/spreadsheets/d/...'
+                  .form-text Nếu có, hệ thống sẽ tự động import test cases
+
+                / Bug Link
+                .mb-3
+                  = f.label :bug_link, "Bug Link", class: 'form-label fw-semibold'
+                  = f.url_field :bug_link, class: 'form-control', placeholder: 'https://...'
+
+                / Time Fields
+                .row
+                  .col-6
+                    .mb-3
+                      = f.label :estimated_time, "Ước tính (giờ)", class: 'form-label fw-semibold'
+                      = f.number_field :estimated_time, class: 'form-control', step: 0.5, placeholder: '0.0'
+                  .col-6
+                    .mb-3
+                      = f.label :spent_time, "Đã dùng (giờ)", class: 'form-label fw-semibold'
+                      = f.number_field :spent_time, class: 'form-control', step: 0.5, placeholder: '0.0'
+
+                / Dates
+                .row
+                  .col-6
+                    .mb-3
+                      = f.label :start_date, "Ngày bắt đầu", class: 'form-label fw-semibold'
+                      = f.date_field :start_date, class: 'form-control'
+                  .col-6
+                    .mb-3
+                      = f.label :due_date, "Deadline", class: 'form-label fw-semibold'
+                      = f.date_field :due_date, class: 'form-control'
+
+            / Buttons
+            .d-flex.gap-2.mt-4
+              = f.submit "Tạo Task", class: 'btn btn-primary btn-lg px-5'
+              = link_to "Hủy", project_path(@project), class: 'btn btn-outline-secondary btn-lg'
+
+  / Redmine Import Form
+  #redmine-form.row.justify-content-center style="display: none;"
+    .col-lg-10
+      .card.border-0.shadow-sm
+        .card-header.bg-success.text-white
+          h5.mb-0
+            i.bi.bi-cloud-download.me-2
+            | Import từ Redmine
+        .card-body.p-4
+          = form_with url: import_from_redmine_project_tasks_path(@project), method: :post, local: true do |f|
+            .text-center.mb-4
+              .display-1.text-success.mb-3
+                i.bi.bi-cloud-arrow-down
+              h4.text-muted Nhập Redmine Issue ID để import task tự động
+              p.text-muted Hệ thống sẽ tự động lấy thông tin từ Redmine và tạo task kèm subtasks, test cases
+
+            .row.justify-content-center
+              .col-md-6
+                .mb-4
+                  label.form-label.fw-bold.fs-5 Redmine Issue ID *
+                  .input-group.input-group-lg
+                    span.input-group-text
+                      i.bi.bi-hash
+                    = text_field_tag :issue_id, nil, class: 'form-control form-control-lg text-center', placeholder: 'Ví dụ: 12345', required: true, style: 'font-size: 1.5rem;'
+                  .form-text.text-center Nhập ID của issue từ Redmine (chỉ số, không cần #)
+
+            .alert.alert-info.d-flex.align-items-center.mt-3
+              i.bi.bi-info-circle-fill.me-2.fs-5
+              div
+                strong Lưu ý:
+                | Hệ thống sẽ tự động import:
+                ul.mb-0.mt-1
+                  li Thông tin task (tiêu đề, mô tả, trạng thái, thời gian...)
+                  li Các subtasks của issue
+                  li Test cases từ Google Sheet (nếu có link trong issue)
+
+            / Buttons
+            .d-flex.gap-2.mt-4.justify-content-center
+              = f.submit "Import từ Redmine", class: 'btn btn-success btn-lg px-5'
+              = link_to "Hủy", project_path(@project), class: 'btn btn-outline-secondary btn-lg'
+
+javascript:
+  document.addEventListener('DOMContentLoaded', function() {
+    const btnManual = document.getElementById('btn-manual');
+    const btnRedmine = document.getElementById('btn-redmine');
+    const manualForm = document.getElementById('manual-form');
+    const redmineForm = document.getElementById('redmine-form');
+
+    btnManual.addEventListener('change', function() {
+      if (this.checked) {
+        manualForm.style.display = 'flex';
+        redmineForm.style.display = 'none';
+      }
+    });
+
+    btnRedmine.addEventListener('change', function() {
+      if (this.checked) {
+        manualForm.style.display = 'none';
+        redmineForm.style.display = 'flex';
+      }
+    });
+  });
+
+
