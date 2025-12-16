@@ -1,7 +1,7 @@
 class TestCasesController < ApplicationController
   skip_load_and_authorize_resource
-  before_action :set_task, except: [ :index ]
-  before_action :set_test_case, only: [ :show, :edit, :update, :destroy, :soft_delete ]
+  before_action :set_task, except: [:index]
+  before_action :set_test_case, except: %i[index new create]
   skip_before_action :verify_authenticity_token
   skip_before_action :authenticate_user!
 
@@ -20,7 +20,7 @@ class TestCasesController < ApplicationController
 
     respond_to do |format|
       format.html
-      format.json { render json: @test_cases.as_json(include: [ :test_steps, :created_by ]) }
+      format.json { render json: @test_cases.as_json(include: %i[test_steps created_by]) }
     end
   end
 
@@ -34,7 +34,7 @@ class TestCasesController < ApplicationController
             test_steps: {
               include: :test_step_contents
             },
-            created_by: { only: [ :id, :name, :email ] }
+            created_by: { only: %i[id name email] }
           }
         )
       end
@@ -49,8 +49,7 @@ class TestCasesController < ApplicationController
   end
 
   # GET /projects/:project_id/tasks/:task_id/test_cases/:id/edit
-  def edit
-  end
+  def edit; end
 
   # POST /projects/:project_id/tasks/:task_id/test_cases
   def create
@@ -61,7 +60,7 @@ class TestCasesController < ApplicationController
       respond_to do |format|
         format.html do
           redirect_to project_task_path(@task.project, @task),
-                      notice: "Test case created successfully."
+                      notice: 'Test case created successfully.'
         end
         format.json { render json: @test_case, status: :created }
       end
@@ -81,8 +80,8 @@ class TestCasesController < ApplicationController
     if @test_case.update(test_case_params)
       respond_to do |format|
         format.html do
-          redirect_to [ @task.project, @task, @test_case ],
-                      notice: "Test case updated successfully."
+          redirect_to [@task.project, @task, @test_case],
+                      notice: 'Test case updated successfully.'
         end
         format.json { render json: @test_case }
       end
@@ -103,7 +102,7 @@ class TestCasesController < ApplicationController
     respond_to do |format|
       format.html do
         redirect_to project_task_path(@task.project, @task),
-                    notice: "Test case deleted successfully."
+                    notice: 'Test case deleted successfully.'
       end
       format.json { head :no_content }
     end
@@ -115,7 +114,7 @@ class TestCasesController < ApplicationController
     respond_to do |format|
       format.html do
         redirect_to project_task_path(@task.project, @task),
-                    notice: "Test case soft deleted successfully."
+                    notice: 'Test case soft deleted successfully.'
       end
       format.json { head :no_content }
     end
@@ -127,7 +126,7 @@ class TestCasesController < ApplicationController
     respond_to do |format|
       format.html do
         redirect_to project_task_path(@task.project, @task),
-                    notice: "Test case restored successfully."
+                    notice: 'Test case restored successfully.'
       end
       format.json { head :no_content }
     end
@@ -140,11 +139,11 @@ class TestCasesController < ApplicationController
     if spreadsheet_id.blank?
       respond_to do |format|
         format.html do
-          redirect_to [ @task.project, @task ],
-                      alert: "Please provide Google Sheet ID."
+          redirect_to [@task.project, @task],
+                      alert: 'Please provide Google Sheet ID.'
         end
         format.json do
-          render json: { error: "Spreadsheet ID is required" },
+          render json: { error: 'Spreadsheet ID is required' },
                  status: :unprocessable_entity
         end
       end
@@ -156,12 +155,12 @@ class TestCasesController < ApplicationController
     if import_service.import
       respond_to do |format|
         format.html do
-          redirect_to [ @task.project, @task ],
+          redirect_to [@task.project, @task],
                       notice: "Imported #{import_service.imported_count} test cases successfully."
         end
         format.json do
           render json: {
-            message: "Import successful",
+            message: 'Import successful',
             imported_count: import_service.imported_count,
             skipped_count: import_service.skipped_count
           }, status: :created
@@ -170,7 +169,7 @@ class TestCasesController < ApplicationController
     else
       respond_to do |format|
         format.html do
-          redirect_to [ @task.project, @task ],
+          redirect_to [@task.project, @task],
                       alert: "Import failed: #{import_service.errors.join(', ')}"
         end
         format.json do
@@ -209,15 +208,15 @@ class TestCasesController < ApplicationController
         :function,
         :display_order,
         :_destroy,
-        test_step_contents_attributes: [
-          :id,
-          :content_type,
-          :content_value,
-          :content_category,
-          :is_expected,
-          :display_order,
-          :_destroy
-        ]
+        { test_step_contents_attributes: %i[
+          id
+          content_type
+          content_value
+          content_category
+          is_expected
+          display_order
+          _destroy
+        ] }
       ]
     )
   end

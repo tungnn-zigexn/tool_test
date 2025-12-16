@@ -26,7 +26,7 @@ class RedmineMultiSheetImportService
 
       # Check if there is testcase link
       unless @parent_task.testcase_link.present?
-        Rails.logger.warn "Cannot find testcase link, only import parent task"
+        Rails.logger.warn 'Cannot find testcase link, only import parent task'
         return true
       end
 
@@ -37,7 +37,7 @@ class RedmineMultiSheetImportService
       all_sheet_data = @google_service.get_project_test_cases(spreadsheet_id)
 
       if all_sheet_data.nil? || all_sheet_data.empty?
-        @errors << "Cannot get data from Google Sheet"
+        @errors << 'Cannot get data from Google Sheet'
         return false
       end
 
@@ -52,7 +52,7 @@ class RedmineMultiSheetImportService
       Rails.logger.info "Import multi-sheet successfully: #{@parent_task.title}"
       Rails.logger.info "Created #{@subtasks.length} subtasks"
       true
-    rescue => e
+    rescue StandardError => e
       @errors << "Error when import task: #{e.message}"
       Rails.logger.error "RedmineMultiSheetImportService Error: #{e.message}\n#{e.backtrace.join("\n")}"
       false
@@ -64,10 +64,10 @@ class RedmineMultiSheetImportService
   def fetch_issue_from_redmine
     issue_data = if @redmine_id.to_s.match?(/^\d+$/)
                    RedmineService.get_issues(@redmine_id)
-    else
-                   @errors << "Vui lòng truyền vào issue ID (số) thay vì tên"
+                 else
+                   @errors << 'Vui lòng truyền vào issue ID (số) thay vì tên'
                    return nil
-    end
+                 end
 
     if issue_data.nil?
       @errors << "Không tìm thấy issue từ Redmine với ID: #{@redmine_id}"
@@ -78,8 +78,8 @@ class RedmineMultiSheetImportService
   end
 
   def create_or_update_parent_task(issue_data)
-    title = issue_data["subject"]
-    custom_fields = parse_custom_fields(issue_data["custom_fields"] || [])
+    title = issue_data['subject']
+    custom_fields = parse_custom_fields(issue_data['custom_fields'] || [])
 
     @parent_task = @project.tasks.find_or_initialize_by(
       redmine_id: @redmine_id
@@ -87,25 +87,25 @@ class RedmineMultiSheetImportService
 
     @parent_task.assign_attributes(
       title: title,
-      parent_id: issue_data.dig("parent", "id"),
-      description: issue_data["description"],
-      status: issue_data.dig("status", "name"),
-      estimated_time: parse_hours(issue_data["estimated_hours"]),
-      spent_time: parse_hours(issue_data["spent_hours"]),
-      percent_done: issue_data["done_ratio"],
-      start_date: issue_data["start_date"],
-      due_date: issue_data["due_date"],
-      testcase_link: custom_fields["testcase_link"],
-      bug_link: custom_fields["bug_link"],
-      stg_bugs_vn: custom_fields["stg_bugs_vn"],
-      stg_bugs_jp: custom_fields["stg_bugs_jp"],
-      prod_bugs: custom_fields["production_bugs"],
-      created_by_name: issue_data.dig("assigned_to", "name")
+      parent_id: issue_data.dig('parent', 'id'),
+      description: issue_data['description'],
+      status: issue_data.dig('status', 'name'),
+      estimated_time: parse_hours(issue_data['estimated_hours']),
+      spent_time: parse_hours(issue_data['spent_hours']),
+      percent_done: issue_data['done_ratio'],
+      start_date: issue_data['start_date'],
+      due_date: issue_data['due_date'],
+      testcase_link: custom_fields['testcase_link'],
+      bug_link: custom_fields['bug_link'],
+      stg_bugs_vn: custom_fields['stg_bugs_vn'],
+      stg_bugs_jp: custom_fields['stg_bugs_jp'],
+      prod_bugs: custom_fields['production_bugs'],
+      created_by_name: issue_data.dig('assigned_to', 'name')
     )
 
     unless @parent_task.save
       @errors << "Không thể lưu parent task: #{@parent_task.errors.full_messages.join(', ')}"
-      raise "Cannot save parent task"
+      raise 'Cannot save parent task'
     end
 
     @parent_task
@@ -151,7 +151,7 @@ class RedmineMultiSheetImportService
       @errors << "Không thể tạo subtask cho sheet '#{sheet_name}': #{subtask.errors.full_messages.join(', ')}"
       Rails.logger.error "Lỗi tạo subtask: #{subtask.errors.full_messages.join(', ')}"
     end
-  rescue => e
+  rescue StandardError => e
     @errors << "Lỗi khi xử lý sheet '#{sheet_name}': #{e.message}"
     Rails.logger.error "Lỗi xử lý sheet #{sheet_name}: #{e.message}\n#{e.backtrace.join("\n")}"
   end
@@ -166,8 +166,8 @@ class RedmineMultiSheetImportService
     result = {}
 
     custom_fields.each do |field|
-      name = field["name"].to_s.downcase.strip.gsub(/ +/, "_").gsub(/[()]/, "")
-      value = field["value"]
+      name = field['name'].to_s.downcase.strip.gsub(/ +/, '_').gsub(/[()]/, '')
+      value = field['value']
       result[name] = value
     end
 
@@ -184,6 +184,7 @@ class RedmineMultiSheetImportService
 
   def parse_hours(hours)
     return nil if hours.nil?
+
     hours.to_f
   end
 end

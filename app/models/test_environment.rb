@@ -28,12 +28,8 @@ class TestEnvironment < ApplicationRecord
   def pass_rate
     total = result_count
     return 0 if total.zero?
-    
+
     passed = test_results.where(status: 'pass').count
     (passed.to_f / total * 100).round(2)
   end
 end
-
-
-
-

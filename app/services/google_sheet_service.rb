@@ -1,10 +1,10 @@
 # app/services/google_sheet_service.rb
-require "google/apis/sheets_v4"
-require "googleauth"
+require 'google/apis/sheets_v4'
+require 'googleauth'
 
 class GoogleSheetService
   SCOPE = Google::Apis::SheetsV4::AUTH_SPREADSHEETS_READONLY
-  CREDENTIALS_PATH = Rails.root.join("config", "google_credentials.json")
+  CREDENTIALS_PATH = Rails.root.join('config', 'google_credentials.json')
 
   def initialize
     @service = Google::Apis::SheetsV4::SheetsService.new
@@ -16,7 +16,7 @@ class GoogleSheetService
     all_sheet_names = get_all_sheet_names(spreadsheet_id)
 
     unless all_sheet_names&.any?
-      puts "Error: Cannot find any sheet in the file."
+      puts 'Error: Cannot find any sheet in the file.'
       return nil
     end
 
@@ -25,7 +25,7 @@ class GoogleSheetService
     filter_options = {
       header_rows_count: 4,
       filter_column_index: 1,
-      valid_filter_values: [ "Feature", "Data", "UI" ]
+      valid_filter_values: %w[Feature Data UI]
     }
 
     all_filtered_data = {}
@@ -43,7 +43,7 @@ class GoogleSheetService
       all_filtered_data[sheet_name] = filtered_data
     end
 
-    puts "Processing completed"
+    puts 'Processing completed'
     all_filtered_data
   end
 
@@ -66,7 +66,6 @@ class GoogleSheetService
       end
 
       all_data
-
     rescue Google::Apis::Error => e
       puts "Error when call Google Sheets API (batch_get): #{e.message}"
       Rails.logger.error "GoogleSheetService: Error API (batch_get): #{e.message}"
@@ -77,15 +76,15 @@ class GoogleSheetService
   def get_filtered_sheet_data(spreadsheet_id, sheet_name, columns_range, options = {})
     header_rows_count = options.fetch(:header_rows_count, 4)
     filter_column_index = options.fetch(:filter_column_index, 1)
-    valid_filter_values = options.fetch(:valid_filter_values, [ "Feature", "Data", "UI" ])
+    valid_filter_values = options.fetch(:valid_filter_values, %w[Feature Data UI])
 
     puts "Filtering sheet '#{sheet_name}'..."
 
     full_range = if columns_range.nil? || columns_range.empty?
                    sheet_name
-    else
+                 else
                    "#{sheet_name}!#{columns_range}"
-    end
+                 end
 
     puts "Getting data from range: '#{full_range}'"
 
@@ -119,50 +118,43 @@ class GoogleSheetService
 
     puts "Filtering completed. Total #{clean_data.length} rows (including #{header_rows_count} header rows + 1 device names row)."
     clean_data
-
-  rescue => e
+  rescue StandardError => e
     puts "Error when filtering (get_filtered_sheet_data): #{e.message}"
     Rails.logger.error "GoogleSheetService: Error filtering: #{e.message}"
     nil
   end
 
   def get_data(spreadsheet_id, range_name)
-    begin
-      response = @service.get_spreadsheet_values(spreadsheet_id, range_name)
+    response = @service.get_spreadsheet_values(spreadsheet_id, range_name)
 
-      if response.values.nil? || response.values.empty?
-        puts "Cannot find data in range: #{range_name}"
-        return []
-      end
-
-      response.values
-
-    rescue Google::Apis::Error => e
-      puts "Error when call Google Sheets API (get_data): #{e.message}"
-      Rails.logger.error "GoogleSheetService: Error API (get_data): #{e.message}"
-      nil
+    if response.values.nil? || response.values.empty?
+      puts "Cannot find data in range: #{range_name}"
+      return []
     end
+
+    response.values
+  rescue Google::Apis::Error => e
+    puts "Error when call Google Sheets API (get_data): #{e.message}"
+    Rails.logger.error "GoogleSheetService: Error API (get_data): #{e.message}"
+    nil
   end
 
   private
 
   def get_all_sheet_names(spreadsheet_id)
-    begin
-      response = @service.get_spreadsheet(spreadsheet_id, fields: "sheets(properties.title)")
-      response.sheets.map { |sheet| sheet.properties.title }
-
-    rescue Google::Apis::Error => e
-      puts "Error when get sheet names: #{e.message}"
-      Rails.logger.error "GoogleSheetService: Error get sheet names: #{e.message}"
-      nil
-    end
+    response = @service.get_spreadsheet(spreadsheet_id, fields: 'sheets(properties.title)')
+    response.sheets.map { |sheet| sheet.properties.title }
+  rescue Google::Apis::Error => e
+    puts "Error when get sheet names: #{e.message}"
+    Rails.logger.error "GoogleSheetService: Error get sheet names: #{e.message}"
+    nil
   end
 
   def authorize
     unless File.exist?(CREDENTIALS_PATH)
       puts "Cannot find credentials file at: #{CREDENTIALS_PATH}"
-      puts "Please download the JSON file of the Service Account from Google Cloud Console."
-      raise "Missing Google Credentials File"
+      puts 'Please download the JSON file of the Service Account from Google Cloud Console.'
+      raise 'Missing Google Credentials File'
     end
 
     Google::Auth::ServiceAccountCredentials.make_creds(

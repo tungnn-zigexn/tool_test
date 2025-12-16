@@ -1,8 +1,8 @@
 class TestRun < ApplicationRecord
   belongs_to :task
-  belongs_to :executed_by, class_name: "User", foreign_key: "executed_by_id", optional: true
+  belongs_to :executed_by, class_name: 'User', foreign_key: 'executed_by_id', optional: true
 
-  has_many :test_results, foreign_key: "run_id", dependent: :destroy
+  has_many :test_results, foreign_key: 'run_id', dependent: :destroy
 
   validates :name, presence: true
   validates :task_id, presence: true
@@ -12,8 +12,8 @@ class TestRun < ApplicationRecord
   scope :deleted, -> { where.not(deleted_at: nil) }
   scope :recent, -> { order(executed_at: :desc) }
   scope :by_status, ->(status) { where(status: status) }
-  scope :in_progress, -> { where(status: [ "pending", "running" ]) }
-  scope :finished, -> { where(status: [ "completed", "aborted" ]) }
+  scope :in_progress, -> { where(status: %w[pending running]) }
+  scope :finished, -> { where(status: %w[completed aborted]) }
 
   def soft_delete!
     update!(deleted_at: Time.current)
@@ -24,11 +24,11 @@ class TestRun < ApplicationRecord
   end
 
   def in_progress?
-    [ "pending", "running" ].include?(status)
+    %w[pending running].include?(status)
   end
 
   def finished?
-    [ "completed", "aborted" ].include?(status)
+    %w[completed aborted].include?(status)
   end
 
   def result_count
@@ -36,15 +36,15 @@ class TestRun < ApplicationRecord
   end
 
   def pass_count
-    test_results.where(status: "pass").count
+    test_results.where(status: 'pass').count
   end
 
   def fail_count
-    test_results.where(status: "fail").count
+    test_results.where(status: 'fail').count
   end
 
   def not_run_count
-    test_results.where(status: "not run").count
+    test_results.where(status: 'not run').count
   end
 
   def pass_rate
@@ -61,20 +61,21 @@ class TestRun < ApplicationRecord
   # Tính thời gian thực thi
   def execution_duration
     return nil if started_at.nil? || completed_at.nil?
+
     completed_at - started_at
   end
 
   def execution_duration_formatted
-    return "N/A" if execution_duration.nil?
+    return 'N/A' if execution_duration.nil?
 
     seconds = execution_duration.to_i
     hours = seconds / 3600
     minutes = (seconds % 3600) / 60
     secs = seconds % 60
 
-    if hours > 0
+    if hours.positive?
       "#{hours}h #{minutes}m #{secs}s"
-    elsif minutes > 0
+    elsif minutes.positive?
       "#{minutes}m #{secs}s"
     else
       "#{secs}s"
@@ -83,24 +84,24 @@ class TestRun < ApplicationRecord
 
   # Tự động cập nhật trạng thái
   def start!
-    update!(status: "running", started_at: Time.current)
+    update!(status: 'running', started_at: Time.current)
   end
 
   def complete!
-    update!(status: "completed", completed_at: Time.current)
+    update!(status: 'completed', completed_at: Time.current)
   end
 
   def abort!
-    update!(status: "aborted", completed_at: Time.current)
+    update!(status: 'aborted', completed_at: Time.current)
   end
 
   def status_color
     case status
-    when "pending" then "secondary"
-    when "running" then "info"
-    when "completed" then "success"
-    when "aborted" then "danger"
-    else "secondary"
+    when 'pending' then 'secondary'
+    when 'running' then 'info'
+    when 'completed' then 'success'
+    when 'aborted' then 'danger'
+    else 'secondary'
     end
   end
 end

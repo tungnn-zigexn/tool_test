@@ -1,9 +1,9 @@
 class Task < ApplicationRecord
   belongs_to :project
-  belongs_to :assignee, class_name: "User", foreign_key: "assignee_id", optional: true
-  belongs_to :parent, class_name: "Task", foreign_key: "parent_id", optional: true
+  belongs_to :assignee, class_name: 'User', foreign_key: 'assignee_id', optional: true
+  belongs_to :parent, class_name: 'Task', foreign_key: 'parent_id', optional: true
 
-  has_many :subtasks, class_name: "Task", foreign_key: "parent_id", dependent: :destroy
+  has_many :subtasks, class_name: 'Task', foreign_key: 'parent_id', dependent: :destroy
   has_many :test_cases, dependent: :destroy
   has_many :test_runs, dependent: :destroy
   has_many :bugs, dependent: :destroy
@@ -32,7 +32,8 @@ class Task < ApplicationRecord
 
   def progress_percentage
     return 0 if estimated_time.nil? || estimated_time.zero? || spent_time.nil?
-    [ (spent_time / estimated_time * 100).round(2), 100 ].min
+
+    [(spent_time / estimated_time * 100).round(2), 100].min
   end
 
   def overdue?

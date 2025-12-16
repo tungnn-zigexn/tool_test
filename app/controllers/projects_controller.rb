@@ -1,6 +1,6 @@
 class ProjectsController < ApplicationController
   skip_load_and_authorize_resource
-  before_action :set_project, only: [ :show, :edit, :update, :destroy, :soft_delete, :restore ]
+  before_action :set_project, except: %i[index new create]
   # before_action :authorize_admin, only: [ :new, :create, :edit, :update, :destroy, :soft_delete, :restore ]
   skip_before_action :verify_authenticity_token
   skip_before_action :authenticate_user!
@@ -54,8 +54,7 @@ class ProjectsController < ApplicationController
     end
   end
 
-  def edit
-  end
+  def edit; end
 
   def update
     respond_to do |format|

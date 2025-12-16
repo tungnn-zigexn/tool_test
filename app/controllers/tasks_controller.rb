@@ -1,7 +1,7 @@
 class TasksController < ApplicationController
   skip_load_and_authorize_resource
-  before_action :set_project, only: [ :new, :create, :import_from_redmine ]
-  before_action :set_task, only: [ :show, :edit, :update, :destroy, :soft_delete ]
+  before_action :set_project, only: %i[new create import_from_redmine]
+  before_action :set_task, except: %i[index new create import_from_redmine]
   skip_before_action :verify_authenticity_token
   skip_before_action :authenticate_user!
 
@@ -28,7 +28,7 @@ class TasksController < ApplicationController
   def show
     respond_to do |format|
       format.html
-      format.json { render json: @task.as_json(include: [ :test_cases, :assignee ]) }
+      format.json { render json: @task.as_json(include: %i[test_cases assignee]) }
     end
   end
 
@@ -38,8 +38,7 @@ class TasksController < ApplicationController
   end
 
   # GET /tasks/:id/edit
-  def edit
-  end
+  def edit; end
 
   # POST /projects/:project_id/tasks
   def create
@@ -47,7 +46,7 @@ class TasksController < ApplicationController
 
     if @task.save
       respond_to do |format|
-        format.html { redirect_to project_task_path(@project, @task), notice: "Create task successfully." }
+        format.html { redirect_to project_task_path(@project, @task), notice: 'Create task successfully.' }
         format.json { render json: @task, status: :created }
       end
     else
@@ -62,7 +61,7 @@ class TasksController < ApplicationController
   def update
     if @task.update(task_params)
       respond_to do |format|
-        format.html { redirect_to @task, notice: "Update task successfully." }
+        format.html { redirect_to @task, notice: 'Update task successfully.' }
         format.json { render json: @task }
       end
     else
@@ -77,7 +76,7 @@ class TasksController < ApplicationController
   def destroy
     @task.destroy
     respond_to do |format|
-      format.html { redirect_to tasks_path, notice: "Delete task successfully." }
+      format.html { redirect_to tasks_path, notice: 'Delete task successfully.' }
       format.json { head :no_content }
     end
   end
@@ -86,7 +85,7 @@ class TasksController < ApplicationController
   def soft_delete
     @task.soft_delete!
     respond_to do |format|
-      format.html { redirect_to tasks_path, notice: "Soft delete task successfully." }
+      format.html { redirect_to tasks_path, notice: 'Soft delete task successfully.' }
       format.json { head :no_content }
     end
   end
@@ -98,8 +97,8 @@ class TasksController < ApplicationController
 
     if issue_id.blank?
       respond_to do |format|
-        format.html { redirect_to @project, alert: "Please provide Issue ID from Redmine." }
-        format.json { render json: { error: "Issue ID is required" }, status: :unprocessable_entity }
+        format.html { redirect_to @project, alert: 'Please provide Issue ID from Redmine.' }
+        format.json { render json: { error: 'Issue ID is required' }, status: :unprocessable_entity }
       end
       return
     end
@@ -115,7 +114,7 @@ class TasksController < ApplicationController
         format.json do
           render json: {
             task: import_service.task.as_json(include: :test_cases),
-            message: "Import successful",
+            message: 'Import successful',
             test_cases_count: import_service.task.number_of_test_cases
           }, status: :created
         end

@@ -1,7 +1,7 @@
 class TestResultsController < ApplicationController
   skip_load_and_authorize_resource
-  before_action :set_test_case, except: [ :index ]
-  before_action :set_test_result, only: [ :show, :edit, :update, :destroy, :soft_delete ]
+  before_action :set_test_case, except: [:index]
+  before_action :set_test_result, except: %i[index new create]
   skip_before_action :verify_authenticity_token
   skip_before_action :authenticate_user!
 
@@ -30,13 +30,13 @@ class TestResultsController < ApplicationController
         render json: @test_results.as_json(
           include: {
             test_case: {
-              only: [ :id, :title ],
+              only: %i[id title],
               include: {
-                task: { only: [ :id, :title, :project_id ] }
+                task: { only: %i[id title project_id] }
               }
             },
-            test_run: { only: [ :id, :name ] },
-            executed_by: { only: [ :id, :name, :email ] }
+            test_run: { only: %i[id name] },
+            executed_by: { only: %i[id name email] }
           }
         )
       end
@@ -57,8 +57,8 @@ class TestResultsController < ApplicationController
                 }
               }
             },
-            test_run: { only: [ :id, :name, :status ] },
-            executed_by: { only: [ :id, :name, :email ] }
+            test_run: { only: %i[id name status] },
+            executed_by: { only: %i[id name email] }
           }
         )
       end
@@ -72,8 +72,7 @@ class TestResultsController < ApplicationController
   end
 
   # GET /test_cases/:test_case_id/test_results/:id/edit
-  def edit
-  end
+  def edit; end
 
   # POST /test_cases/:test_case_id/test_results
   def create
@@ -84,8 +83,8 @@ class TestResultsController < ApplicationController
     if @test_result.save
       respond_to do |format|
         format.html do
-          redirect_to [ @test_case.task.project, @test_case.task, @test_case ],
-                      notice: "Test result created successfully."
+          redirect_to [@test_case.task.project, @test_case.task, @test_case],
+                      notice: 'Test result created successfully.'
         end
         format.json { render json: @test_result, status: :created }
       end
@@ -105,8 +104,8 @@ class TestResultsController < ApplicationController
     if @test_result.update(test_result_params)
       respond_to do |format|
         format.html do
-          redirect_to [ @test_case.task.project, @test_case.task, @test_case ],
-                      notice: "Test result updated successfully."
+          redirect_to [@test_case.task.project, @test_case.task, @test_case],
+                      notice: 'Test result updated successfully.'
         end
         format.json { render json: @test_result }
       end
@@ -126,8 +125,8 @@ class TestResultsController < ApplicationController
     @test_result.destroy
     respond_to do |format|
       format.html do
-        redirect_to [ @test_case.task.project, @test_case.task, @test_case ],
-                    notice: "Test result deleted successfully."
+        redirect_to [@test_case.task.project, @test_case.task, @test_case],
+                    notice: 'Test result deleted successfully.'
       end
       format.json { head :no_content }
     end
@@ -138,8 +137,8 @@ class TestResultsController < ApplicationController
     @test_result.soft_delete!
     respond_to do |format|
       format.html do
-        redirect_to [ @test_case.task.project, @test_case.task, @test_case ],
-                    notice: "Test result soft deleted successfully."
+        redirect_to [@test_case.task.project, @test_case.task, @test_case],
+                    notice: 'Test result soft deleted successfully.'
       end
       format.json { head :no_content }
     end

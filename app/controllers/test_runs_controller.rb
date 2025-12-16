@@ -1,7 +1,7 @@
 class TestRunsController < ApplicationController
   skip_load_and_authorize_resource
   before_action :set_task
-  before_action :set_test_run, only: [:show, :edit, :update, :destroy, :soft_delete, :start, :complete, :abort]
+  before_action :set_test_run, except: %i[index new create]
 
   # GET /projects/:project_id/tasks/:task_id/test_runs
   def index
@@ -15,14 +15,14 @@ class TestRunsController < ApplicationController
       format.json do
         render json: @test_runs.as_json(
           include: {
-            executed_by: { only: [:id, :name, :email] },
+            executed_by: { only: %i[id name email] },
             test_results: {
               include: {
-                test_case: { only: [:id, :title] }
+                test_case: { only: %i[id title] }
               }
             }
           },
-          methods: [:pass_count, :fail_count, :not_run_count, :pass_rate]
+          methods: %i[pass_count fail_count not_run_count pass_rate]
         )
       end
     end
@@ -35,17 +35,17 @@ class TestRunsController < ApplicationController
       format.json do
         render json: @test_run.as_json(
           include: {
-            executed_by: { only: [:id, :name, :email] },
+            executed_by: { only: %i[id name email] },
             test_results: {
               include: {
                 test_case: {
-                  only: [:id, :title],
+                  only: %i[id title],
                   include: :test_steps
                 }
               }
             }
           },
-          methods: [:pass_count, :fail_count, :not_run_count, :pass_rate, :execution_duration_formatted]
+          methods: %i[pass_count fail_count not_run_count pass_rate execution_duration_formatted]
         )
       end
     end
@@ -66,13 +66,13 @@ class TestRunsController < ApplicationController
   def create
     @test_run = @task.test_runs.build(test_run_params)
     @test_run.executed_by = current_user
-    @test_run.status ||= "pending"
+    @test_run.status ||= 'pending'
 
     if @test_run.save
       respond_to do |format|
         format.html do
           redirect_to [@task.project, @task, @test_run],
-                      notice: "Test run created successfully."
+                      notice: 'Test run created successfully.'
         end
         format.json { render json: @test_run, status: :created }
       end
@@ -93,7 +93,7 @@ class TestRunsController < ApplicationController
       respond_to do |format|
         format.html do
           redirect_to [@task.project, @task, @test_run],
-                      notice: "Test run updated successfully."
+                      notice: 'Test run updated successfully.'
         end
         format.json { render json: @test_run }
       end
@@ -114,7 +114,7 @@ class TestRunsController < ApplicationController
     respond_to do |format|
       format.html do
         redirect_to project_task_test_runs_path(@task.project, @task),
-                    notice: "Test run deleted successfully."
+                    notice: 'Test run deleted successfully.'
       end
       format.json { head :no_content }
     end
@@ -126,7 +126,7 @@ class TestRunsController < ApplicationController
     respond_to do |format|
       format.html do
         redirect_to project_task_test_runs_path(@task.project, @task),
-                    notice: "Test run soft deleted successfully."
+                    notice: 'Test run soft deleted successfully.'
       end
       format.json { head :no_content }
     end
@@ -138,7 +138,7 @@ class TestRunsController < ApplicationController
     respond_to do |format|
       format.html do
         redirect_to [@task.project, @task, @test_run],
-                    notice: "Test run started."
+                    notice: 'Test run started.'
       end
       format.json { render json: @test_run }
     end
@@ -150,7 +150,7 @@ class TestRunsController < ApplicationController
     respond_to do |format|
       format.html do
         redirect_to [@task.project, @task, @test_run],
-                    notice: "Test run completed."
+                    notice: 'Test run completed.'
       end
       format.json { render json: @test_run }
     end
@@ -162,7 +162,7 @@ class TestRunsController < ApplicationController
     respond_to do |format|
       format.html do
         redirect_to [@task.project, @task, @test_run],
-                    notice: "Test run aborted."
+                    notice: 'Test run aborted.'
       end
       format.json { render json: @test_run }
     end
@@ -187,7 +187,3 @@ class TestRunsController < ApplicationController
     )
   end
 end
-
-
-
-

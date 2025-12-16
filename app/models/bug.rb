@@ -1,7 +1,7 @@
 class Bug < ApplicationRecord
   belongs_to :task
-  belongs_to :dev, class_name: "User", foreign_key: "dev_id", optional: true
-  belongs_to :tester, class_name: "User", foreign_key: "tester_id", optional: true
+  belongs_to :dev, class_name: 'User', foreign_key: 'dev_id', optional: true
+  belongs_to :tester, class_name: 'User', foreign_key: 'tester_id', optional: true
   belongs_to :test_result, optional: true
 
   has_many :bug_evidences, dependent: :destroy
@@ -15,8 +15,8 @@ class Bug < ApplicationRecord
 
   scope :active, -> { where(deleted_at: nil) }
   scope :deleted, -> { where.not(deleted_at: nil) }
-  scope :open, -> { where(status: [ "new", "fixing", "testing", "pending" ]) }
-  scope :closed, -> { where(status: "done") }
+  scope :open, -> { where(status: %w[new fixing testing pending]) }
+  scope :closed, -> { where(status: 'done') }
   scope :by_category, ->(category) { where(category: category) }
   scope :by_priority, ->(priority) { where(priority: priority) }
   scope :by_application, ->(app) { where(application: app) }
@@ -30,11 +30,11 @@ class Bug < ApplicationRecord
   end
 
   def open?
-    [ "new", "fixing", "testing", "pending" ].include?(status)
+    %w[new fixing testing pending].include?(status)
   end
 
   def closed?
-    status == "done"
+    status == 'done'
   end
 
   def evidence_count
@@ -47,42 +47,42 @@ class Bug < ApplicationRecord
 
   def priority_color
     case priority
-    when "high" then "danger"
-    when "normal" then "warning"
-    when "low" then "info"
-    else "secondary"
+    when 'high' then 'danger'
+    when 'normal' then 'warning'
+    when 'low' then 'info'
+    else 'secondary'
     end
   end
 
   def status_color
     case status
-    when "new" then "primary"
-    when "fixing" then "warning"
-    when "testing" then "info"
-    when "done" then "success"
-    when "pending" then "secondary"
-    else "secondary"
+    when 'new' then 'primary'
+    when 'fixing' then 'warning'
+    when 'testing' then 'info'
+    when 'done' then 'success'
+    when 'pending' then 'secondary'
+    else 'secondary'
     end
   end
 
   def category_display
     case category
-    when "stg_vn" then "STG Bugs (VN)"
-    when "stg_jp" then "STG Bugs (JP)"
-    when "new_requirement" then "New Requirement"
-    when "prod" then "Prod Bugs"
+    when 'stg_vn' then 'STG Bugs (VN)'
+    when 'stg_jp' then 'STG Bugs (JP)'
+    when 'new_requirement' then 'New Requirement'
+    when 'prod' then 'Prod Bugs'
     else category.humanize
     end
   end
 
   def application_display
     case application
-    when "sp_pc" then "SP + PC"
-    when "app" then "APP"
-    when "sp" then "SP"
-    when "pc" then "PC"
-    when "all" then "SP + PC + APP"
-    else application&.humanize || "N/A"
+    when 'sp_pc' then 'SP + PC'
+    when 'app' then 'APP'
+    when 'sp' then 'SP'
+    when 'pc' then 'PC'
+    when 'all' then 'SP + PC + APP'
+    else application&.humanize || 'N/A'
     end
   end
 

@@ -18,7 +18,7 @@ class TestCaseImportService
       all_sheet_data = @google_service.get_project_test_cases(@spreadsheet_id)
 
       if all_sheet_data.nil? || all_sheet_data.empty?
-        @errors << "Cannot get data from Google Sheet"
+        @errors << 'Cannot get data from Google Sheet'
         return false
       end
 
@@ -28,7 +28,7 @@ class TestCaseImportService
 
       Rails.logger.info "Import hoàn tất: #{@imported_count} test cases, bỏ qua: #{@skipped_count}"
       true
-    rescue => e
+    rescue StandardError => e
       @errors << "Lỗi khi import: #{e.message}"
       Rails.logger.error "TestCaseImportService Error: #{e.message}\n#{e.backtrace.join("\n")}"
       false
@@ -62,12 +62,12 @@ class TestCaseImportService
       data_rows = sheet_data.drop(4)
       starting_row_number = 5
       device_names_row = nil # Don't use row 5 as device names
-      Rails.logger.info "Row 5 is data row (TC01) - starting from row 5"
+      Rails.logger.info 'Row 5 is data row (TC01) - starting from row 5'
     else
       # Row 5 is device names - skip 5 rows
       data_rows = sheet_data.drop(5)
       starting_row_number = 6
-      Rails.logger.info "Row 5 is device names row - starting from row 6"
+      Rails.logger.info 'Row 5 is device names row - starting from row 6'
     end
 
     # Parse header to get column positions and device names
@@ -75,15 +75,13 @@ class TestCaseImportService
 
     # Process each data row
     data_rows.each_with_index do |row, index|
-      begin
-        actual_row_number = starting_row_number + index
-        process_test_case_row(row, column_mapping, sheet_name, actual_row_number)
-      rescue => e
-        actual_row_number = starting_row_number + index
-        @errors << "Lỗi dòng #{actual_row_number} trong sheet '#{sheet_name}': #{e.message}"
-        @skipped_count += 1
-        Rails.logger.warn "Bỏ qua dòng #{actual_row_number}: #{e.message}"
-      end
+      actual_row_number = starting_row_number + index
+      process_test_case_row(row, column_mapping, sheet_name, actual_row_number)
+    rescue StandardError => e
+      actual_row_number = starting_row_number + index
+      @errors << "Lỗi dòng #{actual_row_number} trong sheet '#{sheet_name}': #{e.message}"
+      @skipped_count += 1
+      Rails.logger.warn "Bỏ qua dòng #{actual_row_number}: #{e.message}"
     end
   end
 
@@ -96,6 +94,7 @@ class TestCaseImportService
     target_col_index = nil
     header_row.each_with_index do |col_name, index|
       next if col_name.nil? || col_name.strip.empty?
+
       normalized_name = col_name.strip.downcase
       if normalized_name.match?(/^target$|^対象$|^đối.*tượng$/)
         target_col_index = index
@@ -130,6 +129,7 @@ class TestCaseImportService
     # Column 0-3 usually contain: ID, Type, Function, Test Case
     row.first(4).each_with_index do |val, idx|
       next if val.nil?
+
       val_normalized = val.to_s.strip.downcase
 
       # If any of first 4 columns contain TC ID pattern, it's likely a data row
@@ -139,7 +139,7 @@ class TestCaseImportService
       end
     end
 
-    Rails.logger.info "Row 5 does not contain test data markers - treating as device names row"
+    Rails.logger.info 'Row 5 does not contain test data markers - treating as device names row'
     false
   end
 
@@ -167,7 +167,7 @@ class TestCaseImportService
         mapping[:id] = index
       when /^type$/, /^test.*type$/, /^種別$/
         mapping[:test_type] = index
-      when /^function$/, /^funtion$/, /^機能$/, /^chức.*năng$/ # Note: "Funtion" typo in some sheets
+      when /^function$/, /^funtion$/, /^機能$/, /^chức.*năng$/ # NOTE: "Funtion" typo in some sheets
         mapping[:function] = index
       when /^test.*case$/, /^test.*item$/, /^項目$/, /^test.*nội.*dung$/
         mapping[:test_case] = index
@@ -183,7 +183,7 @@ class TestCaseImportService
         mapping[:acceptance_criteria] = index
       when /^us$/, /^user.*story$/, /^ユーザー.*ストーリー$/
         mapping[:user_story] = index
-      when /^note$/,  /^備考$/, /^ghi.*chú$/
+      when /^note$/, /^備考$/, /^ghi.*chú$/
         # Note column marks the end - stop here
         break
       when /browser.*device.*os/
@@ -316,25 +316,25 @@ class TestCaseImportService
       action_lines = action.split("\n").reject(&:blank?)
       action_lines.each_with_index do |line, index|
         test_step.test_step_contents.create!(
-          content_type: "text",
+          content_type: 'text',
           content_value: line.strip,
-          content_category: "action",
+          content_category: 'action',
           display_order: index
         )
       end
     end
 
     # Create content for expected result
-    if expected_result.present?
-      expected_lines = expected_result.split("\n").reject(&:blank?)
-      expected_lines.each_with_index do |line, index|
-        test_step.test_step_contents.create!(
-          content_type: "text",
-          content_value: line.strip,
-          content_category: "expectation",
-          display_order: index
-        )
-      end
+    return unless expected_result.present?
+
+    expected_lines = expected_result.split("\n").reject(&:blank?)
+    expected_lines.each_with_index do |line, index|
+      test_step.test_step_contents.create!(
+        content_type: 'text',
+        content_value: line.strip,
+        content_category: 'expectation',
+        display_order: index
+      )
     end
   end
 
@@ -358,40 +358,41 @@ class TestCaseImportService
   def get_cell_value(row, column_index)
     return nil if column_index.nil?
     return nil if row.nil? || row[column_index].nil?
+
     row[column_index].to_s.strip
   end
 
   def normalize_test_type(test_type)
-    return "feature" if test_type.blank?
+    return 'feature' if test_type.blank?
 
     normalized = test_type.strip.downcase
     case normalized
-    when "ui", "ユーザーインターフェース", "giao diện"
-      "ui"
-    when "feature", "機能", "chức năng", "data", "dữ liệu"
-      "feature"
+    when 'ui', 'ユーザーインターフェース', 'giao diện'
+      'ui'
+    when 'feature', '機能', 'chức năng', 'data', 'dữ liệu'
+      'feature'
     else
-      "feature"
+      'feature'
     end
   end
 
   def normalize_target(target)
-    return "pc_sp_app" if target.blank?
+    return 'pc_sp_app' if target.blank?
 
-    normalized = target.strip.downcase.gsub(/[・、\s]/, "_")
+    normalized = target.strip.downcase.gsub(/[・、\s]/, '_')
     case normalized
     when /pc.*sp.*app/, /pc_sp_app/
-      "pc_sp_app"
+      'pc_sp_app'
     when /pc.*sp/, /pc_sp/
-      "pc_sp"
+      'pc_sp'
     when /^app$/
-      "app"
+      'app'
     when /^pc$/
-      "pc"
+      'pc'
     when /^sp$/
-      "sp"
+      'sp'
     else
-      "pc_sp_app"
+      'pc_sp_app'
     end
   end
 
@@ -419,20 +420,20 @@ class TestCaseImportService
   end
 
   def normalize_test_status(status_value)
-    return "not_run" if status_value.blank?
+    return 'not_run' if status_value.blank?
 
     normalized = status_value.strip.downcase
     case normalized
     when /pass/, /ok/, /success/, /成功/
-      "pass"
+      'pass'
     when /fail/, /error/, /ng/, /失敗/
-      "fail"
+      'fail'
     when /not.*run/, /未実施/, /skip/, /pending/
-      "not_run"
+      'not_run'
     when /block/, /blocked/, /ブロック/
-      "blocked"
+      'blocked'
     else
-      "unknown"
+      'unknown'
     end
   end
 end

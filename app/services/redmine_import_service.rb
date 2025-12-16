@@ -22,7 +22,7 @@ class RedmineImportService
 
       Rails.logger.info "Import task thành công: #{@task.title}"
       true
-    rescue => e
+    rescue StandardError => e
       @errors << "Lỗi khi import task: #{e.message}"
       Rails.logger.error "RedmineImportService Error: #{e.message}\n#{e.backtrace.join("\n")}"
       false
@@ -34,10 +34,10 @@ class RedmineImportService
   def fetch_issue_from_redmine
     issue_data = if @redmine_id.to_s.match?(/^\d+$/)
                    RedmineService.get_issues(@redmine_id)
-    else
-                   @errors << "Please provide issue ID (number) instead of name"
+                 else
+                   @errors << 'Please provide issue ID (number) instead of name'
                    return nil
-    end
+                 end
     if issue_data.nil?
       @errors << "Cannot find issue from Redmine with ID: #{@redmine_id}"
       return nil
@@ -47,8 +47,8 @@ class RedmineImportService
   end
 
   def create_or_update_task(issue_data)
-    title = issue_data["subject"]
-    custom_fields = parse_custom_fields(issue_data["custom_fields"] || [])
+    title = issue_data['subject']
+    custom_fields = parse_custom_fields(issue_data['custom_fields'] || [])
     Rails.logger.info "custom_fields: #{custom_fields}"
     @task = @project.tasks.find_or_initialize_by(
       title: title
@@ -56,27 +56,27 @@ class RedmineImportService
 
     @task.assign_attributes(
       redmine_id: @redmine_id,
-      parent_id: issue_data.dig("parent", "id"),
-      description: issue_data["description"],
-      status: issue_data.dig("status", "name"),
-      estimated_time: parse_hours(issue_data["estimated_hours"]),
-      spent_time: parse_hours(issue_data["spent_hours"]),
-      percent_done: issue_data["done_ratio"],
-      start_date: issue_data["start_date"],
-      due_date: issue_data["due_date"],
-      testcase_link: custom_fields["testcase_link"],
-      number_of_test_cases: custom_fields["number_of_test_cases"],
-      bug_link: custom_fields["bug_link"],
-      stg_bugs_vn: custom_fields["stg_bugs_vn"],
-      stg_bugs_jp: custom_fields["stg_bugs_jp"],
-      prod_bugs: custom_fields["production_bugs"],
-      created_by_name: issue_data.dig("assigned_to", "name"),
+      parent_id: issue_data.dig('parent', 'id'),
+      description: issue_data['description'],
+      status: issue_data.dig('status', 'name'),
+      estimated_time: parse_hours(issue_data['estimated_hours']),
+      spent_time: parse_hours(issue_data['spent_hours']),
+      percent_done: issue_data['done_ratio'],
+      start_date: issue_data['start_date'],
+      due_date: issue_data['due_date'],
+      testcase_link: custom_fields['testcase_link'],
+      number_of_test_cases: custom_fields['number_of_test_cases'],
+      bug_link: custom_fields['bug_link'],
+      stg_bugs_vn: custom_fields['stg_bugs_vn'],
+      stg_bugs_jp: custom_fields['stg_bugs_jp'],
+      prod_bugs: custom_fields['production_bugs'],
+      created_by_name: issue_data.dig('assigned_to', 'name')
       # assignee_id: find_or_create_user(issue_data["assigned_to"])&.id,
     )
 
     unless @task.save
       @errors << "Cannot save task: #{@task.errors.full_messages.join(', ')}"
-      raise "Cannot save task"
+      raise 'Cannot save task'
     end
 
     @task
@@ -86,8 +86,8 @@ class RedmineImportService
     result = {}
 
     custom_fields.each do |field|
-      name = field["name"].to_s.downcase.strip.gsub(/ +/, "_").gsub(/[()]/, "")
-      value = field["value"]
+      name = field['name'].to_s.downcase.strip.gsub(/ +/, '_').gsub(/[()]/, '')
+      value = field['value']
       Rails.logger.info "name: #{name}, value: #{value}"
       result[name] = value
     end
@@ -106,6 +106,7 @@ class RedmineImportService
 
   def parse_hours(hours)
     return nil if hours.nil?
+
     hours.to_f
   end
 

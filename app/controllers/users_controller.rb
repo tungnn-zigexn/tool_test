@@ -1,14 +1,13 @@
 class UsersController < ApplicationController
   skip_load_and_authorize_resource
   before_action :authorize_admin
-  before_action :set_user, only: [ :show, :edit, :update, :destroy, :soft_delete ]
+  before_action :set_user, except: %i[index new create]
 
   def index
     @users = User.active.order(created_at: :desc)
   end
 
-  def show
-  end
+  def show; end
 
   def new
     @user = User.new
@@ -16,17 +15,16 @@ class UsersController < ApplicationController
 
   def create
     @user = User.new(user_params)
-    @user.provider = "local"
+    @user.provider = 'local'
 
     if @user.save
-      redirect_to users_path, notice: "User created successfully."
+      redirect_to users_path, notice: 'User created successfully.'
     else
       render :new, status: :unprocessable_entity
     end
   end
 
-  def edit
-  end
+  def edit; end
 
   def update
     # Remove password params if blank
@@ -37,7 +35,7 @@ class UsersController < ApplicationController
     end
 
     if @user.update(params_to_update)
-      redirect_to @user, notice: "User updated successfully."
+      redirect_to @user, notice: 'User updated successfully.'
     else
       render :edit, status: :unprocessable_entity
     end
@@ -45,12 +43,12 @@ class UsersController < ApplicationController
 
   def destroy
     @user.destroy
-    redirect_to users_path, notice: "User deleted successfully."
+    redirect_to users_path, notice: 'User deleted successfully.'
   end
 
   def soft_delete
     @user.soft_delete!
-    redirect_to users_path, notice: "User soft deleted successfully."
+    redirect_to users_path, notice: 'User soft deleted successfully.'
   end
 
   private

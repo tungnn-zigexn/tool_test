@@ -20,11 +20,12 @@ class BugComment < ApplicationRecord
   end
 
   def author_name
-    user&.name || "Unknown User"
+    user&.name || 'Unknown User'
   end
 
   def short_content(length = 50)
     return content if content.length <= length
+
     "#{content[0...length]}..."
   end
 
@@ -36,12 +37,12 @@ class BugComment < ApplicationRecord
       "#{time_diff.to_i} seconds ago"
     when 60..3599
       "#{(time_diff / 60).to_i} minutes ago"
-    when 3600..86399
+    when 3600..86_399
       "#{(time_diff / 3600).to_i} hours ago"
-    when 86400..2591999
-      "#{(time_diff / 86400).to_i} days ago"
+    when 86_400..2_591_999
+      "#{(time_diff / 86_400).to_i} days ago"
     else
-      created_at.strftime("%d/%m/%Y %H:%M")
+      created_at.strftime('%d/%m/%Y %H:%M')
     end
   end
 end

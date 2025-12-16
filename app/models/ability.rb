@@ -40,18 +40,16 @@ class Ability
       can :read, Bug
 
       # User can create and update test cases, test runs
-      can [ :create, :update ], TestCase
-      can [ :create, :update ], TestRun
-      can [ :create, :update ], TestResult
+      can %i[create update], TestCase
+      can %i[create update], TestRun
+      can %i[create update], TestResult
 
       # User can create and update bugs
-      can [ :create, :update ], Bug
-      can [ :create, :update ], BugComment
+      can %i[create update], Bug
+      can %i[create update], BugComment
 
       # Developer has the same permissions as user
-      if user.developer?
-        can [ :update ], Bug, dev_id: user.id
-      end
+      can [:update], Bug, dev_id: user.id if user.developer?
 
       # User cannot delete Users or Projects
       cannot :destroy, User

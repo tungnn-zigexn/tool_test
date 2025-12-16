@@ -7,14 +7,13 @@ class TestStepsController < ApplicationController
   before_action :set_test_step
 
   # GET /projects/:project_id/tasks/:task_id/test_cases/:test_case_id/test_steps/:id/edit
-  def edit
-  end
+  def edit; end
 
   # PATCH/PUT /projects/:project_id/tasks/:task_id/test_cases/:test_case_id/test_steps/:id
   def update
     if @test_step.update(test_step_params)
       redirect_to project_task_test_case_path(@project, @task, @test_case),
-                  notice: "Test step updated successfully."
+                  notice: 'Test step updated successfully.'
     else
       render :edit, status: :unprocessable_entity
     end
@@ -23,9 +22,9 @@ class TestStepsController < ApplicationController
   # DELETE /projects/:project_id/tasks/:task_id/test_cases/:test_case_id/test_steps/:id
   def destroy
     @test_step.destroy
-    # Note: Auto-renumbering is handled by after_destroy callback in TestStep model
+    # NOTE: Auto-renumbering is handled by after_destroy callback in TestStep model
     redirect_to project_task_test_case_path(@project, @task, @test_case),
-                notice: "Test step deleted and remaining steps renumbered."
+                notice: 'Test step deleted and remaining steps renumbered.'
   end
 
   private
@@ -46,14 +45,14 @@ class TestStepsController < ApplicationController
       :description,
       :function,
       :display_order,
-      test_step_contents_attributes: [
-        :id,
-        :content_type,
-        :content_value,
-        :content_category,
-        :is_expected,
-        :display_order,
-        :_destroy
+      test_step_contents_attributes: %i[
+        id
+        content_type
+        content_value
+        content_category
+        is_expected
+        display_order
+        _destroy
       ]
     )
   end
