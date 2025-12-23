@@ -11,23 +11,23 @@ class TestStepContent < ApplicationRecord
   scope :ordered, -> { order(:display_order) }
 
   # Helper methods
-  def is_action?
+  def action?
     content_category == 'action'
   end
 
-  def is_expectation?
+  def expectation?
     content_category == 'expectation'
   end
 
-  def is_text?
+  def text?
     content_type == 'text'
   end
 
-  def is_link?
+  def link?
     content_type == 'link'
   end
 
-  def is_image?
+  def image?
     content_type == 'image'
   end
 

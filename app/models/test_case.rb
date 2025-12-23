@@ -65,7 +65,7 @@ class TestCase < ApplicationRecord
     end
   end
 
-  def has_device_results?
+  def device_results?
     test_results.active.any?
   end
 end

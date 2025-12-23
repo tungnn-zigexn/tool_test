@@ -4,8 +4,8 @@ require 'json'
 class RedmineService
   BASE_URL = 'https://dev.zigexn.vn'.freeze
   API_KEY = Rails.application.credentials.redmine[:api_key]
-  USERNAME = 'zigexn'.freeze
-  PASSWORD = 'Dqb2o78995lq'.freeze
+  USERNAME = ENV['REDMINE_USERNAME'].freeze
+  PASSWORD = ENV['REDMINE_PASSWORD'].freeze
 
   def self.get_issues(issue_id)
     conn = connection

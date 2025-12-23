@@ -60,7 +60,7 @@
             p.text-muted.small.mb-3= truncate(test_case.description, length: 150)
 
           / Device Results
-          - if test_case.has_device_results?
+          - if test_case.device_results?
             .d-flex.flex-wrap.gap-2
               - test_case.parsed_device_results.each do |result|
                 - status_colors = { 'pass' => 'bg-success', 'fail' => 'bg-danger', 'not_run' => 'bg-secondary', 'blocked' => 'bg-warning text-dark' }

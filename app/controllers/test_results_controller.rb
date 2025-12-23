@@ -8,8 +8,17 @@ class TestResultsController < ApplicationController
   # GET /test_results
   def index
     @test_results = TestResult.active.includes(:test_case, :test_run, :executed_by).order(executed_at: :desc)
+    apply_filters
 
-    # Filters
+    respond_to do |format|
+      format.html
+      format.json { render json: index_json_response }
+    end
+  end
+
+  private
+
+  def apply_filters
     @test_results = @test_results.where(status: params[:status]) if params[:status].present?
     @test_results = @test_results.where(run_id: params[:run_id]) if params[:run_id].present?
     @test_results = @test_results.where(case_id: params[:case_id]) if params[:case_id].present?
@@ -20,27 +29,24 @@ class TestResultsController < ApplicationController
     end
 
     # Filter by project_id
-    if params[:project_id].present?
-      @test_results = @test_results.joins(test_case: :task).where(tasks: { project_id: params[:project_id] })
-    end
+    return unless params[:project_id].present?
 
-    respond_to do |format|
-      format.html
-      format.json do
-        render json: @test_results.as_json(
+    @test_results = @test_results.joins(test_case: :task).where(tasks: { project_id: params[:project_id] })
+  end
+
+  def index_json_response
+    @test_results.as_json(
+      include: {
+        test_case: {
+          only: %i[id title],
           include: {
-            test_case: {
-              only: %i[id title],
-              include: {
-                task: { only: %i[id title project_id] }
-              }
-            },
-            test_run: { only: %i[id name] },
-            executed_by: { only: %i[id name email] }
+            task: { only: %i[id title project_id] }
           }
-        )
-      end
-    end
+        },
+        test_run: { only: %i[id name] },
+        executed_by: { only: %i[id name email] }
+      }
+    )
   end
 
   # GET /test_cases/:test_case_id/test_results/:id
@@ -144,15 +150,13 @@ class TestResultsController < ApplicationController
     end
   end
 
-  private
-
   def set_test_case
     @test_case = TestCase.find(params[:test_case_id]) if params[:test_case_id]
   end
 
   def set_test_result
     @test_result = TestResult.find(params[:id])
-    @test_case ||= @test_result.test_case
+    @test_case = @test_result.test_case if @test_case.nil?
   end
 
   def test_result_params

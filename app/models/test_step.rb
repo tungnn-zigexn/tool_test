@@ -28,11 +28,11 @@ class TestStep < ApplicationRecord
     test_step_contents.count
   end
 
-  def has_actions?
+  def actions?
     action_contents.exists?
   end
 
-  def has_expectations?
+  def expectations?
     expected_contents.exists?
   end
 

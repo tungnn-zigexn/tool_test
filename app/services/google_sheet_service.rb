@@ -21,30 +21,7 @@ class GoogleSheetService
     end
 
     puts "Found #{all_sheet_names.length} sheets: #{all_sheet_names.join(', ')}"
-
-    filter_options = {
-      header_rows_count: 4,
-      filter_column_index: 1,
-      valid_filter_values: %w[Feature Data UI]
-    }
-
-    all_filtered_data = {}
-
-    all_sheet_names.each do |sheet_name|
-      puts "Processing sheet: '#{sheet_name}'"
-
-      filtered_data = get_filtered_sheet_data(
-        spreadsheet_id,
-        sheet_name,
-        nil,
-        filter_options
-      )
-
-      all_filtered_data[sheet_name] = filtered_data
-    end
-
-    puts 'Processing completed'
-    all_filtered_data
+    process_all_sheets(spreadsheet_id, all_sheet_names)
   end
 
   def get_specific_sheet_data(spreadsheet_id, ranges_to_fetch)
@@ -74,50 +51,16 @@ class GoogleSheetService
   end
 
   def get_filtered_sheet_data(spreadsheet_id, sheet_name, columns_range, options = {})
-    header_rows_count = options.fetch(:header_rows_count, 4)
-    filter_column_index = options.fetch(:filter_column_index, 1)
-    valid_filter_values = options.fetch(:valid_filter_values, %w[Feature Data UI])
-
+    @current_options = options
     puts "Filtering sheet '#{sheet_name}'..."
 
-    full_range = if columns_range.nil? || columns_range.empty?
-                   sheet_name
-                 else
-                   "#{sheet_name}!#{columns_range}"
-                 end
-
+    full_range = determine_range(sheet_name, columns_range)
     puts "Getting data from range: '#{full_range}'"
 
     raw_rows = get_data(spreadsheet_id, full_range)
-
     return nil if raw_rows.nil?
 
-    clean_data = []
-
-    # Include header rows (1-4)
-    header_rows = raw_rows.first(header_rows_count)
-    clean_data.concat(header_rows)
-
-    # Include row 5 (device names row) if it exists
-    device_names_row = raw_rows[header_rows_count] if raw_rows.length > header_rows_count
-    if device_names_row
-      puts "Device names row: #{device_names_row.inspect}"
-      clean_data << device_names_row
-      puts "Including device names row (row #{header_rows_count + 1})"
-    end
-
-    # Filter data rows starting from row 6
-    data_rows = raw_rows.drop(header_rows_count + 1) # Skip rows 1-5
-
-    filtered_rows = data_rows.filter do |row|
-      cell_value = row[filter_column_index]
-      !cell_value.nil? && !cell_value.strip.empty? && valid_filter_values.include?(cell_value.strip)
-    end
-
-    clean_data.concat(filtered_rows)
-
-    puts "Filtering completed. Total #{clean_data.length} rows (including #{header_rows_count} header rows + 1 device names row)."
-    clean_data
+    filter_raw_rows(raw_rows)
   rescue StandardError => e
     puts "Error when filtering (get_filtered_sheet_data): #{e.message}"
     Rails.logger.error "GoogleSheetService: Error filtering: #{e.message}"
@@ -140,6 +83,64 @@ class GoogleSheetService
   end
 
   private
+
+  def process_all_sheets(spreadsheet_id, all_sheet_names)
+    filter_options = {
+      header_rows_count: 4,
+      filter_column_index: 1,
+      valid_filter_values: %w[Feature Data UI]
+    }
+
+    result = all_sheet_names.each_with_object({}) do |sheet_name, all_filtered_data|
+      puts "Processing sheet: '#{sheet_name}'"
+      all_filtered_data[sheet_name] = get_filtered_sheet_data(
+        spreadsheet_id, sheet_name, nil, filter_options
+      )
+    end
+    puts 'Processing completed'
+    result
+  end
+
+  def determine_range(sheet_name, columns_range)
+    if columns_range.nil? || columns_range.empty?
+      sheet_name
+    else
+      "#{sheet_name}!#{columns_range}"
+    end
+  end
+
+  def filter_raw_rows(raw_rows)
+    header_rows_count = @current_options.fetch(:header_rows_count, 4)
+    filter_column_index = @current_options.fetch(:filter_column_index, 1)
+    valid_filter_values = @current_options.fetch(:valid_filter_values, %w[Feature Data UI])
+
+    # Include header rows (1-4)
+    clean_data = raw_rows.first(header_rows_count)
+
+    # Include row 5 (device names row) if it exists
+    if raw_rows.length > header_rows_count
+      device_names_row = raw_rows[header_rows_count]
+      clean_data << device_names_row
+      puts "Including device names row (row #{header_rows_count + 1}): #{device_names_row.inspect}"
+    end
+
+    # Filter data rows starting from row 6
+    data_rows = raw_rows.drop(header_rows_count + 1)
+    filtered_rows = data_rows.filter do |row|
+      cell_value = row[filter_column_index]
+      cell_value.present? && valid_filter_values.include?(cell_value.strip)
+    end
+
+    clean_data.concat(filtered_rows)
+    puts_filter_summary(clean_data.length, header_rows_count)
+    clean_data
+  end
+
+  def puts_filter_summary(total_rows, header_count)
+    msg = "Filtering completed. Total #{total_rows} rows " \
+          "(including #{header_count} header rows + 1 device names row)."
+    puts msg
+  end
 
   def get_all_sheet_names(spreadsheet_id)
     response = @service.get_spreadsheet(spreadsheet_id, fields: 'sheets(properties.title)')

@@ -47,14 +47,23 @@ class RedmineImportService
   end
 
   def create_or_update_task(issue_data)
-    title = issue_data['subject']
-    custom_fields = parse_custom_fields(issue_data['custom_fields'] || [])
-    Rails.logger.info "custom_fields: #{custom_fields}"
     @task = @project.tasks.find_or_initialize_by(
-      title: title
+      title: issue_data['subject']
     )
 
-    @task.assign_attributes(
+    @task.assign_attributes(task_attributes(issue_data))
+
+    unless @task.save
+      @errors << "Cannot save task: #{@task.errors.full_messages.join(', ')}"
+      raise 'Cannot save task'
+    end
+
+    @task
+  end
+
+  def task_attributes(issue_data)
+    custom_fields = parse_custom_fields(issue_data['custom_fields'] || [])
+    {
       redmine_id: @redmine_id,
       parent_id: issue_data.dig('parent', 'id'),
       description: issue_data['description'],
@@ -71,15 +80,7 @@ class RedmineImportService
       stg_bugs_jp: custom_fields['stg_bugs_jp'],
       prod_bugs: custom_fields['production_bugs'],
       created_by_name: issue_data.dig('assigned_to', 'name')
-      # assignee_id: find_or_create_user(issue_data["assigned_to"])&.id,
-    )
-
-    unless @task.save
-      @errors << "Cannot save task: #{@task.errors.full_messages.join(', ')}"
-      raise 'Cannot save task'
-    end
-
-    @task
+    }
   end
 
   def parse_custom_fields(custom_fields)

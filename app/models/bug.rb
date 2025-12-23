@@ -60,7 +60,6 @@ class Bug < ApplicationRecord
     when 'fixing' then 'warning'
     when 'testing' then 'info'
     when 'done' then 'success'
-    when 'pending' then 'secondary'
     else 'secondary'
     end
   end

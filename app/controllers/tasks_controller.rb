@@ -96,43 +96,57 @@ class TasksController < ApplicationController
     issue_id = params[:issue_id]
 
     if issue_id.blank?
-      respond_to do |format|
-        format.html { redirect_to @project, alert: 'Please provide Issue ID from Redmine.' }
-        format.json { render json: { error: 'Issue ID is required' }, status: :unprocessable_entity }
-      end
+      handle_missing_issue_id
       return
     end
 
     import_service = RedmineImportService.new(issue_id, @project.id)
 
     if import_service.import
-      respond_to do |format|
-        format.html do
-          redirect_to project_task_path(@project, import_service.task),
-                      notice: "Import task successfully from Redmine. Imported #{import_service.task.number_of_test_cases} test cases."
-        end
-        format.json do
-          render json: {
-            task: import_service.task.as_json(include: :test_cases),
-            message: 'Import successful',
-            test_cases_count: import_service.task.number_of_test_cases
-          }, status: :created
-        end
-      end
+      handle_import_success(import_service)
     else
-      respond_to do |format|
-        format.html do
-          redirect_to @project,
-                      alert: "Import failed: #{import_service.errors.join(', ')}"
-        end
-        format.json do
-          render json: { errors: import_service.errors }, status: :unprocessable_entity
-        end
-      end
+      handle_import_failure(import_service)
     end
   end
 
   private
+
+  def handle_missing_issue_id
+    respond_to do |format|
+      format.html { redirect_to @project, alert: 'Please provide Issue ID from Redmine.' }
+      format.json { render json: { error: 'Issue ID is required' }, status: :unprocessable_entity }
+    end
+  end
+
+  def handle_import_success(service)
+    task = service.task
+    count = task.number_of_test_cases
+    respond_to do |format|
+      format.html do
+        redirect_to project_task_path(@project, task),
+                    notice: "Import task successfully from Redmine. Imported #{count} test cases."
+      end
+      format.json do
+        render json: {
+          task: task.as_json(include: :test_cases),
+          message: 'Import successful',
+          test_cases_count: count
+        }, status: :created
+      end
+    end
+  end
+
+  def handle_import_failure(service)
+    respond_to do |format|
+      format.html do
+        redirect_to @project,
+                    alert: "Import failed: #{service.errors.join(', ')}"
+      end
+      format.json do
+        render json: { errors: service.errors }, status: :unprocessable_entity
+      end
+    end
+  end
 
   def set_project
     @project = Project.find(params[:project_id]) if params[:project_id]
@@ -144,19 +158,9 @@ class TasksController < ApplicationController
 
   def task_params
     params.require(:task).permit(
-      :title,
-      :description,
-      :status,
-      :assignee_id,
-      :parent_id,
-      :estimated_time,
-      :spent_time,
-      :percent_done,
-      :start_date,
-      :due_date,
-      :testcase_link,
-      :bug_link,
-      :issue_link
+      :title, :description, :status, :assignee_id, :parent_id,
+      :estimated_time, :spent_time, :percent_done, :start_date, :due_date,
+      :testcase_link, :bug_link, :issue_link
     )
   end
 end

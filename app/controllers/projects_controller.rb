@@ -23,7 +23,7 @@ class ProjectsController < ApplicationController
     # Filter root tasks (including orphaned tasks)
     # We load all tasks first to ensure associations are eager loaded as requested
     @all_tasks = @tasks.to_a
-    task_ids = @all_tasks.map(&:id).to_set
+    task_ids = @all_tasks.to_set(&:id)
 
     # A task is a root if:
     # 1. parent_id is nil

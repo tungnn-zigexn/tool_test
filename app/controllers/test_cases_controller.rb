@@ -137,50 +137,55 @@ class TestCasesController < ApplicationController
     spreadsheet_id = params[:spreadsheet_id]
 
     if spreadsheet_id.blank?
-      respond_to do |format|
-        format.html do
-          redirect_to [@task.project, @task],
-                      alert: 'Please provide Google Sheet ID.'
-        end
-        format.json do
-          render json: { error: 'Spreadsheet ID is required' },
-                 status: :unprocessable_entity
-        end
-      end
+      handle_missing_spreadsheet_id
       return
     end
 
     import_service = TestCaseImportService.new(@task, spreadsheet_id)
 
     if import_service.import
-      respond_to do |format|
-        format.html do
-          redirect_to [@task.project, @task],
-                      notice: "Imported #{import_service.imported_count} test cases successfully."
-        end
-        format.json do
-          render json: {
-            message: 'Import successful',
-            imported_count: import_service.imported_count,
-            skipped_count: import_service.skipped_count
-          }, status: :created
-        end
-      end
+      handle_import_success(import_service)
     else
-      respond_to do |format|
-        format.html do
-          redirect_to [@task.project, @task],
-                      alert: "Import failed: #{import_service.errors.join(', ')}"
-        end
-        format.json do
-          render json: { errors: import_service.errors },
-                 status: :unprocessable_entity
-        end
-      end
+      handle_import_failure(import_service)
     end
   end
 
   private
+
+  def handle_missing_spreadsheet_id
+    respond_to do |format|
+      format.html { redirect_to [@task.project, @task], alert: 'Please provide Google Sheet ID.' }
+      format.json { render json: { error: 'Spreadsheet ID is required' }, status: :unprocessable_entity }
+    end
+  end
+
+  def handle_import_success(service)
+    respond_to do |format|
+      format.html do
+        redirect_to [@task.project, @task],
+                    notice: "Imported #{service.imported_count} test cases successfully."
+      end
+      format.json do
+        render json: {
+          message: 'Import successful',
+          imported_count: service.imported_count,
+          skipped_count: service.skipped_count
+        }, status: :created
+      end
+    end
+  end
+
+  def handle_import_failure(service)
+    respond_to do |format|
+      format.html do
+        redirect_to [@task.project, @task],
+                    alert: "Import failed: #{service.errors.join(', ')}"
+      end
+      format.json do
+        render json: { errors: service.errors }, status: :unprocessable_entity
+      end
+    end
+  end
 
   def set_task
     @task = Task.find(params[:task_id]) if params[:task_id]
@@ -188,36 +193,25 @@ class TestCasesController < ApplicationController
 
   def set_test_case
     @test_case = TestCase.find(params[:id])
-    @task ||= @test_case.task
+    @task = @test_case.task if @task.nil?
   end
 
   def test_case_params
     params.require(:test_case).permit(
-      :title,
-      :description,
-      :expected_result,
-      :test_type,
-      :function,
-      :target,
-      :acceptance_criteria_url,
-      :user_story_url,
-      test_steps_attributes: [
-        :id,
-        :step_number,
-        :description,
-        :function,
-        :display_order,
-        :_destroy,
-        { test_step_contents_attributes: %i[
-          id
-          content_type
-          content_value
-          content_category
-          is_expected
-          display_order
-          _destroy
-        ] }
-      ]
+      :title, :description, :expected_result, :test_type, :function, :target,
+      :acceptance_criteria_url, :user_story_url,
+      test_steps_attributes: test_steps_params
     )
+  end
+
+  def test_steps_params
+    [
+      :id, :step_number, :description, :function, :display_order, :_destroy,
+      { test_step_contents_attributes: test_step_contents_params }
+    ]
+  end
+
+  def test_step_contents_params
+    %i[id content_type content_value content_category is_expected display_order _destroy]
   end
 end

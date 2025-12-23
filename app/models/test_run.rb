@@ -97,7 +97,6 @@ class TestRun < ApplicationRecord
 
   def status_color
     case status
-    when 'pending' then 'secondary'
     when 'running' then 'info'
     when 'completed' then 'success'
     when 'aborted' then 'danger'
