@@ -18,3 +18,19 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+/* Flash Messages Toast Style */
+.flash-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1060;
+  min-width: 300px;
+  pointer-events: none;
+}
+
+.flash-container .alert {
+  pointer-events: auto;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  margin-bottom: 10px;
+}

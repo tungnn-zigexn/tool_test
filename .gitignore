@@ -39,3 +39,5 @@
 /node_modules
 
 config/google_credentials.json
+
+/.vscode

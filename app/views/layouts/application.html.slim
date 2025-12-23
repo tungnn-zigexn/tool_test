@@ -18,6 +18,16 @@ html
     = stylesheet_link_tag "application", "data-turbo-track": "reload"
     = javascript_importmap_tags
   body
+    .flash-container
+      - if notice.present?
+        .alert.alert-success.alert-dismissible.fade.show role="alert" data-controller="flash"
+          = notice
+          button.btn-close type="button" data-bs-dismiss="alert" aria-label="Close"
+      - if alert.present?
+        .alert.alert-danger.alert-dismissible.fade.show role="alert" data-controller="flash"
+          = alert
+          button.btn-close type="button" data-bs-dismiss="alert" aria-label="Close"
+
     - if user_signed_in?
       = render 'shared/header'
       .container-fluid
@@ -28,14 +38,6 @@ html
 
           / === Main content ===
           .col-md-9.col-lg-10.p-4
-            - if notice.present?
-              .alert.alert-success.alert-dismissible.fade.show role="alert"
-                = notice
-                button.btn-close type="button" data-bs-dismiss="alert" aria-label="Close"
-            - if alert.present?
-              .alert.alert-danger.alert-dismissible.fade.show role="alert"
-                = alert
-                button.btn-close type="button" data-bs-dismiss="alert" aria-label="Close"
             = yield
     - else
       / For login/signup pages
