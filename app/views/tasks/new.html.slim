@@ -1,4 +1,4 @@
-.container-fluid.px-4.py-4
+.container-fluid.px-4.py-4 data-controller="form-toggle"
   / Header
   .row.mb-4
     .col
@@ -18,17 +18,17 @@
   .row.mb-4
     .col-lg-10
       .btn-group.w-100 role="group" aria-label="Chọn phương thức tạo task"
-        input#btn-manual.btn-check type="radio" name="task-mode" autocomplete="off" checked=true
+        input#btn-manual.btn-check type="radio" name="task-mode" autocomplete="off" checked=true data-action="change->form-toggle#toggle"
         label.btn.btn-outline-primary.py-3 for="btn-manual"
           i.bi.bi-pencil-square.me-2
           | Tạo thủ công
-        input#btn-redmine.btn-check type="radio" name="task-mode" autocomplete="off"
+        input#btn-redmine.btn-check type="radio" name="task-mode" autocomplete="off" data-action="change->form-toggle#toggle"
         label.btn.btn-outline-success.py-3 for="btn-redmine"
           i.bi.bi-cloud-download.me-2
           | Import từ Redmine
 
   / Manual Form
-  #manual-form.row.justify-content-center
+  #manual-form.row.justify-content-center data-form-toggle-target="manualForm"
     .col-lg-10
       .card.border-0.shadow-sm
         .card-header.bg-primary.text-white
@@ -109,7 +109,7 @@
               = link_to "Hủy", project_path(@project), class: 'btn btn-outline-secondary btn-lg'
 
   / Redmine Import Form
-  #redmine-form.row.justify-content-center style="display: none;"
+  #redmine-form.row.justify-content-center style="display: none;" data-form-toggle-target="redmineForm"
     .col-lg-10
       .card.border-0.shadow-sm
         .card-header.bg-success.text-white
@@ -149,26 +149,5 @@
               = f.submit "Import từ Redmine", class: 'btn btn-success btn-lg px-5'
               = link_to "Hủy", project_path(@project), class: 'btn btn-outline-secondary btn-lg'
 
-javascript:
-  document.addEventListener('DOMContentLoaded', function() {
-    const btnManual = document.getElementById('btn-manual');
-    const btnRedmine = document.getElementById('btn-redmine');
-    const manualForm = document.getElementById('manual-form');
-    const redmineForm = document.getElementById('redmine-form');
-
-    btnManual.addEventListener('change', function() {
-      if (this.checked) {
-        manualForm.style.display = 'flex';
-        redmineForm.style.display = 'none';
-      }
-    });
-
-    btnRedmine.addEventListener('change', function() {
-      if (this.checked) {
-        manualForm.style.display = 'none';
-        redmineForm.style.display = 'flex';
-      }
-    });
-  });
 
 

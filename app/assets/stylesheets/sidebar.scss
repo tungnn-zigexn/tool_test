@@ -1,0 +1,15 @@
+/* Sidebar Navigation Styles */
+.nav-link {
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.nav-link:hover {
+  background-color: rgba(102, 126, 234, 0.1);
+  transform: translateX(5px);
+}
+
+.nav-link.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white !important;
+}

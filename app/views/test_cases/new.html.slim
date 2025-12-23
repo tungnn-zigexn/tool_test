@@ -21,7 +21,7 @@
     .col-12
       .card.border-0.shadow-sm
         .card-body.p-4
-          = form_for [@task.project, @task, @test_case], html: { class: 'needs-validation', id: 'test-case-form' } do |f|
+          = form_for [@task.project, @task, @test_case], html: { class: 'needs-validation', id: 'test-case-form', data: { controller: 'dynamic-form' } } do |f|
             / Basic Information
             .card.mb-4
               .card-header.bg-light
@@ -75,11 +75,11 @@
                 h5.mb-0.fw-bold
                   i.bi.bi-list-ol.me-2
                   | Test Steps
-                button.btn.btn-sm.btn-success type="button" onclick="addTestStep()"
+                button.btn.btn-sm.btn-success type="button" data-action="click->dynamic-form#addStep"
                   i.bi.bi-plus-circle.me-1
                   | Thêm Step
 
-              .card-body#test-steps-container
+              .card-body#test-steps-container data-dynamic-form-target="container"
                 / Initial step will be added by JavaScript or from form builder
 
             / Buttons
@@ -87,85 +87,4 @@
               = f.submit "Tạo Test Case", class: 'btn btn-primary btn-lg px-5'
               = link_to "Hủy", project_task_path(@task.project, @task), class: 'btn btn-outline-secondary btn-lg'
 
-script type="text/javascript"
-  |
-    (function() {
-      // Unique ID counter for form field names
-      var uniqueIdCounter = 0;
-
-      function getNextUniqueId() {
-        return uniqueIdCounter++;
-      }
-
-      window.addTestStep = function() {
-        var container = document.getElementById('test-steps-container');
-        var currentStepCount = container.querySelectorAll('.test-step').length;
-        var displayStepNumber = currentStepCount + 1;
-        var uniqueId = getNextUniqueId();
-
-        var stepHtml = '<div class="card mb-3 test-step" data-unique-id="' + uniqueId + '">' +
-          '<div class="card-header bg-white d-flex justify-content-between align-items-center">' +
-          '<h6 class="mb-0 fw-bold step-title">Step ' + displayStepNumber + '</h6>' +
-          '<button type="button" class="btn btn-sm btn-outline-danger" onclick="removeTestStep(this)">' +
-          '<i class="bi bi-trash"></i> Xóa</button></div>' +
-          '<div class="card-body">' +
-          '<input type="hidden" class="step-number-input" name="test_case[test_steps_attributes][' + uniqueId + '][step_number]" value="' + displayStepNumber + '" />' +
-          '<div class="mb-3">' +
-          '<label class="form-label fw-semibold">Mô tả Step</label>' +
-          '<input type="text" name="test_case[test_steps_attributes][' + uniqueId + '][description]" class="form-control" placeholder="Step ' + displayStepNumber + ' description" />' +
-          '</div>' +
-          '<div class="row">' +
-          '<div class="col-md-6">' +
-          '<label class="form-label fw-semibold">Actions (thao tác)</label>' +
-          '<textarea name="test_case[test_steps_attributes][' + uniqueId + '][test_step_contents_attributes][0][content_value]" class="form-control mb-2" rows="3" placeholder="1. Mở trang login&#10;2. Nhập email&#10;3. Nhập password"></textarea>' +
-          '<input type="hidden" name="test_case[test_steps_attributes][' + uniqueId + '][test_step_contents_attributes][0][content_type]" value="text" />' +
-          '<input type="hidden" name="test_case[test_steps_attributes][' + uniqueId + '][test_step_contents_attributes][0][content_category]" value="action" />' +
-          '<input type="hidden" name="test_case[test_steps_attributes][' + uniqueId + '][test_step_contents_attributes][0][display_order]" value="0" />' +
-          '</div>' +
-          '<div class="col-md-6">' +
-          '<label class="form-label fw-semibold">Expected Results</label>' +
-          '<textarea name="test_case[test_steps_attributes][' + uniqueId + '][test_step_contents_attributes][1][content_value]" class="form-control mb-2" rows="3" placeholder="Kết quả mong đợi"></textarea>' +
-          '<input type="hidden" name="test_case[test_steps_attributes][' + uniqueId + '][test_step_contents_attributes][1][content_type]" value="text" />' +
-          '<input type="hidden" name="test_case[test_steps_attributes][' + uniqueId + '][test_step_contents_attributes][1][content_category]" value="expectation" />' +
-          '<input type="hidden" name="test_case[test_steps_attributes][' + uniqueId + '][test_step_contents_attributes][1][display_order]" value="0" />' +
-          '<label class="form-label fw-semibold mt-2">Evidence URL (Gyazo)</label>' +
-          '<input type="url" name="test_case[test_steps_attributes][' + uniqueId + '][test_step_contents_attributes][2][content_value]" class="form-control" placeholder="https://gyazo.com/..." />' +
-          '<input type="hidden" name="test_case[test_steps_attributes][' + uniqueId + '][test_step_contents_attributes][2][content_type]" value="image" />' +
-          '<input type="hidden" name="test_case[test_steps_attributes][' + uniqueId + '][test_step_contents_attributes][2][content_category]" value="expectation" />' +
-          '<input type="hidden" name="test_case[test_steps_attributes][' + uniqueId + '][test_step_contents_attributes][2][display_order]" value="1" />' +
-          '</div></div></div></div>';
-
-        container.insertAdjacentHTML('beforeend', stepHtml);
-        renumberSteps();
-      };
-
-      window.removeTestStep = function(button) {
-        var stepCard = button.closest('.test-step');
-        stepCard.remove();
-        renumberSteps();
-      };
-
-      function renumberSteps() {
-        var container = document.getElementById('test-steps-container');
-        var steps = container.querySelectorAll('.test-step');
-
-        steps.forEach(function(step, index) {
-          var newNumber = index + 1;
-
-          var title = step.querySelector('.step-title');
-          if (title) {
-            title.textContent = 'Step ' + newNumber;
-          }
-
-          var stepNumberInput = step.querySelector('.step-number-input');
-          if (stepNumberInput) {
-            stepNumberInput.value = newNumber;
-          }
-        });
-      }
-
-      document.addEventListener('DOMContentLoaded', function() {
-        window.addTestStep();
-      });
-    })();
 
