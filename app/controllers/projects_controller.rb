@@ -1,11 +1,20 @@
 class ProjectsController < ApplicationController
   skip_load_and_authorize_resource
-  before_action :set_project, except: %i[index new create]
+  before_action :set_project, except: %i[index new create archived]
   # before_action :authorize_admin, only: [ :new, :create, :edit, :update, :destroy, :soft_delete, :restore ]
   skip_before_action :verify_authenticity_token
   skip_before_action :authenticate_user!
   def index
-    @projects = Project.all.order(created_at: :desc)
+    @projects = Project.active.order(created_at: :desc)
+
+    respond_to do |format|
+      format.html
+      format.json { render json: @projects }
+    end
+  end
+
+  def archived
+    @projects = Project.deleted.order(deleted_at: :desc)
 
     respond_to do |format|
       format.html
@@ -69,10 +78,12 @@ class ProjectsController < ApplicationController
   end
 
   def destroy
+    is_archived = @project.deleted_at.present?
     @project.destroy
 
     respond_to do |format|
-      format.html { redirect_to projects_path, notice: 'Project has been deleted successfully.' }
+      redirect_path = is_archived ? archived_projects_path : projects_path
+      format.html { redirect_to redirect_path, notice: 'Project has been permanently deleted.' }
       format.json { head :no_content }
     end
   end
@@ -90,7 +101,7 @@ class ProjectsController < ApplicationController
     @project.update(deleted_at: nil)
 
     respond_to do |format|
-      format.html { redirect_to projects_path, notice: 'Project has been restored successfully.' }
+      format.html { redirect_to archived_projects_path, notice: 'Project has been restored successfully.' }
       format.json { render json: @project }
     end
   end

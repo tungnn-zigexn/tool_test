@@ -1,64 +1,78 @@
 .container-fluid.px-4.py-4
   / Header
-  .row.mb-4
-    .col
-      .d-flex.justify-content-between.align-items-center
-        div
-          h1.display-6.fw-bold.text-dark
-            i.bi.bi-folder-fill.me-2
-            | Danh sách Projects
-          p.text-muted Tất cả projects trong hệ thống
-        - if current_user&.admin?
-          = link_to new_project_path, class: "btn btn-success btn-lg" do
-            i.bi.bi-folder-plus.me-2
-            | Tạo Project mới
+  .row.mb-5.align-items-center
+    .col-md-8
+      span.badge.bg-primary.bg-opacity-10.text-primary.px-3.py-2.rounded-pill.fw-bold.mb-3
+        i.bi.bi-speedometer2.me-2
+        | PROJECT DASHBOARD
+      h1.display-5.fw-bold.text-dark.mb-2
+        | Workspace Projects
+      p.lead.text-secondary.mb-0 Manage and track all your software testing projects in one place.
+    .col-md-4.text-md-end.mt-3.mt-md-0.d-flex.gap-2.justify-content-md-end
+      - if current_user&.admin?
+        = link_to archived_projects_path, class: "btn btn-outline-secondary btn-lg px-4 shadow-sm" do
+          i.bi.bi-archive.me-2
+          | Archived
+        = link_to new_project_path, class: "btn btn-primary btn-lg px-4 shadow-sm" do
+          i.bi.bi-plus-lg.me-2
+          | New Project
 
   / Projects Grid
   - if @projects.any?
     .row.g-4
       - @projects.each do |project|
         .col-md-6.col-lg-4
-          .card.border-0.shadow-sm.h-100.hover-card style="cursor: pointer; transition: all 0.3s;" onclick="window.location='#{project_path(project)}'"
-            .card-header.bg-gradient.text-white.border-0 style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"
-              h5.mb-0.fw-bold
-                i.bi.bi-folder-fill.me-2
-                = project.name
+          .card.border-0.shadow-sm.h-100.hover-card.position-relative
+            / Card Link Cover (allows the whole card to be clickable while remaining accessible)
+            = link_to project_path(project), class: "stretched-link" do
+              span.visually-hidden = "View #{project.name}"
 
-            .card-body
-              / Description
-              - if project.description.present?
-                p.text-muted.mb-3 = truncate(project.description, length: 100)
-              - else
-                p.text-muted.mb-3.fst-italic Không có mô tả
-
-              / Stats
-              .row.g-2.mb-3
-                .col-6
-                  .d-flex.align-items-center
-                    .bg-primary.bg-opacity-10.rounded.p-2.me-2
-                      i.bi.bi-list-check.text-primary
-                    div
-                      .small.text-muted Tasks
-                      .fw-bold = project.task_count
-
-                .col-6
-                  .d-flex.align-items-center
-                    .bg-success.bg-opacity-10.rounded.p-2.me-2
-                      i.bi.bi-calendar-check.text-success
-                    div
-                      .small.text-muted Ngày tạo
-                      .fw-bold.small = project.created_at.strftime("%d/%m/%Y")
-
-            .card-footer.bg-transparent.border-0
-              .d-flex.gap-2
-                = link_to project_path(project), class: "btn btn-outline-primary flex-grow-1", onclick: "event.stopPropagation();" do
-                  i.bi.bi-eye.me-1
-                  | Xem
+            .card-header.border-0.p-4 style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"
+              .d-flex.justify-content-between.align-items-start
+                .bg-white.bg-opacity-25.rounded-circle.p-3.mb-3
+                  i.bi.bi-folder2-open.text-white.fs-4
                 - if current_user&.admin?
-                  = link_to edit_project_path(project), class: "btn btn-outline-warning", onclick: "event.stopPropagation();" do
-                    i.bi.bi-pencil
-                  = button_to soft_delete_project_path(project), method: :delete, data: { turbo_confirm: "Bạn có chắc muốn xóa project này?" }, class: "btn btn-outline-danger", onclick: "event.stopPropagation();" do
-                    i.bi.bi-trash
+                  .dropdown.position-relative style="z-index: 2;"
+                    button.btn.btn-link.text-white.p-0.opacity-75.hover-opacity-100 type="button" data-bs-toggle="dropdown"
+                      i.bi.bi-three-dots-vertical.fs-5
+                    ul.dropdown-menu.dropdown-menu-end.shadow-sm
+                      li = link_to edit_project_path(project), class: "dropdown-item" do
+                        i.bi.bi-pencil.me-2.text-warning
+                        | Chỉnh sửa
+                      li = button_to soft_delete_project_path(project), method: :patch, data: { turbo_confirm: "Bạn có chắc muốn xóa project này?" }, class: "dropdown-item text-danger" do
+                        i.bi.bi-trash.me-2
+                        | Xóa Project
+
+              h4.card-title.text-white.fw-bold.mb-0 = project.name
+              p.text-white.text-opacity-75.small.mb-0
+                i.bi.bi-clock.me-1
+                | Created #{time_ago_in_words(project.created_at)} ago
+
+            .card-body.p-4
+              / Description
+              .description-preview.mb-4
+                - if project.description.present?
+                  p.text-secondary.mb-0.line-clamp-2 title=project.description
+                    = project.description
+                - else
+                  p.text-muted.mb-0.fst-italic No description provided.
+
+              / Stats Grid
+              .row.g-3
+                .col-6
+                  .p-3.bg-light.rounded-3.border-0
+                    .small.text-muted.text-uppercase.fw-bold.mb-1 Tasks
+                    .h5.mb-0.text-primary.fw-bold = project.task_count
+                .col-6
+                  .p-3.bg-light.rounded-3.border-0
+                    .small.text-muted.text-uppercase.fw-bold.mb-1 Progress
+                    .h5.mb-0.text-success.fw-bold
+                      = project.task_count > 0 ? "#{(project.completed_task_count.to_f / project.task_count * 100).round}%" : "0%"
+
+            .card-footer.bg-transparent.border-0.px-4.pb-4.pt-0
+              .d-flex.align-items-center.text-primary.fw-semibold
+                | Explore Project
+                i.bi.bi-arrow-right.ms-2
 
   - else
     / Empty State

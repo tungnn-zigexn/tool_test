@@ -1,8 +1,16 @@
-/* General UI Components and Utilities */
+.hover-card {
+  transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+  animation: fadeIn 0.5s ease-out;
+}
+
 .hover-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
-  transition: all 0.2s;
+  transform: translateY(-8px);
+  box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.175) !important;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .hover-shadow:hover {
