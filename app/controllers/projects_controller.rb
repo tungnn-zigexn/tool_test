@@ -23,21 +23,14 @@ class ProjectsController < ApplicationController
   end
 
   def show
-    @tasks = @project.tasks.includes(
+    @root_tasks = @project.root_tasks.includes(
       :assignee,
       :test_cases,
       :subtasks
     ).order(created_at: :desc)
 
-    # Filter root tasks (including orphaned tasks)
-    # We load all tasks first to ensure associations are eager loaded as requested
-    @all_tasks = @tasks.to_a
-    task_ids = @all_tasks.to_set(&:id)
-
-    # A task is a root if:
-    # 1. parent_id is nil
-    # 2. OR parent_id points to an ID that is NOT in the loaded task list (Orphan)
-    @root_tasks = @all_tasks.select { |t| t.parent_id.nil? || !task_ids.include?(t.parent_id) }
+    # We still need @tasks for some stats in the view (test cases sum etc)
+    @tasks = @project.tasks.active
 
     respond_to do |format|
       format.html

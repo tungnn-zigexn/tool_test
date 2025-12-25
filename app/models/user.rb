@@ -1,4 +1,5 @@
 class User < ApplicationRecord
+  include SoftDeletable
   # Devise modules
   devise :database_authenticatable, :registerable,
          :recoverable, :rememberable, :validatable
@@ -24,17 +25,6 @@ class User < ApplicationRecord
   validates :provider, presence: true
   validates :role, presence: true
 
-  # Soft delete
-  scope :active, -> { where(deleted_at: nil) }
-  scope :deleted, -> { where.not(deleted_at: nil) }
-
-  def soft_delete!
-    update!(deleted_at: Time.current)
-  end
-
-  def active?
-    deleted_at.nil?
-  end
 
   # Google OAuth
   def self.from_google(auth)

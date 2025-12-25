@@ -30,6 +30,8 @@ Rails.application.routes.draw do
   get "dashboard", to: "dashboard#index"
   get "admin/dashboard", to: "dashboard#admin", as: :admin_dashboard
   get "user/dashboard", to: "dashboard#user", as: :user_dashboard
+  get "profile/password", to: "profiles#edit_password", as: :edit_password
+  patch "profile/password", to: "profiles#update_password", as: :update_password
 
   # Main resources
   resources :users do

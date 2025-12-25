@@ -1,0 +1,28 @@
+.card.shadow-sm.border-0.hover-shadow.hover-card.cursor-pointer onclick="window.location.href='#{project_task_test_case_path(test_case.task.project, test_case.task, test_case)}'" style="transition: all 0.2s;"
+  .card-body.p-4
+    .d-flex.justify-content-between.align-items-start.mb-3
+      .flex-grow-1
+        h5.card-title.fw-bold.text-dark.mb-2 = test_case.title
+        .d-flex.align-items-center.flex-wrap.gap-2.text-muted.small
+          span.badge.bg-primary.bg-opacity-10.text-primary.border-0.rounded-pill.px-3
+            = test_case.test_type_display
+          span.badge.bg-success.bg-opacity-10.text-success.border-0.rounded-pill.px-3
+            = test_case.target_display
+          - if test_case.function.present?
+            span.text-secondary
+              i.bi.bi-gear.me-1
+              = test_case.function
+          span •
+          span.fw-semibold #{test_case.test_steps.count} steps
+
+    - if test_case.description.present?
+      p.text-muted.small.mb-3 = truncate(test_case.description, length: 150)
+
+    / Device Results
+    - if test_case.device_results?
+      .d-flex.flex-wrap.gap-2.mt-2
+        - test_case.parsed_device_results.each do |result|
+          - status_colors = { 'pass' => 'bg-success', 'fail' => 'bg-danger', 'not_run' => 'bg-secondary', 'blocked' => 'bg-warning text-dark' }
+          - status_class = status_colors[result[:status].to_s] || 'bg-secondary'
+          span.badge.rounded-pill.px-2.py-1 class=status_class style="font-size: 0.7rem;"
+            = result[:device]

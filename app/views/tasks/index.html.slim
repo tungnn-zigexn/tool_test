@@ -1,8 +1,13 @@
 .container.py-4
   / Header
-  .mb-4
-    h1.h2.fw-bold.text-dark.mb-2 📝 All Tasks
-    p.text-muted Browse all tasks across projects
+  .row.mb-5.align-items-center
+    .col-md-12
+      span.badge.bg-info.bg-opacity-10.text-info.px-3.py-2.rounded-pill.fw-bold.mb-3
+        i.bi.bi-card-list.me-2
+        | GLOBAL TASKLIST
+      h1.display-5.fw-bold.text-dark.mb-2
+        | Centralized Task Management
+      p.lead.text-secondary.mb-0 Review and track all tasks from every active project.
 
   / Stats
   .row.mb-4.g-3
@@ -28,44 +33,9 @@
           .text-muted.small Completed
 
   / Tasks List
-  .d-flex.flex-column.gap-3
+  .d-flex.flex-column.gap-4
     - @tasks.includes(:project, :test_cases, :subtasks).each do |task|
-      .card.shadow-sm.border-0.hover-shadow.cursor-pointer onclick="window.location.href='#{project_task_path(task.project, task)}'" style="transition: all 0.2s;"
-        .card-body
-          .d-flex.justify-content-between.align-items-start.mb-3
-            .flex-grow-1
-              h5.card-title.fw-bold.text-dark.mb-2 style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;"
-                = task.title
-              .d-flex.align-items-center.gap-3.text-muted.small
-                span
-                  i.bi.bi-hash.me-1
-                  | Redmine ##{task.redmine_id}
-                span •
-                span
-                  i.bi.bi-folder.me-1
-                  = task.project.name
-                - if task.created_by_name.present?
-                  span •
-                  span= task.created_by_name
-            span.badge.rounded-pill class=(task.status == 'Closed' ? 'bg-success' : 'bg-warning text-dark')
-              = task.status
-
-          .row.text-center.g-2
-            .col
-              .fw-bold.text-secondary= "#{task.estimated_time || 0}h"
-              .small.text-muted Estimated
-            .col
-              .fw-bold.text-secondary= "#{task.spent_time || 0}h"
-              .small.text-muted Spent
-            .col
-              .fw-bold.text-secondary= "#{task.percent_done || 0}%"
-              .small.text-muted Progress
-            .col
-              .fw-bold.text-primary= task.number_of_test_cases
-              .small.text-muted Test Cases
-            .col
-              .fw-bold.text-info= task.subtasks.count
-              .small.text-muted Subtasks
+      = render 'tasks/task_card', task: task, show_project: true
 
   / Empty State
   - if @tasks.empty?

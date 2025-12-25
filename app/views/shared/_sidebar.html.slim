@@ -1,58 +1,63 @@
-.d-flex.flex-column.p-3.bg-light style="min-height: calc(100vh - 56px);"
+.d-flex.flex-column.p-4.bg-white.border-end style="min-height: calc(100vh - 64px); width: 260px;"
   / Dashboard Links
   ul.nav.nav-pills.flex-column.mb-auto
     - if current_user&.admin?
-      / Admin Menu
-      li.nav-item.mb-2
-        = link_to admin_dashboard_path, class: "nav-link #{controller_name == 'dashboard' && action_name == 'admin' ? 'active' : 'text-dark'}" do
-          i.bi.bi-speedometer2.me-2
-          | Dashboard
+      / Admin Section
+      .small.text-uppercase.fw-bold.text-muted.mb-3 Management
 
       li.nav-item.mb-2
-        = link_to users_path, class: "nav-link #{controller_name == 'users' ? 'active' : 'text-dark'}" do
-          i.bi.bi-people-fill.me-2
-          | Quản lý Users
+        = link_to admin_dashboard_path, class: "nav-link d-flex align-items-center rounded-3 p-3 #{controller_name == 'dashboard' && action_name == 'admin' ? 'active shadow-sm' : 'text-secondary hover-bg-light'}" do
+          i.bi.bi-grid-1x2-fill.me-3
+          span Dashboard
 
       li.nav-item.mb-2
-        = link_to projects_path, class: "nav-link #{controller_name == 'projects' ? 'active' : 'text-dark'}" do
-          i.bi.bi-folder-fill.me-2
-          | Quản lý Projects
+        = link_to users_path, class: "nav-link d-flex align-items-center rounded-3 p-3 #{controller_name == 'users' ? 'active shadow-sm' : 'text-secondary hover-bg-light'}" do
+          i.bi.bi-people-fill.me-3
+          span Users List
 
-      li
-        hr.my-3
+      li.nav-item.mb-2
+        = link_to projects_path, class: "nav-link d-flex align-items-center rounded-3 p-3 #{controller_name == 'projects' ? 'active shadow-sm' : 'text-secondary hover-bg-light'}" do
+          i.bi.bi-kanban-fill.me-3
+          span Projects
+
+      hr.my-4.text-muted.opacity-25
 
       / Quick Actions for Admin
-      li.nav-item.mb-2
-        = link_to new_user_path, class: "nav-link text-primary" do
-          i.bi.bi-person-plus-fill.me-2
-          | Tạo User mới
+      .small.text-uppercase.fw-bold.text-muted.mb-3 Actions
 
       li.nav-item.mb-2
-        = link_to new_project_path, class: "nav-link text-success" do
-          i.bi.bi-folder-plus.me-2
-          | Tạo Project mới
+        = link_to new_user_path, class: "nav-link d-flex align-items-center rounded-3 p-3 text-primary hover-bg-primary-light" do
+          i.bi.bi-person-plus-fill.me-3
+          span New User
+
+      li.nav-item.mb-2
+        = link_to new_project_path, class: "nav-link d-flex align-items-center rounded-3 p-3 text-success hover-bg-success-light" do
+          i.bi.bi-folder-plus.me-3
+          span New Project
 
     - else
-      / User Menu
-      li.nav-item.mb-2
-        = link_to user_dashboard_path, class: "nav-link #{controller_name == 'dashboard' && action_name == 'user' ? 'active' : 'text-dark'}" do
-          i.bi.bi-house-fill.me-2
-          | Trang chủ
+      / User Section
+      .small.text-uppercase.fw-bold.text-muted.mb-3 Workspace
 
       li.nav-item.mb-2
-        = link_to projects_path, class: "nav-link #{controller_name == 'projects' ? 'active' : 'text-dark'}" do
-          i.bi.bi-folder-fill.me-2
-          | Projects
+        = link_to user_dashboard_path, class: "nav-link d-flex align-items-center rounded-3 p-3 #{controller_name == 'dashboard' && action_name == 'user' ? 'active shadow-sm' : 'text-secondary hover-bg-light'}" do
+          i.bi.bi-house-heart-fill.me-3
+          span My Home
 
       li.nav-item.mb-2
-        = link_to tasks_path, class: "nav-link #{controller_name == 'tasks' ? 'active' : 'text-dark'}" do
-          i.bi.bi-list-task.me-2
-          | Tasks
+        = link_to projects_path, class: "nav-link d-flex align-items-center rounded-3 p-3 #{controller_name == 'projects' ? 'active shadow-sm' : 'text-secondary hover-bg-light'}" do
+          i.bi.bi-folder2-open.me-3
+          span My Projects
 
       li.nav-item.mb-2
-        = link_to test_cases_path, class: "nav-link #{controller_name == 'test_cases' ? 'active' : 'text-dark'}" do
-          i.bi.bi-clipboard-check.me-2
-          | Test Cases
+        = link_to tasks_path, class: "nav-link d-flex align-items-center rounded-3 p-3 #{controller_name == 'tasks' ? 'active shadow-sm' : 'text-secondary hover-bg-light'}" do
+          i.bi.bi-list-ul.me-3
+          span My Tasks
+
+      li.nav-item.mb-2
+        = link_to test_cases_path, class: "nav-link d-flex align-items-center rounded-3 p-3 #{controller_name == 'test_cases' ? 'active shadow-sm' : 'text-secondary hover-bg-light'}" do
+          i.bi.bi-shield-check.me-3
+          span Test Cases
 
 
 

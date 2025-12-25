@@ -57,7 +57,7 @@
                             i.bi.bi-eye
                           = link_to edit_user_path(user), class: "btn btn-sm btn-outline-warning", title: "Chỉnh sửa" do
                             i.bi.bi-pencil
-                          = link_to soft_delete_user_path(user), data: { turbo_method: :patch, turbo_confirm: "Bạn có chắc muốn xóa user này?" }, class: "btn btn-sm btn-outline-danger", title: "Xóa mềm" do
+                          = link_to user_path(user), data: { turbo_method: :delete, turbo_confirm: "Bạn có chắc muốn xóa user này?" }, class: "btn btn-sm btn-outline-danger", title: "Xóa" do
                             i.bi.bi-trash
                 - else
                   tr

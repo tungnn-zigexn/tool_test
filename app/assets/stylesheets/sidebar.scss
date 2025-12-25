@@ -1,7 +1,17 @@
 /* Sidebar Navigation Styles */
+.hover-bg-light:hover {
+  background-color: #f8f9fa;
+}
+.hover-bg-primary-light:hover {
+  background-color: rgba(102, 126, 234, 0.1);
+}
+.hover-bg-success-light:hover {
+  background-color: rgba(25, 135, 84, 0.1);
+}
 .nav-link {
+  transition: all 0.2s ease;
+  font-weight: 500;
   border-radius: 8px;
-  transition: all 0.2s;
 }
 
 .nav-link:hover {

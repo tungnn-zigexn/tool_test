@@ -1,4 +1,5 @@
 class Task < ApplicationRecord
+  include SoftDeletable
   belongs_to :project
   belongs_to :assignee, class_name: 'User', foreign_key: 'assignee_id', optional: true
   belongs_to :parent, class_name: 'Task', foreign_key: 'parent_id', optional: true
@@ -10,17 +11,7 @@ class Task < ApplicationRecord
 
   validates :title, presence: true
 
-  scope :active, -> { where(deleted_at: nil) }
-  scope :deleted, -> { where.not(deleted_at: nil) }
   scope :root_tasks, -> { where(parent_id: nil) }
-
-  def soft_delete!
-    update!(deleted_at: Time.current)
-  end
-
-  def active?
-    deleted_at.nil?
-  end
 
   def subtask?
     parent_id.present?

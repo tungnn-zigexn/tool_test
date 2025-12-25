@@ -1,19 +1,21 @@
 .container.py-4
   / Header
-  .mb-4
-    .d-flex.justify-content-between.align-items-center
-      div
-        h1.h2.fw-bold.text-dark.mb-2 🧪 Test Cases
-        p.text-muted
-          - if @task
-            | Test cases for task: #{@task.title}
-          - else
-            | All test cases
-
+  .row.mb-5.align-items-center
+    .col-md-8
+      span.badge.bg-primary.bg-opacity-10.text-primary.px-3.py-2.rounded-pill.fw-bold.mb-3
+        i.bi.bi-check-all.me-2
+        | TEST REPOSITORY
+      h1.display-5.fw-bold.text-dark.mb-2
+        - if @task
+          | Tests for #{@task.title}
+        - else
+          | Global Test Library
+      p.lead.text-secondary.mb-0 Review and manage test cases across your entire workspace.
+    .col-md-4.text-md-end.mt-3.mt-md-0
       - if @task && current_user
-        = link_to new_project_task_test_case_path(@task.project, @task), class: "btn btn-primary" do
+        = link_to new_project_task_test_case_path(@task.project, @task), class: "btn btn-primary btn-lg shadow-sm" do
           i.bi.bi-plus-circle.me-2
-          | Tạo Test Case mới
+          | New Test Case
 
   / Stats
   .row.mb-4.g-3
@@ -39,31 +41,6 @@
           .text-muted.small Total Steps
 
   / Test Cases List
-  .d-flex.flex-column.gap-3
+  .d-flex.flex-column.gap-4
     - @test_cases.each do |test_case|
-      .card.shadow-sm.border-0.hover-shadow.cursor-pointer onclick="window.location.href='#{project_task_test_case_path(test_case.task.project, test_case.task, test_case)}'" style="transition: all 0.2s;"
-        .card-body.p-4
-          .d-flex.justify-content-between.align-items-start.mb-3
-            .flex-grow-1
-              h5.card-title.fw-bold.text-dark.mb-2= test_case.title
-              .d-flex.align-items-center.gap-2.text-muted.small
-                span.badge.bg-light.text-primary.border
-                  = test_case.test_type_display
-                span.badge.bg-light.text-success.border
-                  = test_case.target_display
-                - if test_case.function.present?
-                  span= test_case.function
-                span •
-                span #{test_case.test_steps.count} steps
-
-          - if test_case.description.present?
-            p.text-muted.small.mb-3= truncate(test_case.description, length: 150)
-
-          / Device Results
-          - if test_case.device_results?
-            .d-flex.flex-wrap.gap-2
-              - test_case.parsed_device_results.each do |result|
-                - status_colors = { 'pass' => 'bg-success', 'fail' => 'bg-danger', 'not_run' => 'bg-secondary', 'blocked' => 'bg-warning text-dark' }
-                - status_class = status_colors[result[:status].to_s] || 'bg-secondary'
-                span.badge class=status_class
-                  = result[:device]
+      = render 'test_cases/test_case_card', test_case: test_case

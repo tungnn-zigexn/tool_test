@@ -1,4 +1,5 @@
 class Bug < ApplicationRecord
+  include SoftDeletable
   belongs_to :task
   belongs_to :dev, class_name: 'User', foreign_key: 'dev_id', optional: true
   belongs_to :tester, class_name: 'User', foreign_key: 'tester_id', optional: true
@@ -13,21 +14,12 @@ class Bug < ApplicationRecord
   validates :priority, presence: true
   validates :status, presence: true
 
-  scope :active, -> { where(deleted_at: nil) }
-  scope :deleted, -> { where.not(deleted_at: nil) }
   scope :open, -> { where(status: %w[new fixing testing pending]) }
   scope :closed, -> { where(status: 'done') }
   scope :by_category, ->(category) { where(category: category) }
   scope :by_priority, ->(priority) { where(priority: priority) }
   scope :by_application, ->(app) { where(application: app) }
 
-  def soft_delete!
-    update!(deleted_at: Time.current)
-  end
-
-  def active?
-    deleted_at.nil?
-  end
 
   def open?
     %w[new fixing testing pending].include?(status)

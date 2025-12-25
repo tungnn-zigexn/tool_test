@@ -16,9 +16,9 @@
           = link_to edit_user_path(@user), class: "btn btn-warning" do
             i.bi.bi-pencil.me-2
             | Chỉnh sửa
-          = link_to soft_delete_user_path(@user), data: { turbo_method: :patch, turbo_confirm: "Bạn có chắc muốn xóa user này?" }, class: "btn btn-danger" do
+          = link_to user_path(@user), data: { turbo_method: :delete, turbo_confirm: "Bạn có chắc muốn xóa user này?" }, class: "btn btn-danger" do
             i.bi.bi-trash.me-2
-            | Xóa mềm
+            | Xóa
 
   / User Info
   .row.g-4

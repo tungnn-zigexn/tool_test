@@ -1,4 +1,5 @@
 class TestCase < ApplicationRecord
+  include SoftDeletable
   belongs_to :task
   belongs_to :created_by, class_name: 'User', foreign_key: 'created_by_id', optional: true
 
@@ -14,22 +15,9 @@ class TestCase < ApplicationRecord
   validates :title, presence: true
   validates :task_id, presence: true
 
-  scope :active, -> { where(deleted_at: nil) }
-  scope :deleted, -> { where.not(deleted_at: nil) }
   scope :by_type, ->(type) { where(test_type: type) }
   scope :by_target, ->(target) { where(target: target) }
 
-  def soft_delete!
-    update!(deleted_at: Time.current)
-  end
-
-  def restore!
-    update!(deleted_at: nil)
-  end
-
-  def active?
-    deleted_at.nil?
-  end
 
   def step_count
     test_steps.count

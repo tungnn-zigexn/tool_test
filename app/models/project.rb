@@ -1,28 +1,22 @@
 class Project < ApplicationRecord
+  include SoftDeletable
   has_many :tasks, dependent: :destroy
 
   validates :name, presence: true
 
-  scope :active, -> { where(deleted_at: nil) }
-  scope :deleted, -> { where.not(deleted_at: nil) }
-
-  def soft_delete!
-    update!(deleted_at: Time.current)
-  end
-
-  def active?
-    deleted_at.nil?
-  end
-
   # Đếm tasks (không tính subtask)
-  # Đếm tasks (không tính subtask, bao gồm cả orphaned)
   def task_count
-    # Simple count of roots + check for orphans would be expensive in Ruby loop.
-    # SQL way: tasks where parent_id is NULL OR parent_id NOT IN (select id from tasks where project_id = project.id)
-    tasks.active.where('parent_id IS NULL OR parent_id NOT IN (SELECT id FROM tasks WHERE project_id = ?)', id).count
+    root_tasks.count
   end
 
   def completed_task_count
-    tasks.root_tasks.where(status: 'resolved').count
+    root_tasks.where(status: ['Closed', 'resolved']).count
   end
+
+  def root_tasks
+    # A task is a root if it has no parent or its parent doesn't exist in the same project
+    tasks.active.where('parent_id IS NULL OR parent_id NOT IN (SELECT id FROM tasks WHERE project_id = ?)', id)
+  end
+
+  private
 end
