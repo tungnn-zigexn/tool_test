@@ -2,8 +2,6 @@ class TestResultsController < ApplicationController
   skip_load_and_authorize_resource
   before_action :set_test_case, except: [:index]
   before_action :set_test_result, except: %i[index new create]
-  skip_before_action :verify_authenticity_token
-  skip_before_action :authenticate_user!
 
   # GET /test_results
   def index
@@ -14,39 +12,6 @@ class TestResultsController < ApplicationController
       format.html
       format.json { render json: index_json_response }
     end
-  end
-
-  private
-
-  def apply_filters
-    @test_results = @test_results.where(status: params[:status]) if params[:status].present?
-    @test_results = @test_results.where(run_id: params[:run_id]) if params[:run_id].present?
-    @test_results = @test_results.where(case_id: params[:case_id]) if params[:case_id].present?
-
-    # Filter by task_id
-    if params[:task_id].present?
-      @test_results = @test_results.joins(:test_case).where(test_cases: { task_id: params[:task_id] })
-    end
-
-    # Filter by project_id
-    return unless params[:project_id].present?
-
-    @test_results = @test_results.joins(test_case: :task).where(tasks: { project_id: params[:project_id] })
-  end
-
-  def index_json_response
-    @test_results.as_json(
-      include: {
-        test_case: {
-          only: %i[id title],
-          include: {
-            task: { only: %i[id title project_id] }
-          }
-        },
-        test_run: { only: %i[id name] },
-        executed_by: { only: %i[id name email] }
-      }
-    )
   end
 
   # GET /test_cases/:test_case_id/test_results/:id
@@ -148,6 +113,39 @@ class TestResultsController < ApplicationController
       end
       format.json { head :no_content }
     end
+  end
+
+  private
+
+  def apply_filters
+    @test_results = @test_results.where(status: params[:status]) if params[:status].present?
+    @test_results = @test_results.where(run_id: params[:run_id]) if params[:run_id].present?
+    @test_results = @test_results.where(case_id: params[:case_id]) if params[:case_id].present?
+
+    # Filter by task_id
+    if params[:task_id].present?
+      @test_results = @test_results.joins(:test_case).where(test_cases: { task_id: params[:task_id] })
+    end
+
+    # Filter by project_id
+    return unless params[:project_id].present?
+
+    @test_results = @test_results.joins(test_case: :task).where(tasks: { project_id: params[:project_id] })
+  end
+
+  def index_json_response
+    @test_results.as_json(
+      include: {
+        test_case: {
+          only: %i[id title],
+          include: {
+            task: { only: %i[id title project_id] }
+          }
+        },
+        test_run: { only: %i[id name] },
+        executed_by: { only: %i[id name email] }
+      }
+    )
   end
 
   def set_test_case

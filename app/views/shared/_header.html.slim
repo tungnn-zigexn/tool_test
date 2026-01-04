@@ -12,7 +12,7 @@ nav.navbar.navbar-expand-lg.navbar-dark.shadow-sm style="background: linear-grad
         - if user_signed_in?
           / User info
           li.nav-item.dropdown
-            a.nav-link.dropdown-toggle.d-flex.align-items-center href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"
+            a.nav-link.dropdown-toggle.d-flex.align-items-center href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" data-turbo="false"
               .bg-white.rounded-circle.d-flex.align-items-center.justify-content-center.me-2 style="width: 32px; height: 32px;"
                 i.bi.bi-person-fill.text-primary
               span.fw-semibold = current_user.email

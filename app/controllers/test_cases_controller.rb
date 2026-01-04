@@ -2,8 +2,6 @@ class TestCasesController < ApplicationController
   skip_load_and_authorize_resource
   before_action :set_task, except: [:index]
   before_action :set_test_case, except: %i[index new create]
-  skip_before_action :verify_authenticity_token
-  skip_before_action :authenticate_user!
 
   # GET /test_cases or /projects/:project_id/tasks/:task_id/test_cases
   def index

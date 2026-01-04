@@ -8,12 +8,12 @@
       h1.display-5.fw-bold.text-dark.mb-2
         | Workspace Projects
       p.lead.text-secondary.mb-0 Manage and track all your software testing projects in one place.
-    .col-md-4.text-md-end.mt-3.mt-md-0.d-flex.gap-2.justify-content-md-end
+    .col-md-4.text-md-end.mt-3.mt-md-0.d-flex.gap-2.justify-content-md-end.overflow-x-auto.pb-2
       - if current_user&.admin?
-        = link_to archived_projects_path, class: "btn btn-outline-secondary btn-lg px-4 shadow-sm" do
+        = link_to archived_projects_path, class: "btn btn-outline-secondary btn-lg px-4 shadow-sm text-nowrap d-inline-flex align-items-center" do
           i.bi.bi-archive.me-2
           | Archived
-        = link_to new_project_path, class: "btn btn-primary btn-lg px-4 shadow-sm" do
+        = link_to new_project_path, class: "btn btn-primary btn-lg px-4 shadow-sm text-nowrap d-inline-flex align-items-center" do
           i.bi.bi-plus-lg.me-2
           | New Project
 

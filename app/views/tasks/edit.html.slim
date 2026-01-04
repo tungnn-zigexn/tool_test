@@ -28,7 +28,7 @@
                 / Title
                 .mb-3
                   = f.label :title, "Tiêu đề Task *", class: 'form-label fw-semibold'
-                  = f.text_field :title, class: 'form-control form-control-lg', required: true
+                  = f.text_field :title, class: 'form-control form-control-lg', required: true, maxlength: 100
                   - if @task.errors[:title].any?
                     .invalid-feedback.d-block = @task.errors[:title].join(', ')
 
@@ -70,16 +70,22 @@
                   .col-6
                     .mb-3
                       = f.label :estimated_time, "Ước tính (giờ)", class: 'form-label fw-semibold'
-                      = f.number_field :estimated_time, class: 'form-control', step: 0.5
+                      = f.number_field :estimated_time, class: 'form-control', step: 0.5, min: 0
+                      - if @task.errors[:estimated_time].any?
+                        .invalid-feedback.d-block = @task.errors[:estimated_time].join(', ')
                   .col-6
                     .mb-3
                       = f.label :spent_time, "Đã dùng (giờ)", class: 'form-label fw-semibold'
-                      = f.number_field :spent_time, class: 'form-control', step: 0.5
+                      = f.number_field :spent_time, class: 'form-control', step: 0.5, min: 0
+                      - if @task.errors[:spent_time].any?
+                        .invalid-feedback.d-block = @task.errors[:spent_time].join(', ')
 
                 / Percent Done
                 .mb-3
                   = f.label :percent_done, "Hoàn thành (%)", class: 'form-label fw-semibold'
                   = f.number_field :percent_done, class: 'form-control', min: 0, max: 100
+                  - if @task.errors[:percent_done].any?
+                    .invalid-feedback.d-block = @task.errors[:percent_done].join(', ')
 
                 / Dates
                 .row
@@ -87,10 +93,14 @@
                     .mb-3
                       = f.label :start_date, "Ngày bắt đầu", class: 'form-label fw-semibold'
                       = f.date_field :start_date, class: 'form-control'
+                      - if @task.errors[:start_date].any?
+                        .invalid-feedback.d-block = @task.errors[:start_date].join(', ')
                   .col-6
                     .mb-3
                       = f.label :due_date, "Deadline", class: 'form-label fw-semibold'
                       = f.date_field :due_date, class: 'form-control'
+                      - if @task.errors[:due_date].any?
+                        .invalid-feedback.d-block = @task.errors[:due_date].join(', ')
 
             / Buttons
             .d-flex.gap-2.mt-4

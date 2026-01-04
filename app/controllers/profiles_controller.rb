@@ -1,6 +1,5 @@
 class ProfilesController < ApplicationController
   skip_load_and_authorize_resource
-  before_action :authenticate_user!
 
   def edit_password
     @user = current_user

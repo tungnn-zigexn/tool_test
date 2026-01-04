@@ -2,7 +2,7 @@ class Project < ApplicationRecord
   include SoftDeletable
   has_many :tasks, dependent: :destroy
 
-  validates :name, presence: true
+  validates :name, presence: true, length: { maximum: 50 }, uniqueness: { case_sensitive: false }
 
   # Đếm tasks (không tính subtask)
   def task_count

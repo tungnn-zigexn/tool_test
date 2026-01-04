@@ -8,19 +8,20 @@
   / Project Header
   .card.border-0.shadow-sm.mb-4
     .card-body.p-4
-      .d-flex.justify-content-between.align-items-start.mb-4
-        div
-          h1.display-5.fw-bold.text-dark.mb-2= @project.name
-          - if @project.description.present?
-            p.text-muted= @project.description
-        .d-flex.gap-2
-          = link_to new_project_task_path(@project), class: "btn btn-primary" do
+      .d-flex.justify-content-between.align-items-center.flex-wrap.gap-3.mb-3
+        h1.display-5.fw-bold.text-dark.mb-0= @project.name.truncate(50)
+        .d-flex.gap-2.flex-shrink-0
+          = link_to new_project_task_path(@project), class: "btn btn-primary text-nowrap d-inline-flex align-items-center" do
             i.bi.bi-plus-lg.me-2
             | Tạo Task mới
           - if current_user&.admin?
-            button.btn.btn-success data-bs-toggle="modal" data-bs-target="#importRedmineModal"
+            button.btn.btn-success.text-nowrap.d-inline-flex.align-items-center data-bs-toggle="modal" data-bs-target="#importRedmineModal"
               i.bi.bi-cloud-download.me-2
               | Import từ Redmine
+
+      - if @project.description.present?
+        .border-top.pt-3.pb-3.mt-3.text-muted style="white-space: pre-wrap; max-width: 1000px; font-size: 0.95rem; line-height: 1.6;"
+          = @project.description
 
       .row.g-3
         .col-md-3

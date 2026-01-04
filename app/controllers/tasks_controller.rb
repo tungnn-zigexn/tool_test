@@ -2,16 +2,16 @@ class TasksController < ApplicationController
   skip_load_and_authorize_resource
   before_action :set_project, only: %i[new create import_from_redmine]
   before_action :set_task, except: %i[index new create import_from_redmine]
-  skip_before_action :verify_authenticity_token
-  skip_before_action :authenticate_user!
+  # skip_before_action :verify_authenticity_token
+  # skip_before_action :authenticate_user! # TODO: test postman
 
   # GET /tasks or /projects/:project_id/tasks
   def index
     if params[:project_id]
       @project = Project.find(params[:project_id])
-      @tasks = @project.tasks.active.includes(:assignee, :test_cases)
+      @tasks = @project.tasks.active.root_tasks.includes(:assignee, :test_cases)
     else
-      @tasks = Task.active.includes(:project, :assignee, :test_cases)
+      @tasks = Task.active.root_tasks.includes(:project, :assignee, :test_cases)
     end
 
     # Filters
@@ -43,6 +43,7 @@ class TasksController < ApplicationController
   # POST /projects/:project_id/tasks
   def create
     @task = @project.tasks.build(task_params)
+    @task.created_by_name = current_user.name || current_user.email
 
     if @task.save
       respond_to do |format|
@@ -61,7 +62,7 @@ class TasksController < ApplicationController
   def update
     if @task.update(task_params)
       respond_to do |format|
-        format.html { redirect_to @task, notice: 'Update task successfully.' }
+        format.html { redirect_to project_task_path(@task.project, @task), notice: 'Update task successfully.' }
         format.json { render json: @task }
       end
     else

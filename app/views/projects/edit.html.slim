@@ -23,7 +23,7 @@
             / Name
             .mb-3
               = f.label :name, "Tên Project *", class: 'form-label fw-semibold'
-              = f.text_field :name, class: 'form-control form-control-lg', placeholder: 'Ví dụ: Project Management System', required: true
+              = f.text_field :name, class: 'form-control form-control-lg', placeholder: 'Ví dụ: Project Management System', required: true, maxlength: 50
               - if @project.errors[:name].any?
                 .invalid-feedback.d-block = @project.errors[:name].join(', ')
 

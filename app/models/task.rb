@@ -10,15 +10,33 @@ class Task < ApplicationRecord
   has_many :bugs, dependent: :destroy
 
   validates :title, presence: true
+  validates :estimated_time, :spent_time, numericality: { greater_than_or_equal_to: 0, allow_nil: true }
+  validates :percent_done, numericality: { greater_than_or_equal_to: 0, less_than_or_equal_to: 100, allow_nil: true }
+  validate :due_date_after_start_date
 
-  scope :root_tasks, -> { where(parent_id: nil) }
+  private
+
+  def due_date_after_start_date
+    return if due_date.blank? || start_date.blank?
+
+    if due_date < start_date
+      errors.add(:due_date, "phải lớn hơn hoặc bằng ngày bắt đầu")
+    end
+  end
+
+  public
+
+  scope :root_tasks, -> {
+    where(parent_id: nil, redmine_id: nil)
+    .or(where.not(parent_id: nil).where.not(redmine_id: nil))
+  }
 
   def subtask?
-    parent_id.present?
+    !root_task?
   end
 
   def root_task?
-    parent_id.nil?
+    (parent_id.nil? && redmine_id.nil?) || (parent_id.present? && redmine_id.present?)
   end
 
   def progress_percentage

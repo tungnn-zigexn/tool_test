@@ -13,48 +13,49 @@
   / Task Header
   .card.border-0.shadow-sm.mb-4
     .card-header.text-white.p-4 style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"
-      .d-flex.justify-content-between.align-items-start
-        div
-          h1.h3.fw-bold.mb-2= @task.title
-          .d-flex.align-items-center.gap-3.text-white-50
-            span
-              i.bi.bi-tag.me-1
-              | Redmine ##{@task.redmine_id}
-            span •
-            span Created by: #{@task.created_by_name || 'N/A'}
-        .d-flex.gap-2.align-items-center
-          / Test Case Actions
-          = link_to new_project_task_test_case_path(@task.project, @task), class: "btn btn-light btn-sm" do
-            i.bi.bi-plus-circle.me-1
-            | Tạo Test Case
-          button.btn.btn-light.btn-sm data-bs-toggle="modal" data-bs-target="#importTestCasesModal"
-            i.bi.bi-cloud-download.me-1
-            | Import từ Sheet
+      / Layer 1: Title
+      h1.h3.fw-bold.mb-3.text-break= @task.title
 
-          / Task Actions Dropdown
-          .dropdown
-            button.btn.btn-light.btn-sm.dropdown-toggle type="button" data-bs-toggle="dropdown" aria-expanded="false"
-              i.bi.bi-gear.me-1
-              | Tùy chọn
-            ul.dropdown-menu.dropdown-menu-end
-              li
-                = link_to edit_project_task_path(@task.project, @task), class: "dropdown-item" do
-                  i.bi.bi-pencil.me-2.text-primary
-                  | Chỉnh sửa Task
-              li
-                hr.dropdown-divider
-              li
-                button.dropdown-item.text-warning type="button" data-bs-toggle="modal" data-bs-target="#softDeleteModal"
-                  i.bi.bi-archive.me-2
-                  | Soft Delete
-              li
-                button.dropdown-item.text-danger type="button" data-bs-toggle="modal" data-bs-target="#deleteModal"
-                  i.bi.bi-trash.me-2
-                  | Xóa vĩnh viễn
+      / Layer 2: Actions & Status
+      .d-flex.align-items-center.gap-2.flex-wrap.mb-3
+        = link_to new_project_task_test_case_path(@task.project, @task), class: "btn btn-light btn-sm text-nowrap d-inline-flex align-items-center shadow-sm" do
+          i.bi.bi-plus-circle.me-1
+          | Tạo Test Case
 
-          / Status Badge
-          span.badge.rounded-pill.fs-6.ms-2 class=((@task.status == 'Closed' || @task.status == 'resolved') ? 'bg-success' : 'bg-warning text-dark')
-            = @task.status
+        button.btn.btn-light.btn-sm.text-nowrap.d-inline-flex.align-items-center.shadow-sm data-bs-toggle="modal" data-bs-target="#importTestCasesModal"
+          i.bi.bi-cloud-download.me-1
+          | Import từ Sheet
+
+        .dropdown
+          button.btn.btn-light.btn-sm.dropdown-toggle.shadow-sm type="button" data-bs-toggle="dropdown" aria-expanded="false"
+            i.bi.bi-gear.me-1
+            | Tùy chọn
+          ul.dropdown-menu.dropdown-menu-end
+            li
+              = link_to edit_project_task_path(@task.project, @task), class: "dropdown-item" do
+                i.bi.bi-pencil.me-2.text-primary
+                | Chỉnh sửa Task
+            li
+              hr.dropdown-divider
+            li
+              button.dropdown-item.text-warning type="button" data-bs-toggle="modal" data-bs-target="#softDeleteModal"
+                i.bi.bi-archive.me-2
+                | Soft Delete
+            li
+              button.dropdown-item.text-danger type="button" data-bs-toggle="modal" data-bs-target="#deleteModal"
+                i.bi.bi-trash.me-2
+                | Xóa vĩnh viễn
+
+        span.badge.rounded-pill.fs-7.py-2.px-3 class=((@task.status == 'Closed' || @task.status == 'resolved') ? 'bg-success' : 'bg-warning text-dark')
+          = @task.status
+
+      / Layer 3: Meta Info
+      .d-flex.align-items-center.gap-3.text-white-50.flex-wrap.small
+        span
+          i.bi.bi-tag.me-1
+          | Redmine ##{@task.redmine_id}
+        span •
+        span Created by: #{@task.created_by_name || 'N/A'}
 
     / Task Stats
     .card-body.bg-light.border-bottom
@@ -88,11 +89,11 @@
         .col-md-6
           h6.fw-semibold.text-muted.mb-2 Timeline
           ul.list-unstyled.mb-0
-            li.d-flex.justify-content-between.mb-1
-              span.text-muted Start Date:
+            li.mb-1
+              span.text-muted style="display: inline-block; width: 100px;" Start Date:
               span.fw-medium= @task.start_date&.strftime("%Y-%m-%d") || 'N/A'
-            li.d-flex.justify-content-between
-              span.text-muted Due Date:
+            li
+              span.text-muted style="display: inline-block; width: 100px;" Due Date:
               span.fw-medium= @task.due_date&.strftime("%Y-%m-%d") || 'N/A'
 
         .col-md-6
@@ -100,13 +101,13 @@
           ul.list-unstyled.mb-0
             - if @task.testcase_link.present?
               li.mb-1
-                span.text-muted Testcase:
-                a.ms-2 href=@task.testcase_link target="_blank"
+                span.text-muted style="display: inline-block; width: 100px;" Testcase:
+                a href=@task.testcase_link target="_blank"
                   | View Sheet →
             - if @task.bug_link.present?
               li
-                span.text-muted Bug:
-                a.ms-2 href=@task.bug_link target="_blank"
+                span.text-muted style="display: inline-block; width: 100px;" Bug:
+                a href=@task.bug_link target="_blank"
                   | View Link →
 
       - if @task.stg_bugs_vn.to_i > 0 || @task.stg_bugs_jp.to_i > 0 || @task.prod_bugs.to_i > 0
