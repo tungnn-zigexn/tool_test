@@ -22,10 +22,13 @@
           i.bi.bi-plus-circle.me-1
           | Tạo Test Case
 
-        - if @task.bug_link.present?
-          = link_to project_task_bugs_path(@project, @task), class: "btn btn-light btn-sm text-nowrap d-inline-flex align-items-center shadow-sm" do
-            i.bi.bi-bug.me-1.text-danger
-            | Bugs list
+        = link_to new_project_task_bug_path(@project, @task), class: "btn btn-light btn-sm text-nowrap d-inline-flex align-items-center shadow-sm" do
+          i.bi.bi-bug-fill.me-1.text-danger
+          | Tạo Bug
+
+        = link_to project_task_bugs_path(@project, @task), class: "btn btn-light btn-sm text-nowrap d-inline-flex align-items-center shadow-sm" do
+          i.bi.bi-list-ul.me-1.text-danger
+          | Bugs list
 
         button.btn.btn-light.btn-sm.text-nowrap.d-inline-flex.align-items-center.shadow-sm data-bs-toggle="modal" data-bs-target="#importTestCasesModal"
           i.bi.bi-cloud-download.me-1

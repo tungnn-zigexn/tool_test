@@ -1,0 +1,15 @@
+.container.py-4
+  nav aria-label="breadcrumb"
+    ol.breadcrumb
+      li.breadcrumb-item = link_to 'Projects', projects_path
+      li.breadcrumb-item.text-truncate style="max-width: 150px;" = link_to @project.name, project_path(@project), title: @project.name
+      li.breadcrumb-item.text-truncate style="max-width: 250px;" = link_to @task.title, project_task_path(@project, @task), title: @task.title
+      li.breadcrumb-item = link_to 'Bugs', project_task_bugs_path(@project, @task)
+      li.breadcrumb-item.active aria-current="page" Tạo Bug mới
+
+  .mb-4
+    h2.mb-0.text-truncate title="Tạo Bug mới cho Task: #{@task.title}"
+      i.bi.bi-bug.me-2.text-danger
+      | Tạo Bug mới cho Task: #{@task.title}
+
+  = render 'form', bug: @bug
