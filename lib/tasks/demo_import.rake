@@ -480,12 +480,12 @@ namespace :demo do
     puts "✅ Project: #{project.name} (ID: #{project.id})"
     puts ''
 
-    # Import task từ Redmine với multi-sheet support
-    puts '📥 Đang import task từ Redmine (multi-sheet mode)...'
-    service = RedmineMultiSheetImportService.new('101531', project.id)
+    # Import task từ Redmine (hệ thống sẽ tự động xử lý multi-sheet nếu cần)
+    puts '📥 Đang import task từ Redmine...'
+    service = RedmineImportService.new('101531', project.id)
 
     if service.import
-      parent_task = service.parent_task
+      parent_task = service.task
       puts '✅ Import thành công!'
       puts ''
       puts '📋 PARENT TASK:'
@@ -495,9 +495,10 @@ namespace :demo do
       puts "   - Tổng Test Cases: #{parent_task.number_of_test_cases}"
       puts ''
 
-      if service.subtasks.any?
-        puts "📂 SUBTASKS (#{service.subtasks.count}):"
-        service.subtasks.each_with_index do |subtask, index|
+      subtasks = parent_task.subtasks
+      if subtasks.any?
+        puts "📂 SUBTASKS (#{subtasks.count}):"
+        subtasks.each_with_index do |subtask, index|
           puts ''
           puts "   #{index + 1}. #{subtask.title}"
           puts "      - ID: #{subtask.id}"
@@ -518,7 +519,7 @@ namespace :demo do
       puts ''
       puts '📊 TỔNG KẾT:'
       puts '   - Parent task: 1'
-      puts "   - Subtasks: #{service.subtasks.count}"
+      puts "   - Subtasks: #{subtasks.count}"
       puts "   - Tổng test cases: #{parent_task.number_of_test_cases}"
     else
       puts '❌ Import thất bại!'

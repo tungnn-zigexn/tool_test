@@ -70,9 +70,12 @@ Rails.application.routes.draw do
           end
         end
       end
-      resources :bugs, except: [ :index ] do
+      resources :bugs do
         member do
           patch :soft_delete
+        end
+        collection do
+          post :import_from_sheet
         end
       end
       resources :test_runs, except: [ :index ] do

@@ -22,6 +22,11 @@
           i.bi.bi-plus-circle.me-1
           | Tạo Test Case
 
+        - if @task.bug_link.present?
+          = link_to project_task_bugs_path(@project, @task), class: "btn btn-light btn-sm text-nowrap d-inline-flex align-items-center shadow-sm" do
+            i.bi.bi-bug.me-1.text-danger
+            | Bugs list
+
         button.btn.btn-light.btn-sm.text-nowrap.d-inline-flex.align-items-center.shadow-sm data-bs-toggle="modal" data-bs-target="#importTestCasesModal"
           i.bi.bi-cloud-download.me-1
           | Import từ Sheet
@@ -108,7 +113,7 @@
               li
                 span.text-muted style="display: inline-block; width: 100px;" Bug:
                 a href=@task.bug_link target="_blank"
-                  | View Link →
+                  | View Sheet →
 
       - if @task.stg_bugs_vn.to_i > 0 || @task.stg_bugs_jp.to_i > 0 || @task.prod_bugs.to_i > 0
         .mb-4

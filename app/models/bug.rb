@@ -77,6 +77,14 @@ class Bug < ApplicationRecord
     end
   end
 
+  def dev_name
+    dev&.name || dev_name_raw || 'N/A'
+  end
+
+  def tester_name
+    tester&.name || tester_name_raw || 'N/A'
+  end
+
   # Export to sheet format (giống Bug sheet trong ảnh)
   def to_sheet_row
     {
@@ -85,8 +93,8 @@ class Bug < ApplicationRecord
       application: application_display,
       category: category_display,
       priority: priority.titleize,
-      dev: dev&.name,
-      tester: tester&.name,
+      dev: dev_name,
+      tester: tester_name,
       status: status.titleize,
       image_video: image_video_url,
       note: notes,

@@ -1,0 +1,80 @@
+.container.py-4
+  / Breadcrumbs
+  nav aria-label="breadcrumb"
+    ol.breadcrumb.mb-4
+      li.breadcrumb-item
+        a.text-decoration-none href=projects_path Projects
+      li.breadcrumb-item
+        a.text-decoration-none href=project_path(@project) = @project.name
+      li.breadcrumb-item
+        a.text-decoration-none href=project_task_path(@project, @task) = @task.title
+      li.breadcrumb-item.active aria-current="page" Bugs
+
+  / Header
+  .d-flex.justify-content-between.align-items-center.mb-4
+    div
+      h1.h3.fw-bold.mb-1
+        i.bi.bi-bug.text-danger.me-2
+        | Bugs list
+      p.text-muted.mb-0 = "Associated with: #{@task.title}"
+
+    .d-flex.gap-2
+      - if @task.bug_link.present?
+        = button_to import_from_sheet_project_task_bugs_path(@project, @task), method: :post, class: 'btn btn-outline-primary' do
+          i.bi.bi-arrow-repeat.me-2
+          | Re-import from Sheet
+        a.btn.btn-outline-secondary href=@task.bug_link target="_blank"
+          i.bi.bi-google.me-2
+          | Open Sheet
+
+  / Bugs Table
+  .card.border-0.shadow-sm
+    .card-body.p-0
+      .table-responsive
+        table.table.table-hover.align-middle.mb-0
+          thead.bg-light
+            tr
+              th.ps-4.py-3 width="60" No.
+              th.py-3 Content
+              th.py-3 width="120" App
+              th.py-3 width="150" Dev / Test
+              th.py-3 width="120" Status
+              th.py-3 width="120" Links
+          tbody
+            - @bugs.each_with_index do |bug, index|
+              tr
+                td.ps-4 = index + 1
+                td
+                  .fw-semibold.text-dark = bug.title
+                  - if bug.content.present? && bug.content != bug.title
+                    .small.text-muted.text-truncate style="max-width: 400px;" = bug.content.split("\n")[1..].join(" ")
+                td
+                  span.badge.bg-secondary.bg-opacity-10.text-secondary = bug.application_display
+                td
+                  .small
+                    .mb-1
+                      span.text-muted Dev:
+                      span.fw-medium = bug.dev_name
+                    div
+                      span.text-muted Test:
+                      span.fw-medium = bug.tester_name
+                td
+                  span class="badge bg-#{bug.status_color} bg-opacity-10 text-#{bug.status_color}"
+                    = bug.status.titleize
+                td
+                  - if bug.image_video_url.present?
+                    a.btn.btn-sm.btn-outline-info href=bug.image_video_url target="_blank"
+                      i.bi.bi-image.me-1
+                      | Media
+                  - else
+                    span.text-muted.small N/A
+
+  / Empty State
+  - if @bugs.empty?
+    .text-center.py-5
+      .h1.mb-3 🐛
+      h4.text-secondary No Bugs Found
+      p.text-muted This task has no bugs recorded yet.
+      - if @task.bug_link.present?
+        = button_to import_from_sheet_project_task_bugs_path(@project, @task), method: :post, class: 'btn btn-primary mt-2' do
+          | Import Bugs from Sheet

@@ -1,3 +1,4 @@
+# encoding: utf-8
 class TestCaseImportService
   attr_reader :errors, :imported_count, :skipped_count
 
@@ -8,6 +9,7 @@ class TestCaseImportService
     @errors = []
     @imported_count = 0
     @skipped_count = 0
+    @task_counts = Hash.new(0)
   end
 
   # Import test cases from Google Sheet
@@ -23,21 +25,31 @@ class TestCaseImportService
       end
 
       all_sheet_data.each do |sheet_name, sheet_data|
+        # If the task is explicitly meant to match a specific sheet (subtask level),
+        # only process the matching sheet.
+        if @task.parent_id.present?
+          next unless name_match?(@task.title, sheet_name)
+        end
+
         process_sheet(sheet_name, sheet_data)
       end
 
-      Rails.logger.info "Import hoàn tất: #{@imported_count} test cases, bỏ qua: #{@skipped_count}"
+      # Update counts for all affected tasks
+      @task_counts.each do |target_task, count|
+        target_task.update(number_of_test_cases: count)
+      end
+
+      # Also update the primary task if it wasn't in the counts (meaning 0)
+      @task.update(number_of_test_cases: @task_counts[@task]) unless @task_counts.key?(@task)
+
+      Rails.logger.info "Import hoàn tất: #{@imported_count} test cases across #{@task_counts.keys.count} tasks"
       true
     rescue StandardError => e
-      @errors << "Lỗi khi import: #{e.message}"
-      Rails.logger.error "TestCaseImportService Error: #{e.message}\n#{e.backtrace.join("\n")}"
+      error_msg = ensure_utf8(e.message)
+      @errors << "Lỗi khi import: #{error_msg}"
+      Rails.logger.error "TestCaseImportService Error: #{error_msg}\n#{e.backtrace.join("\n")}"
       false
     end
-  end
-
-  # Public method to import from sheet data directly (for multi-sheet service)
-  def import_from_sheet_data(sheet_name, sheet_data)
-    process_sheet(sheet_name, sheet_data)
   end
 
   private
@@ -45,7 +57,7 @@ class TestCaseImportService
   def process_sheet(sheet_name, sheet_data)
     return if sheet_data.nil? || sheet_data.empty?
 
-    Rails.logger.info "Processing sheet: #{sheet_name} with #{sheet_data.length} rows"
+    Rails.logger.info "Processing sheet: #{ensure_utf8(sheet_name)} with #{sheet_data.length} rows"
 
     # Skip 4 header rows
     header_rows = sheet_data.first(4)
@@ -76,9 +88,10 @@ class TestCaseImportService
       actual_row_number = starting_row_number + index
       process_test_case_row(row, column_mapping, sheet_name, actual_row_number)
     rescue StandardError => e
-      @errors << "Lỗi dòng #{actual_row_number} trong sheet '#{sheet_name}': #{e.message}"
+      error_msg = ensure_utf8(e.message)
+      @errors << "Lỗi dòng #{actual_row_number} trong sheet '#{ensure_utf8(sheet_name)}': #{error_msg}"
       @skipped_count += 1
-      Rails.logger.warn "Bỏ qua dòng #{actual_row_number}: #{e.message}"
+      Rails.logger.warn "Bỏ qua dòng #{actual_row_number}: #{error_msg}"
     end
   end
 
@@ -98,21 +111,21 @@ class TestCaseImportService
     header_row.each_with_index do |col_name, index|
       next if col_name.blank?
 
-      return index if col_name.strip.downcase.match?(/^target$|^対象$|^đối.*tượng$/)
+      return index if ensure_utf8(col_name).downcase.match?(/^target$|^対象$|^đối.*tượng$/)
     end
     nil
   end
 
   def row_contains_status?(row, target_idx, row_len)
     ((target_idx + 1)...row_len).any? do |idx|
-      val = row[idx].to_s.strip.downcase
+      val = ensure_utf8(row[idx]).downcase
       val.match?(/^(pass|fail|failed|ok|ng|not.*run|skip|pending|block|blocked)$/i) || val.match?(/^tc\d+$/i)
     end
   end
 
   def row_contains_identifier?(row)
     row.first(4).any? do |val|
-      val_norm = val.to_s.strip.downcase
+      val_norm = ensure_utf8(val).downcase
       val_norm.match?(/^tc\d+$/i) || val_norm.match?(/^\d+$/)
     end
   end
@@ -124,7 +137,7 @@ class TestCaseImportService
 
     header_row.each_with_index do |col_name, index|
       next if col_name.blank?
-      break if col_name.strip.downcase.match?(/^note$|^備考$|^ghi.*chú$/)
+      break if ensure_utf8(col_name).downcase.match?(/^note$|^備考$|^ghi.*chú$/)
 
       map_column_header(col_name, index, mapping, device_columns)
     end
@@ -137,7 +150,7 @@ class TestCaseImportService
   end
 
   def map_column_header(col_name, index, mapping, device_columns)
-    name = col_name.strip.downcase
+    name = ensure_utf8(col_name).downcase
 
     case name
     when /^id$/, /^no$/, /^stt$/, /^順番$/ then mapping[:id] = index
@@ -151,7 +164,7 @@ class TestCaseImportService
     when /^us$/, /^user.*story$/, /^ユーザー.*ストーリー$/ then mapping[:user_story] = index
     when /chrome|firefox|safari|edge|android|ios|iphone|ipad/,
          /^prod$/i, /^stg/i, /environment|version|deploy.*gate|testflight/
-      device_columns << { index: index, name: col_name.strip }
+      device_columns << { index: index, name: ensure_utf8(col_name) }
     end
   end
 
@@ -160,10 +173,10 @@ class TestCaseImportService
 
     ((target_idx + 1)...header_row.length).each do |idx|
       header_name = header_row[idx]
-      break if header_name&.match?(/^note$/i)
+      break if ensure_utf8(header_name)&.match?(/^note$/i)
 
       device_name = device_row[idx]
-      device_columns << { index: idx, name: device_name.strip } if device_name.present?
+      device_columns << { index: idx, name: ensure_utf8(device_name) } if device_name.present?
     end
   end
 
@@ -183,16 +196,42 @@ class TestCaseImportService
       return skip_row(row_number) if title.blank?
     end
 
-    test_case = @task.test_cases.find_or_initialize_by(title: title)
+    # Intelligent task matching:
+    # If the sheet name matches a subtask, use that subtask. Otherwise use current task.
+    target = find_target_task(sheet_name)
+
+    test_case = target.test_cases.find_or_initialize_by(title: title)
     test_case.assign_attributes(test_case_import_attributes(case_data, sheet_name, row_number))
 
     if test_case.save
       create_test_step(test_case, case_data[:action], case_data[:expected_result])
       create_device_test_results(test_case, device_results)
       @imported_count += 1
+      @task_counts[target] += 1
     else
       handle_test_case_save_error(test_case, row_number)
     end
+  end
+
+  def find_target_task(sheet_name)
+    return @task if sheet_name.blank?
+
+    # Try to find a subtask that matches the sheet name (fuzzy match)
+    # We prioritize subtasks of the current task.
+    matching_subtask = @task.subtasks.find do |s|
+      name_match?(s.title, sheet_name)
+    end
+
+    matching_subtask || @task
+  end
+
+  def name_match?(task_title, sheet_name)
+    return false if task_title.blank? || sheet_name.blank?
+
+    t_title = ensure_utf8(task_title).downcase
+    s_name = ensure_utf8(sheet_name).downcase
+
+    t_title == s_name || t_title.include?(s_name) || s_name.include?(t_title)
   end
 
   def extract_case_data(row, mapping)
@@ -230,14 +269,14 @@ class TestCaseImportService
       test_type: normalize_test_type(case_data[:test_type]),
       function: case_data[:function],
       target: normalize_target(case_data[:target]),
-      description: "Imported from sheet: #{sheet_name}, row: #{row_number}",
+      description: "Imported from sheet: #{ensure_utf8(sheet_name)}, row: #{row_number}",
       acceptance_criteria_url: case_data[:ac_url],
       user_story_url: case_data[:us_url]
     }
   end
 
   def handle_test_case_save_error(test_case, row_number)
-    @errors << "Không thể lưu test case dòng #{row_number}: #{test_case.errors.full_messages.join(', ')}"
+    @errors << "Không thể lưu test case dòng #{row_number}: #{ensure_utf8(test_case.errors.full_messages.join(', '))}"
     @skipped_count += 1
   end
 
@@ -257,7 +296,7 @@ class TestCaseImportService
     lines.each_with_index do |line, index|
       test_step.test_step_contents.create!(
         content_type: 'text',
-        content_value: line.strip,
+        content_value: ensure_utf8(line).strip,
         content_category: category,
         display_order: index
       )
@@ -270,7 +309,7 @@ class TestCaseImportService
     device_results.each do |result|
       test_case.test_results.where(device: result[:device]).destroy_all
       test_case.test_results.create!(
-        device: result[:device], status: result[:status],
+        device: ensure_utf8(result[:device]), status: result[:status],
         run_id: nil, executed_at: Time.current
       )
     end
@@ -279,13 +318,13 @@ class TestCaseImportService
   def get_cell_value(row, column_index)
     return nil if column_index.nil? || row.nil? || row[column_index].nil?
 
-    row[column_index].to_s.strip
+    ensure_utf8(row[column_index]).strip
   end
 
   def normalize_test_type(test_type)
     return 'feature' if test_type.blank?
 
-    case test_type.strip.downcase
+    case ensure_utf8(test_type).downcase
     when 'ui', 'ユーザーインターフェース', 'giao diện' then 'ui'
     else 'feature'
     end
@@ -294,7 +333,7 @@ class TestCaseImportService
   def normalize_target(target)
     return 'pc_sp_app' if target.blank?
 
-    normalized = target.strip.downcase.gsub(/[・、\s]/, '_')
+    normalized = ensure_utf8(target).downcase.gsub(/[・、\s]/, '_')
     if normalized.include?('pc') && normalized.include?('sp')
       normalized.include?('app') ? 'pc_sp_app' : 'pc_sp'
     elsif %w[app pc sp].include?(normalized)
@@ -312,7 +351,7 @@ class TestCaseImportService
       next if value.blank?
 
       results << {
-        device: device_col[:name],
+        device: ensure_utf8(device_col[:name]),
         status: normalize_test_status(value),
         raw_value: value
       }
@@ -322,12 +361,18 @@ class TestCaseImportService
   def normalize_test_status(status_value)
     return 'not_run' if status_value.blank?
 
-    case status_value.strip.downcase
+    case ensure_utf8(status_value).downcase
     when /pass/, /ok/, /success/, /成功/ then 'pass'
     when /fail/, /error/, /ng/, /失敗/ then 'fail'
     when /not.*run/, /未実施/, /skip/, /pending/ then 'not_run'
     when /block/, /blocked/, /ブロック/ then 'blocked'
     else 'unknown'
     end
+  end
+
+  def ensure_utf8(str)
+    return nil if str.nil?
+    # Force to UTF-8 and scrub invalid sequences
+    str.to_s.force_encoding('UTF-8').scrub
   end
 end

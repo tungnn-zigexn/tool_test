@@ -155,6 +155,7 @@ class TasksController < ApplicationController
 
   def set_task
     @task = Task.find(params[:id])
+    @project = @task.project
   end
 
   def task_params

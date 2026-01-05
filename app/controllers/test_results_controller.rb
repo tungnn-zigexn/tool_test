@@ -150,11 +150,15 @@ class TestResultsController < ApplicationController
 
   def set_test_case
     @test_case = TestCase.find(params[:test_case_id]) if params[:test_case_id]
+    @task = @test_case&.task
+    @project = @task&.project
   end
 
   def set_test_result
     @test_result = TestResult.find(params[:id])
     @test_case = @test_result.test_case if @test_case.nil?
+    @task = @test_case&.task if @task.nil?
+    @project = @task&.project if @project.nil?
   end
 
   def test_result_params

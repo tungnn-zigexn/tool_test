@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_24_041522) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_04_155316) do
   create_table "bug_comments", force: :cascade do |t|
     t.integer "bug_id", null: false
     t.integer "user_id", null: false
@@ -51,6 +51,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_24_041522) do
     t.datetime "deleted_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "dev_name_raw"
+    t.string "tester_name_raw"
     t.index ["application"], name: "index_bugs_on_application"
     t.index ["category"], name: "index_bugs_on_category"
     t.index ["deleted_at"], name: "index_bugs_on_deleted_at"
