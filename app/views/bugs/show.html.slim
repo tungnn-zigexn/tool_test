@@ -61,6 +61,11 @@
         .card-body
           = simple_format @bug.notes
 
+    / Activity History
+    .card.shadow-sm.mb-4
+      .card-body
+        = render 'shared/activity_timeline', logs: ActivityLog.where(trackable_type: 'Bug', trackable_id: @bug.id).limit(10)
+
   .col-md-4
     .card.shadow-sm.mb-4
       .card-header.bg-light

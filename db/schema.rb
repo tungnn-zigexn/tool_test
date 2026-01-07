@@ -10,7 +10,19 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_04_155316) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_05_033733) do
+  create_table "activity_logs", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.string "trackable_type", null: false
+    t.integer "trackable_id", null: false
+    t.string "action_type"
+    t.json "metadata"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["trackable_type", "trackable_id"], name: "index_activity_logs_on_trackable"
+    t.index ["user_id"], name: "index_activity_logs_on_user_id"
+  end
+
   create_table "bug_comments", force: :cascade do |t|
     t.integer "bug_id", null: false
     t.integer "user_id", null: false
@@ -231,4 +243,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_04_155316) do
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
+
+  add_foreign_key "activity_logs", "users"
 end

@@ -1,5 +1,6 @@
 class TestCase < ApplicationRecord
   include SoftDeletable
+  include Loggable
   belongs_to :task
   belongs_to :created_by, class_name: 'User', foreign_key: 'created_by_id', optional: true
 

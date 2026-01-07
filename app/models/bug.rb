@@ -1,5 +1,6 @@
 class Bug < ApplicationRecord
   include SoftDeletable
+  include Loggable
   belongs_to :task
   belongs_to :dev, class_name: 'User', foreign_key: 'dev_id', optional: true
   belongs_to :tester, class_name: 'User', foreign_key: 'tester_id', optional: true

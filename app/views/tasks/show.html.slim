@@ -132,6 +132,9 @@
               span.text-muted Production:
               span.fw-bold.text-danger.ms-1= @task.prod_bugs
 
+      / Activity History
+      = render 'shared/activity_timeline', logs: ActivityLog.where(trackable_type: 'Task', trackable_id: @task.id).limit(10)
+
   / Subtasks Section
   - if @task.subtasks.any?
     .card.border-0.shadow-sm.mb-4

@@ -109,22 +109,22 @@
                   - else
                     p.small.text-muted.fst-italic.mb-0 No actions defined
 
-                / Expected Results
-                .col-md-6
-                  h6.fw-semibold.text-muted.mb-2
-                    i.bi.bi-check-circle.me-2.text-success
-                    | Expected Results
-                  - if step.expected_contents.any?
-                    .vstack.gap-2
-                      - step.expected_contents.each do |content|
-                        - if content.content_type == 'text'
-                          p.small.text-muted.mb-0= content.content_value
-                        - elsif content.content_type == 'image' && content.content_value.present?
-                          div
-                            img.rounded.shadow-sm src=gyazo_to_image_url(content.content_value) alt="Evidence" style="max-width: 400px;"
-                            .small.text-muted.mt-1
-                              a href=content.content_value target="_blank" View full size
-                  - else
-                    p.small.text-muted.fst-italic.mb-0 No expected results defined
+                - if step.expected_contents.any?
+                  .vstack.gap-2
+                    - step.expected_contents.each do |content|
+                      - if content.content_type == 'text'
+                        p.small.text-muted.mb-0= content.content_value
+                      - elsif content.content_type == 'image' && content.content_value.present?
+                        div
+                          img.rounded.shadow-sm src=gyazo_to_image_url(content.content_value) alt="Evidence" style="max-width: 400px;"
+                          .small.text-muted.mt-1
+                            a href=content.content_value target="_blank" View full size
+                - else
+                  p.small.text-muted.fst-italic.mb-0 No expected results defined
+
+  / Activity History
+  .card.border-0.shadow-sm.mt-4
+    .card-body
+      = render 'shared/activity_timeline', logs: ActivityLog.where(trackable_type: 'TestCase', trackable_id: @test_case.id).limit(10)
 
 
