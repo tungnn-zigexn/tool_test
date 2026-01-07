@@ -3,7 +3,7 @@ require 'json'
 
 class RedmineService
   BASE_URL = 'https://dev.zigexn.vn'.freeze
-  API_KEY = Rails.application.credentials.redmine[:api_key]
+  API_KEY = ENV['REDMINE_API_KEY'].freeze
   USERNAME = ENV['REDMINE_USERNAME'].freeze
   PASSWORD = ENV['REDMINE_PASSWORD'].freeze
 
