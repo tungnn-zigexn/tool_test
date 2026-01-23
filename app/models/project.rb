@@ -1,6 +1,8 @@
 class Project < ApplicationRecord
   include SoftDeletable
+
   has_many :tasks, dependent: :destroy
+  has_many :project_histories, dependent: :destroy
 
   validates :name, presence: true, length: { maximum: 50 }, uniqueness: { case_sensitive: false }
 
@@ -10,13 +12,11 @@ class Project < ApplicationRecord
   end
 
   def completed_task_count
-    root_tasks.where(status: ['Closed', 'resolved']).count
+    root_tasks.where(status: %w[Closed resolved]).count
   end
 
   def root_tasks
     # A task is a root if it has no parent or its parent doesn't exist in the same project
     tasks.active.where('parent_id IS NULL OR parent_id NOT IN (SELECT id FROM tasks WHERE project_id = ?)', id)
   end
-
-  private
 end
