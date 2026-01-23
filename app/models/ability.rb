@@ -39,6 +39,10 @@ class Ability
       can :read, TestCase
       can :read, Bug
 
+      # User can read task and test case histories only (NOT ProjectHistory)
+      can :read, TaskHistory
+      can :read, TestCaseHistory
+
       # User can create and update test cases, test runs
       can %i[create update], TestCase
       can %i[create update], TestRun

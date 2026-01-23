@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_24_041522) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_14_042211) do
   create_table "bug_comments", force: :cascade do |t|
     t.integer "bug_id", null: false
     t.integer "user_id", null: false
@@ -60,6 +60,19 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_24_041522) do
     t.index ["task_id"], name: "index_bugs_on_task_id"
     t.index ["test_result_id"], name: "index_bugs_on_test_result_id"
     t.index ["tester_id"], name: "index_bugs_on_tester_id"
+  end
+
+  create_table "project_histories", force: :cascade do |t|
+    t.integer "project_id", null: false
+    t.integer "user_id", null: false
+    t.string "action", null: false
+    t.text "old_value"
+    t.text "new_value"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["action"], name: "index_project_histories_on_action"
+    t.index ["project_id"], name: "index_project_histories_on_project_id"
+    t.index ["user_id"], name: "index_project_histories_on_user_id"
   end
 
   create_table "projects", force: :cascade do |t|
@@ -152,7 +165,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_24_041522) do
   create_table "test_results", force: :cascade do |t|
     t.integer "run_id"
     t.integer "case_id", null: false
-    t.string "status"
+    t.string "result"
     t.text "device"
     t.integer "executed_by_id"
     t.datetime "executed_at"

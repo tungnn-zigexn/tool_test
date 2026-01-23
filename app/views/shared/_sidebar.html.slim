@@ -19,6 +19,11 @@
         = link_to projects_path, class: "nav-link d-flex align-items-center rounded-3 p-3 #{controller_name == 'projects' ? 'active shadow-sm' : 'text-secondary hover-bg-light'}" do
           i.bi.bi-kanban-fill.me-3
           span Projects
+      
+      li.nav-item.mb-2
+        = link_to project_histories_path, class: "nav-link d-flex align-items-center rounded-3 p-3 #{controller_name == 'project_histories' ? 'active shadow-sm' : 'text-secondary hover-bg-light'}" do
+          i.bi.bi-clock-history.me-3
+          span Project History
 
       hr.my-4.text-muted.opacity-25
 
@@ -58,6 +63,5 @@
         = link_to test_cases_path, class: "nav-link d-flex align-items-center rounded-3 p-3 #{controller_name == 'test_cases' ? 'active shadow-sm' : 'text-secondary hover-bg-light'}" do
           i.bi.bi-shield-check.me-3
           span Test Cases
-
 
 

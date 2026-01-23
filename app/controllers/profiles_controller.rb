@@ -17,7 +17,7 @@ class ProfilesController < ApplicationController
         render :edit_password, status: :unprocessable_entity
       end
     else
-      @user.errors.add(:current_password, "không chính xác")
+      @user.errors.add(:current_password, 'không chính xác')
       render :edit_password, status: :unprocessable_entity
     end
   end
