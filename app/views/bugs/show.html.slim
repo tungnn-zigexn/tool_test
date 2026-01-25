@@ -1,0 +1,100 @@
+.container.py-4
+  nav aria-label="breadcrumb"
+    ol.breadcrumb
+      li.breadcrumb-item = link_to 'Projects', projects_path
+      li.breadcrumb-item.text-truncate style="max-width: 150px;" = link_to @project.name, project_path(@project), title: @project.name
+      li.breadcrumb-item.text-truncate style="max-width: 250px;" = link_to @task.title, project_task_path(@project, @task), title: @task.title
+      li.breadcrumb-item = link_to 'Bugs', project_task_bugs_path(@project, @task)
+      li.breadcrumb-item.active aria-current="page" Bug ##{@bug.id}
+
+  .d-flex.flex-column.flex-md-row.justify-content-between.align-items-start.align-items-md-center.gap-3.mb-4
+    .d-flex.align-items-center.flex-grow-1.min-width-0
+      h2.mb-0.me-3.text-truncate title="Bug ##{@bug.id}: #{@bug.title}"
+        i.bi.bi-bug.text-danger.me-2
+        | Bug ##{@bug.id}: #{@bug.title}
+      .d-flex.gap-2
+        span.badge class="bg-#{@bug.status_color}" = @bug.status.titleize
+        span.badge class="bg-#{@bug.priority_color}" = @bug.priority.titleize
+
+  .d-flex.gap-2
+    = link_to edit_project_task_bug_path(@project, @task, @bug), class: 'btn btn-outline-primary' do
+      i.bi.bi-pencil.me-1
+      | Chỉnh sửa
+    = link_to project_task_bug_path(@project, @task, @bug), method: :delete, data: { confirm: 'Bạn có chắc chắn muốn xóa bug này không?' }, class: 'btn btn-outline-danger' do
+      i.bi.bi-trash.me-1
+      | Xóa
+
+.row
+  .col-md-8
+    .card.shadow-sm.mb-4
+      .card-header.bg-white
+        h5.mb-0 Nội dung chi tiết
+      .card-body
+        .bug-content.whitespace-pre-wrap
+          - if @bug.content.present?
+            = simple_format @bug.content
+          - else
+            i.text-muted Không có nội dung chi tiết.
+
+    - if @bug.image_video_url.present?
+      .card.shadow-sm.mb-4
+        .card-header.bg-white
+          h5.mb-0 Ảnh / Video minh họa
+        .card-body
+          = link_to @bug.image_video_url, target: '_blank', class: 'btn btn-sm btn-outline-info mb-3' do
+            i.bi.bi-box-arrow-up-right.me-1
+            | Mở liên kết gốc
+          .media-preview.border.rounded.p-2.bg-light
+            - if @bug.image_video_url.match?(/\.(jpg|jpeg|png|gif|webp)$/i)
+              img.img-fluid.rounded src=@bug.image_video_url alt="Bug Image"
+            - elsif @bug.image_video_url.include?('gyazo.com')
+              img.img-fluid.rounded src="#{@bug.image_video_url}/max_size.png" alt="Gyazo Image"
+            - else
+              .p-4.text-center
+                i.bi.bi-file-earmark-play.display-4.text-secondary
+                p.mt-2 Bản xem trước không khả dụng cho link này.
+
+    - if @bug.notes.present?
+      .card.shadow-sm.mb-4
+        .card-header.bg-white
+          h5.mb-0 Ghi chú
+        .card-body
+          = simple_format @bug.notes
+
+    / Activity History
+    .card.shadow-sm.mb-4
+      .card-body
+        = render 'shared/activity_timeline', logs: ActivityLog.where(trackable_type: 'Bug', trackable_id: @bug.id).limit(10)
+
+  .col-md-4
+    .card.shadow-sm.mb-4
+      .card-header.bg-light
+        h6.mb-0 Thông tin thuộc tính
+      .card-body.p-0
+        table.table.table-borderless.mb-0
+          tbody
+            tr
+              th.ps-3 Scope:
+              td = @bug.application_display
+            tr
+              th.ps-3 Category:
+              td = @bug.category_display
+            tr
+              th.ps-3 Developer:
+              td
+                - if @bug.dev
+                  i.bi.bi-person-circle.me-1.text-primary
+                  = @bug.dev.name
+                - else
+                  span.text-muted = @bug.dev_name_raw || 'Unassigned'
+            tr
+              th.ps-3 Tester:
+              td
+                - if @bug.tester
+                  i.bi.bi-person-badge.me-1.text-success
+                  = @bug.tester.name
+                - else
+                  span.text-muted = @bug.tester_name_raw || 'Unassigned'
+            tr
+              th.ps-3 Created at:
+              td.text-muted = @bug.created_at.strftime("%d/%m/%Y %H:%M")

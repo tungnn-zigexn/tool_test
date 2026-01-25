@@ -10,7 +10,19 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_24_041522) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_05_033733) do
+  create_table "activity_logs", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.string "trackable_type", null: false
+    t.integer "trackable_id", null: false
+    t.string "action_type"
+    t.json "metadata"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["trackable_type", "trackable_id"], name: "index_activity_logs_on_trackable"
+    t.index ["user_id"], name: "index_activity_logs_on_user_id"
+  end
+
   create_table "bug_comments", force: :cascade do |t|
     t.integer "bug_id", null: false
     t.integer "user_id", null: false
@@ -51,6 +63,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_24_041522) do
     t.datetime "deleted_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "dev_name_raw"
+    t.string "tester_name_raw"
     t.index ["application"], name: "index_bugs_on_application"
     t.index ["category"], name: "index_bugs_on_category"
     t.index ["deleted_at"], name: "index_bugs_on_deleted_at"
@@ -229,4 +243,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_24_041522) do
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
+
+  add_foreign_key "activity_logs", "users"
 end

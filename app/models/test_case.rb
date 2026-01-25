@@ -1,10 +1,11 @@
 class TestCase < ApplicationRecord
   include SoftDeletable
+  include Loggable
   belongs_to :task
   belongs_to :created_by, class_name: 'User', foreign_key: 'created_by_id', optional: true
 
-  has_many :test_steps, foreign_key: 'case_id', dependent: :destroy, inverse_of: :test_case
-  has_many :test_results, foreign_key: 'case_id', dependent: :destroy
+  has_many :test_steps, foreign_key: 'case_id', dependent: :delete_all, inverse_of: :test_case
+  has_many :test_results, foreign_key: 'case_id', dependent: :delete_all
 
   # Nested attributes for creating test steps - reject blank steps
   accepts_nested_attributes_for :test_steps, allow_destroy: true, reject_if: lambda { |attrs|

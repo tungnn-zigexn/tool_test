@@ -4,6 +4,13 @@ class ApplicationController < ActionController::Base
 
   # Devise authentication
   before_action :authenticate_user!
+  before_action :set_current_user
+
+  private
+
+  def set_current_user
+    Current.user = current_user
+  end
 
   # CanCanCan authorization
   load_and_authorize_resource unless: :devise_controller?

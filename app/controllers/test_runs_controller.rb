@@ -171,11 +171,14 @@ class TestRunsController < ApplicationController
   private
 
   def set_task
-    @task = Task.find(params[:task_id])
+    @task = Task.find(params[:task_id]) if params[:task_id]
+    @project = @task&.project
   end
 
   def set_test_run
     @test_run = TestRun.find(params[:id])
+    @task = @test_run.task if @task.nil?
+    @project = @task&.project if @project.nil?
   end
 
   def test_run_params

@@ -22,6 +22,14 @@
           i.bi.bi-plus-circle.me-1
           | Tạo Test Case
 
+        = link_to new_project_task_bug_path(@project, @task), class: "btn btn-light btn-sm text-nowrap d-inline-flex align-items-center shadow-sm" do
+          i.bi.bi-bug-fill.me-1.text-danger
+          | Tạo Bug
+
+        = link_to project_task_bugs_path(@project, @task), class: "btn btn-light btn-sm text-nowrap d-inline-flex align-items-center shadow-sm" do
+          i.bi.bi-list-ul.me-1.text-danger
+          | Bugs list
+
         button.btn.btn-light.btn-sm.text-nowrap.d-inline-flex.align-items-center.shadow-sm data-bs-toggle="modal" data-bs-target="#importTestCasesModal"
           i.bi.bi-cloud-download.me-1
           | Import từ Sheet
@@ -108,7 +116,7 @@
               li
                 span.text-muted style="display: inline-block; width: 100px;" Bug:
                 a href=@task.bug_link target="_blank"
-                  | View Link →
+                  | View Sheet →
 
       - if @task.stg_bugs_vn.to_i > 0 || @task.stg_bugs_jp.to_i > 0 || @task.prod_bugs.to_i > 0
         .mb-4
@@ -123,6 +131,9 @@
             .bg-danger.bg-opacity-10.px-3.py-2.rounded
               span.text-muted Production:
               span.fw-bold.text-danger.ms-1= @task.prod_bugs
+
+      / Activity History
+      = render 'shared/activity_timeline', logs: ActivityLog.where(trackable_type: 'Task', trackable_id: @task.id).limit(10)
 
   / Subtasks Section
   - if @task.subtasks.any?

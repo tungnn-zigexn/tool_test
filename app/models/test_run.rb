@@ -2,7 +2,7 @@ class TestRun < ApplicationRecord
   belongs_to :task
   belongs_to :executed_by, class_name: 'User', foreign_key: 'executed_by_id', optional: true
 
-  has_many :test_results, foreign_key: 'run_id', dependent: :destroy
+  has_many :test_results, foreign_key: 'run_id', dependent: :delete_all
 
   validates :name, presence: true
   validates :task_id, presence: true

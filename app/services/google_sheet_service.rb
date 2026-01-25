@@ -70,15 +70,33 @@ class GoogleSheetService
   def get_data(spreadsheet_id, range_name)
     response = @service.get_spreadsheet_values(spreadsheet_id, range_name)
 
-    if response.values.nil? || response.values.empty?
-      puts "Cannot find data in range: #{range_name}"
-      return []
-    end
-
-    response.values
+    response.values || []
   rescue Google::Apis::Error => e
     puts "Error when call Google Sheets API (get_data): #{e.message}"
     Rails.logger.error "GoogleSheetService: Error API (get_data): #{e.message}"
+    nil
+  end
+
+  def get_all_sheet_names(spreadsheet_id)
+    response = @service.get_spreadsheet(spreadsheet_id, fields: 'sheets(properties.title)')
+    response.sheets.map { |sheet| ensure_utf8(sheet.properties.title) }
+  rescue Google::Apis::Error => e
+    puts "Error when get sheet names: #{e.message}"
+    Rails.logger.error "GoogleSheetService: Error get sheet names: #{e.message}"
+    nil
+  end
+
+  def get_sheets_info(spreadsheet_id)
+    response = @service.get_spreadsheet(spreadsheet_id, fields: 'sheets(properties(title,sheetId))')
+    response.sheets.map do |sheet|
+      {
+        title: ensure_utf8(sheet.properties.title),
+        sheet_id: sheet.properties.sheet_id.to_s
+      }
+    end
+  rescue Google::Apis::Error => e
+    puts "Error when get sheets info: #{e.message}"
+    Rails.logger.error "GoogleSheetService: Error get sheets info: #{e.message}"
     nil
   end
 
@@ -142,15 +160,6 @@ class GoogleSheetService
     puts msg
   end
 
-  def get_all_sheet_names(spreadsheet_id)
-    response = @service.get_spreadsheet(spreadsheet_id, fields: 'sheets(properties.title)')
-    response.sheets.map { |sheet| sheet.properties.title }
-  rescue Google::Apis::Error => e
-    puts "Error when get sheet names: #{e.message}"
-    Rails.logger.error "GoogleSheetService: Error get sheet names: #{e.message}"
-    nil
-  end
-
   def authorize
     unless File.exist?(CREDENTIALS_PATH)
       puts "Cannot find credentials file at: #{CREDENTIALS_PATH}"
@@ -162,5 +171,12 @@ class GoogleSheetService
       json_key_io: File.open(CREDENTIALS_PATH),
       scope: SCOPE
     )
+  end
+
+  def ensure_utf8(str)
+    return nil if str.nil?
+
+    # Force to UTF-8 and scrub invalid sequences
+    str.to_s.force_encoding('UTF-8').scrub
   end
 end

@@ -72,30 +72,51 @@ class ProjectsController < ApplicationController
 
   def destroy
     is_archived = @project.deleted_at.present?
-    @project.destroy
 
-    respond_to do |format|
+    begin
+      @project.destroy!
+      notice_msg = is_archived ? 'Project has been permanently deleted.' : 'Project has been deleted.'
       redirect_path = is_archived ? archived_projects_path : projects_path
-      format.html { redirect_to redirect_path, notice: 'Project has been permanently deleted.' }
-      format.json { head :no_content }
+
+      respond_to do |format|
+        format.html { redirect_to redirect_path, notice: notice_msg }
+        format.json { head :no_content }
+      end
+    rescue StandardError => e
+      respond_to do |format|
+        format.html { redirect_back fallback_location: projects_path, alert: "Failed to delete project: #{e.message}" }
+        format.json { render json: { error: e.message }, status: :unprocessable_entity }
+      end
     end
   end
 
   def soft_delete
-    @project.update(deleted_at: Time.current)
-
     respond_to do |format|
-      format.html { redirect_to projects_path, notice: 'Project has been soft deleted successfully.' }
-      format.json { render json: @project }
+      if @project.soft_delete!
+        format.html { redirect_to projects_path, notice: 'Project has been moved to archive.' }
+        format.json { render json: @project }
+      else
+        format.html do
+          redirect_back fallback_location: projects_path,
+                        alert: "Failed to archive project: #{@project.errors.full_messages.join(', ')}"
+        end
+        format.json { render json: @project.errors, status: :unprocessable_entity }
+      end
     end
   end
 
   def restore
-    @project.update(deleted_at: nil)
-
     respond_to do |format|
-      format.html { redirect_to archived_projects_path, notice: 'Project has been restored successfully.' }
-      format.json { render json: @project }
+      if @project.restore!
+        format.html { redirect_to archived_projects_path, notice: 'Project has been restored successfully.' }
+        format.json { render json: @project }
+      else
+        format.html do
+          redirect_back fallback_location: archived_projects_path,
+                        alert: "Failed to restore project: #{@project.errors.full_messages.join(', ')}"
+        end
+        format.json { render json: @project.errors, status: :unprocessable_entity }
+      end
     end
   end
 

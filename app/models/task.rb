@@ -1,5 +1,6 @@
 class Task < ApplicationRecord
   include SoftDeletable
+  include Loggable
   belongs_to :project
   belongs_to :assignee, class_name: 'User', foreign_key: 'assignee_id', optional: true
   belongs_to :parent, class_name: 'Task', foreign_key: 'parent_id', optional: true

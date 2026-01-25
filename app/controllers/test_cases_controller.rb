@@ -187,11 +187,13 @@ class TestCasesController < ApplicationController
 
   def set_task
     @task = Task.find(params[:task_id]) if params[:task_id]
+    @project = @task&.project
   end
 
   def set_test_case
     @test_case = TestCase.find(params[:id])
     @task = @test_case.task if @task.nil?
+    @project = @task&.project if @project.nil?
   end
 
   def test_case_params
