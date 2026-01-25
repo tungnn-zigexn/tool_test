@@ -1,6 +1,7 @@
 class Task < ApplicationRecord
   include SoftDeletable
   include Loggable
+
   belongs_to :project
   belongs_to :assignee, class_name: 'User', foreign_key: 'assignee_id', optional: true
   belongs_to :parent, class_name: 'Task', foreign_key: 'parent_id', optional: true
@@ -20,16 +21,16 @@ class Task < ApplicationRecord
   def due_date_after_start_date
     return if due_date.blank? || start_date.blank?
 
-    if due_date < start_date
-      errors.add(:due_date, "phải lớn hơn hoặc bằng ngày bắt đầu")
-    end
+    return unless due_date < start_date
+
+    errors.add(:due_date, 'phải lớn hơn hoặc bằng ngày bắt đầu')
   end
 
   public
 
-  scope :root_tasks, -> {
+  scope :root_tasks, lambda {
     where(parent_id: nil, redmine_id: nil)
-    .or(where.not(parent_id: nil).where.not(redmine_id: nil))
+      .or(where.not(parent_id: nil).where.not(redmine_id: nil))
   }
 
   def subtask?

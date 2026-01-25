@@ -1,5 +1,4 @@
 class UsersController < ApplicationController
-  skip_load_and_authorize_resource
   before_action :authorize_admin
   before_action :set_user, except: %i[index new create]
 

@@ -44,34 +44,35 @@ module Loggable
   end
 
   def format_changes(changes)
-    formatted = {}
-    changes.each do |field, values|
-      # Find if this field is a foreign key for any belongs_to association
-      reflection = self.class.reflections.values.find { |r| r.belongs_to? && r.foreign_key.to_s == field.to_s }
+    changes.each_with_object({}) do |(field, values), formatted|
+      reflection = find_reflection(field)
+      klass = reflection ? safe_reflection_klass(reflection) : nil
 
-      if reflection
-        klass = begin
-          reflection.klass
-        rescue StandardError
-          nil
-        end
-        if klass
-          resolver = lambda { |id|
-            return 'N/A' if id.blank?
-
-            record = klass.unscoped.find_by(id: id)
-            return id.to_s unless record
-
-            record.try(:name) || record.try(:title) || record.try(:full_name) || id.to_s
-          }
-
-          display_name = reflection.name.to_s.humanize
-          formatted[display_name] = [resolver.call(values[0]), resolver.call(values[1])]
-          next
-        end
+      if klass
+        display_name = reflection.name.to_s.humanize
+        formatted[display_name] = [resolve_value(klass, values[0]), resolve_value(klass, values[1])]
+      else
+        formatted[field] = values
       end
-      formatted[field] = values
     end
-    formatted
+  end
+
+  def find_reflection(field)
+    self.class.reflections.values.find { |r| r.belongs_to? && r.foreign_key.to_s == field.to_s }
+  end
+
+  def safe_reflection_klass(reflection)
+    reflection.klass
+  rescue StandardError
+    nil
+  end
+
+  def resolve_value(klass, id)
+    return 'N/A' if id.blank?
+
+    record = klass.unscoped.find_by(id: id)
+    return id.to_s unless record
+
+    record.try(:name) || record.try(:title) || record.try(:full_name) || id.to_s
   end
 end

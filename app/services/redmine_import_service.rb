@@ -1,4 +1,3 @@
-# encoding: utf-8
 class RedmineImportService
   attr_reader :errors, :task, :project
 
@@ -36,12 +35,12 @@ class RedmineImportService
   private
 
   def fetch_issue_from_redmine
-    issue_data = if @redmine_id.to_s.match?(/^\d+$/)
-                   RedmineService.get_issues(@redmine_id)
-                 else
-                    @errors << 'Please provide issue ID (number) instead of name'
-                    return nil
-                 end
+    unless @redmine_id.to_s.match?(/^\d+$/)
+      @errors << 'Please provide issue ID (number) instead of name'
+      return nil
+    end
+
+    issue_data = RedmineService.get_issues(@redmine_id)
     if issue_data.nil?
       @errors << "Cannot find issue from Redmine with ID: #{@redmine_id}"
       return nil
@@ -67,15 +66,20 @@ class RedmineImportService
 
   def task_attributes(issue_data)
     custom_fields = parse_custom_fields(issue_data['custom_fields'] || [])
+    internal_parent_id = find_internal_parent_id(issue_data)
 
-    # Map parent_id by Redmine ID if present
+    build_task_attributes(issue_data, custom_fields, internal_parent_id)
+  end
+
+  def find_internal_parent_id(issue_data)
     parent_redmine_id = issue_data.dig('parent', 'id')
-    internal_parent_id = nil
-    if parent_redmine_id.present?
-      parent_task = Task.find_by(redmine_id: parent_redmine_id.to_s)
-      internal_parent_id = parent_task&.id
-    end
+    return nil unless parent_redmine_id.present?
 
+    parent_task = Task.find_by(redmine_id: parent_redmine_id.to_s)
+    parent_task&.id
+  end
+
+  def build_task_attributes(issue_data, custom_fields, internal_parent_id)
     {
       redmine_id: @redmine_id.to_s,
       parent_id: internal_parent_id,
@@ -126,33 +130,41 @@ class RedmineImportService
 
   def import_subtasks_from_sheets
     return unless @task.testcase_link.present?
-    return if @task.parent_id.present? # Only top-level tasks should create subtasks from sheets
+    return if @task.parent_id.present?
 
-    spreadsheet_id = extract_spreadsheet_id(@task.testcase_link)
-    google_service = GoogleSheetService.new
-    sheet_names = google_service.get_all_sheet_names(spreadsheet_id)
-
-    # If there's only one sheet, we don't need to create subtasks from it (parent handles it)
-    return unless sheet_names.length > 1
+    sheet_names = fetch_sheet_names_for_subtasks
+    return unless sheet_names&.length.to_i > 1
 
     Rails.logger.info "Creating subtasks from #{sheet_names.length} sheets for task: #{@task.id}"
+    create_subtasks_from_sheets(sheet_names)
+  end
 
+  def fetch_sheet_names_for_subtasks
+    spreadsheet_id = extract_spreadsheet_id(@task.testcase_link)
+    google_service = GoogleSheetService.new
+    google_service.get_all_sheet_names(spreadsheet_id)
+  end
+
+  def create_subtasks_from_sheets(sheet_names)
     sheet_names.each do |name|
       name_utf8 = ensure_utf8(name)
-      # Skip common non-test-case sheets if any (e.g., 'Summary', 'Settings')
       next if name_utf8.match?(/summary|template|settings|master/i)
 
       subtask = @task.subtasks.find_or_initialize_by(title: name_utf8)
-      subtask.assign_attributes(
-        project_id: @project.id,
-        description: "Subtask automatic created from sheet: #{name_utf8}",
-        status: @task.status,
-        start_date: @task.start_date,
-        due_date: @task.due_date,
-        created_by_name: @task.created_by_name
-      )
+      subtask.assign_attributes(subtask_attributes(name_utf8))
       subtask.save!
     end
+  end
+
+  def subtask_attributes(name_utf8)
+    {
+      project_id: @project.id,
+      description: "Subtask automatic created from sheet: #{name_utf8}",
+      status: @task.status,
+      start_date: @task.start_date,
+      due_date: @task.due_date,
+      created_by_name: @task.created_by_name
+    }
   end
 
   def import_test_cases_if_available
@@ -185,7 +197,9 @@ class RedmineImportService
     import_service = BugImportService.new(@task, spreadsheet_id)
 
     if import_service.import
-      Rails.logger.info "Import bugs successfully: #{import_service.imported_count} new, #{import_service.updated_count} updated"
+      new_count = import_service.imported_count
+      updated_count = import_service.updated_count
+      Rails.logger.info "Import bugs successfully: #{new_count} new, #{updated_count} updated"
     else
       import_service.errors.each do |err|
         @errors << ensure_utf8(err)

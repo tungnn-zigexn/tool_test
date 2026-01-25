@@ -1,5 +1,4 @@
 class TestStepsController < ApplicationController
-  skip_load_and_authorize_resource
   before_action :set_test_case
   before_action :set_test_step
 

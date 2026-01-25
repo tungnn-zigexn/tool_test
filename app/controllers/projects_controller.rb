@@ -1,5 +1,4 @@
 class ProjectsController < ApplicationController
-  skip_load_and_authorize_resource
   before_action :set_project, except: %i[index new create archived]
   before_action :authorize_admin, except: %i[index show archived]
   # skip_before_action :verify_authenticity_token

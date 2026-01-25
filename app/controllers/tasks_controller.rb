@@ -1,5 +1,4 @@
 class TasksController < ApplicationController
-  skip_load_and_authorize_resource
   before_action :set_project, only: %i[new create import_from_redmine]
   before_action :set_task, except: %i[index new create import_from_redmine]
   # skip_before_action :verify_authenticity_token

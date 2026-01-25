@@ -1,6 +1,4 @@
 class ProfilesController < ApplicationController
-  skip_load_and_authorize_resource
-
   def edit_password
     @user = current_user
   end
@@ -17,7 +15,7 @@ class ProfilesController < ApplicationController
         render :edit_password, status: :unprocessable_entity
       end
     else
-      @user.errors.add(:current_password, "không chính xác")
+      @user.errors.add(:current_password, 'không chính xác')
       render :edit_password, status: :unprocessable_entity
     end
   end

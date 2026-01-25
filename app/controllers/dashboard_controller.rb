@@ -1,6 +1,4 @@
 class DashboardController < ApplicationController
-  skip_load_and_authorize_resource
-
   def index
     if current_user.admin?
       redirect_to admin_dashboard_path

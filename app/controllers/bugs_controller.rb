@@ -1,8 +1,7 @@
 class BugsController < ApplicationController
-  skip_load_and_authorize_resource
   before_action :set_project
   before_action :set_task
-  before_action :set_bug, only: [:show, :edit, :update, :destroy]
+  before_action :set_bug, only: %i[show edit update destroy]
 
   def index
     @bugs = @task.bugs.order(created_at: :desc)
@@ -10,8 +9,7 @@ class BugsController < ApplicationController
     @bugs = @bugs.by_priority(params[:priority]) if params[:priority].present?
   end
 
-  def show
-  end
+  def show; end
 
   def new
     @bug = @task.bugs.build
@@ -26,8 +24,7 @@ class BugsController < ApplicationController
     end
   end
 
-  def edit
-  end
+  def edit; end
 
   def update
     if @bug.update(bug_params)
@@ -75,7 +72,8 @@ class BugsController < ApplicationController
   end
 
   def bug_params
-    params.require(:bug).permit(:title, :content, :application, :category, :priority, :status, :dev_id, :tester_id, :image_video_url, :notes)
+    params.require(:bug).permit(:title, :content, :application, :category, :priority, :status, :dev_id, :tester_id,
+                                :image_video_url, :notes)
   end
 
   def extract_spreadsheet_id(url)

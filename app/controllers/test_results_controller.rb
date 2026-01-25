@@ -1,5 +1,4 @@
 class TestResultsController < ApplicationController
-  skip_load_and_authorize_resource
   before_action :set_test_case, except: [:index]
   before_action :set_test_result, except: %i[index new create]
 

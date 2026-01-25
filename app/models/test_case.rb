@@ -1,6 +1,7 @@
 class TestCase < ApplicationRecord
   include SoftDeletable
   include Loggable
+
   belongs_to :task
   belongs_to :created_by, class_name: 'User', foreign_key: 'created_by_id', optional: true
 
@@ -18,7 +19,6 @@ class TestCase < ApplicationRecord
 
   scope :by_type, ->(type) { where(test_type: type) }
   scope :by_target, ->(target) { where(target: target) }
-
 
   def step_count
     test_steps.count

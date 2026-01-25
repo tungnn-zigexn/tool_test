@@ -1,4 +1,3 @@
-# encoding: utf-8
 class BugImportService
   attr_reader :errors, :imported_count, :updated_count
 
@@ -14,26 +13,8 @@ class BugImportService
   def import
     Rails.logger.info "Start import bugs from Google Sheet: #{@spreadsheet_id}"
     begin
-      gid = extract_gid(@task.bug_link)
-      sheets_info = @google_service.get_sheets_info(@spreadsheet_id)
-
-      if sheets_info.nil? || sheets_info.empty?
-        @errors << 'Cannot get sheets info from Google Sheet'
-        return false
-      end
-
-      # Find target sheet(s)
-      target_sheets = if gid.present?
-                        sheets_info.select { |s| s[:sheet_id] == gid }
-                      else
-                        # Default to the first sheet if no GID is specified
-                        [sheets_info.first]
-                      end
-
-      if target_sheets.empty?
-        @errors << "Cannot find sheet with gid: #{gid}"
-        return false
-      end
+      target_sheets = find_target_sheets
+      return false unless target_sheets
 
       target_sheets.each do |sheet|
         sheet_data = @google_service.get_data(@spreadsheet_id, sheet[:title])
@@ -43,15 +24,37 @@ class BugImportService
       Rails.logger.info "Import bugs complete: #{@imported_count} imported, #{@updated_count} updated"
       true
     rescue StandardError => e
-      # Force error message to UTF-8 to avoid clashing with UTF-8 log strings
-      error_msg = ensure_utf8(e.message)
-      @errors << "Lỗi khi import bug: #{error_msg}"
-      Rails.logger.error "BugImportService Error: #{error_msg}\n#{e.backtrace.join("\n")}"
+      add_import_error(e)
       false
     end
   end
 
   private
+
+  def find_target_sheets
+    gid = extract_gid(@task.bug_link)
+    sheets_info = @google_service.get_sheets_info(@spreadsheet_id)
+
+    if sheets_info.nil? || sheets_info.empty?
+      @errors << 'Cannot get sheets info from Google Sheet'
+      return nil
+    end
+
+    target_sheets = gid.present? ? sheets_info.select { |s| s[:sheet_id] == gid } : [sheets_info.first]
+
+    if target_sheets.empty?
+      @errors << "Cannot find sheet with gid: #{gid}"
+      return nil
+    end
+
+    target_sheets
+  end
+
+  def add_import_error(exception)
+    error_msg = ensure_utf8(exception.message)
+    @errors << "Lỗi khi import bug: #{error_msg}"
+    Rails.logger.error "BugImportService Error: #{error_msg}\n#{exception.backtrace.join("\n")}"
+  end
 
   def process_sheet(sheet_name, sheet_data)
     return if sheet_data.nil? || sheet_data.empty?
@@ -65,7 +68,7 @@ class BugImportService
 
     data_rows.each_with_index do |row, index|
       actual_row_number = index + 2
-      process_bug_row(row, column_mapping, sheet_name, actual_row_number)
+      process_bug_row(row, column_mapping)
     rescue StandardError => e
       error_msg = ensure_utf8(e.message)
       @errors << "Lỗi dòng #{actual_row_number} trong sheet '#{ensure_utf8(sheet_name)}': #{error_msg}"
@@ -77,6 +80,7 @@ class BugImportService
     mapping = {}
     header_row.each_with_index do |col_name, index|
       next if col_name.blank?
+
       name = ensure_utf8(col_name).downcase
       case name
       when /^no$/, /^stt$/ then mapping[:no] = index
@@ -93,39 +97,40 @@ class BugImportService
     mapping
   end
 
-  def process_bug_row(row, mapping, sheet_name, row_number)
+  def process_bug_row(row, mapping)
     content = get_cell_value(row, mapping[:content])
     return if content.blank?
 
-    # Since Bug model has 'title', we'll use first line of content as title
     title = content.split("\n").first.truncate(200)
-
-    # Always use current task (parent task) as requested by user
     bug = @task.bugs.find_or_initialize_by(title: title)
 
+    assign_bug_attributes(bug, row, mapping)
+    save_bug(bug)
+  end
+
+  def assign_bug_attributes(bug, row, mapping)
     dev_name = get_cell_value(row, mapping[:dev])
     test_name = get_cell_value(row, mapping[:test])
 
-    dev = find_user(dev_name)
-    tester = find_user(test_name)
-
     bug.assign_attributes(
-      content: content,
+      content: get_cell_value(row, mapping[:content]),
       application: normalize_application(get_cell_value(row, mapping[:application])),
       category: normalize_category(get_cell_value(row, mapping[:category])),
       priority: normalize_priority(get_cell_value(row, mapping[:priority])),
       status: normalize_status(get_cell_value(row, mapping[:status])),
       image_video_url: get_cell_value(row, mapping[:media]),
-      dev_id: dev&.id,
-      tester_id: tester&.id,
+      dev_id: find_user(dev_name)&.id,
+      tester_id: find_user(test_name)&.id,
       dev_name_raw: dev_name,
       tester_name_raw: test_name
     )
+  end
 
+  def save_bug(bug)
     if bug.new_record?
       @imported_count += 1 if bug.save
-    else
-      @updated_count += 1 if bug.save
+    elsif bug.save
+      @updated_count += 1
     end
   end
 
@@ -138,43 +143,43 @@ class BugImportService
     match[1] if match
   end
 
-
   def get_cell_value(row, index)
     return nil if index.nil? || row[index].nil?
+
     ensure_utf8(row[index].to_s).strip
   end
 
   def find_user(name)
     return nil if name.blank?
+
     # Simple fuzzy search for user name
-    User.where("name LIKE ?", "%#{name}%").first
+    User.where('name LIKE ?', "%#{name}%").first
   end
 
   def normalize_application(app)
     return 'sp_pc' if app.blank?
-    case app.downcase.gsub(' ', '')
-    when /sp\+pc/ then 'sp_pc'
-    when /app/ then 'app'
-    when /sp/ then 'sp'
-    when /pc/ then 'pc'
-    when /all/ then 'all'
-    else 'sp_pc'
-    end
+
+    normalized = app.downcase.gsub(' ', '')
+    return 'app' if normalized.match?(/app/)
+    return 'sp' if normalized.match?(/sp/) && !normalized.match?(/sp\+pc/)
+    return 'pc' if normalized.match?(/pc/) && !normalized.match?(/sp\+pc/)
+
+    'sp_pc'
   end
 
   def normalize_category(cat)
     return 'stg_vn' if cat.blank?
-    case cat.downcase
-    when /stg.*vn/ then 'stg_vn'
-    when /stg.*jp/ then 'stg_jp'
-    when /prod/ then 'prod'
-    when /requirement/ then 'new_requirement'
-    else 'stg_vn'
-    end
+
+    normalized = cat.downcase
+    return 'stg_jp' if normalized.match?(/stg.*jp/)
+    return 'prod' if normalized.match?(/prod/)
+
+    'stg_vn'
   end
 
   def normalize_priority(pri)
     return 'normal' if pri.blank?
+
     case pri.downcase
     when /high/, /cao/ then 'high'
     when /low/, /thấp/ then 'low'
@@ -184,6 +189,7 @@ class BugImportService
 
   def normalize_status(stat)
     return 'new' if stat.blank?
+
     case stat.downcase
     when /done/, /đã.*xong/, /ok/ then 'done'
     when /fixing/, /đang.*sửa/ then 'fixing'

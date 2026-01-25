@@ -12,9 +12,6 @@ class ApplicationController < ActionController::Base
     Current.user = current_user
   end
 
-  # CanCanCan authorization
-  load_and_authorize_resource unless: :devise_controller?
-
   # Handle exception CanCan::AccessDenied
   rescue_from CanCan::AccessDenied do |exception|
     respond_to do |format|
@@ -22,8 +19,6 @@ class ApplicationController < ActionController::Base
       format.json { render json: { error: exception.message }, status: :forbidden }
     end
   end
-
-  private
 
   # Override Devise helper to use current_user
   def current_ability

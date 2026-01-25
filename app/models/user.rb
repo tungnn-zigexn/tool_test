@@ -1,5 +1,6 @@
 class User < ApplicationRecord
   include SoftDeletable
+
   # Devise modules
   devise :database_authenticatable, :registerable,
          :recoverable, :rememberable, :validatable
@@ -24,7 +25,6 @@ class User < ApplicationRecord
   }
   validates :provider, presence: true
   validates :role, presence: true
-
 
   # Google OAuth
   def self.from_google(auth)

@@ -1,5 +1,4 @@
 class TestRunsController < ApplicationController
-  skip_load_and_authorize_resource
   before_action :set_task
   before_action :set_test_run, except: %i[index new create]
 

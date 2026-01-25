@@ -1,6 +1,7 @@
 class Bug < ApplicationRecord
   include SoftDeletable
   include Loggable
+
   belongs_to :task
   belongs_to :dev, class_name: 'User', foreign_key: 'dev_id', optional: true
   belongs_to :tester, class_name: 'User', foreign_key: 'tester_id', optional: true
@@ -20,7 +21,6 @@ class Bug < ApplicationRecord
   scope :by_category, ->(category) { where(category: category) }
   scope :by_priority, ->(priority) { where(priority: priority) }
   scope :by_application, ->(app) { where(application: app) }
-
 
   def open?
     %w[new fixing testing pending].include?(status)
@@ -86,7 +86,7 @@ class Bug < ApplicationRecord
     tester&.name || tester_name_raw || 'N/A'
   end
 
-  # Export to sheet format (giống Bug sheet trong ảnh)
+  # Export to sheet format
   def to_sheet_row
     {
       no: id,

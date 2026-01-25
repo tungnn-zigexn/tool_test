@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_05_033733) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_25_153626) do
   create_table "activity_logs", force: :cascade do |t|
     t.integer "user_id", null: false
     t.string "trackable_type", null: false
@@ -84,19 +84,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_05_033733) do
     t.datetime "updated_at", null: false
   end
 
-  create_table "task_histories", force: :cascade do |t|
-    t.integer "task_id", null: false
-    t.integer "user_id", null: false
-    t.string "action", null: false
-    t.text "old_value"
-    t.text "new_value"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["action"], name: "index_task_histories_on_action"
-    t.index ["task_id"], name: "index_task_histories_on_task_id"
-    t.index ["user_id"], name: "index_task_histories_on_user_id"
-  end
-
   create_table "tasks", force: :cascade do |t|
     t.integer "redmine_id"
     t.integer "project_id", null: false
@@ -127,19 +114,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_05_033733) do
     t.index ["parent_id"], name: "index_tasks_on_parent_id"
     t.index ["project_id"], name: "index_tasks_on_project_id"
     t.index ["status"], name: "index_tasks_on_status"
-  end
-
-  create_table "test_case_histories", force: :cascade do |t|
-    t.integer "test_case_id", null: false
-    t.integer "user_id", null: false
-    t.string "action", null: false
-    t.text "old_value"
-    t.text "new_value"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["action"], name: "index_test_case_histories_on_action"
-    t.index ["test_case_id"], name: "index_test_case_histories_on_test_case_id"
-    t.index ["user_id"], name: "index_test_case_histories_on_user_id"
   end
 
   create_table "test_cases", force: :cascade do |t|
