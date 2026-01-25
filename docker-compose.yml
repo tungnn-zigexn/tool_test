@@ -5,7 +5,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.dev
-    command: bash -c "rm -f tmp/pids/server.pid && bundle exec rails server -b 0.0.0.0 -p 4000"
+    command: bin/dev
     volumes:
       - .:/rails
       - bundle_cache:/usr/local/bundle
@@ -17,19 +17,6 @@ services:
       - RAILS_MAX_THREADS=5
     stdin_open: true
     tty: true
-    depends_on:
-      - css
-
-  css:
-    build:
-      context: .
-      dockerfile: Dockerfile.dev
-    command: npm run build:css:watch
-    volumes:
-      - .:/rails
-      - node_modules:/rails/node_modules
-    environment:
-      - NODE_ENV=development
 
 volumes:
   bundle_cache:

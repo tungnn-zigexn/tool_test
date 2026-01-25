@@ -195,7 +195,8 @@ class RedmineImportService
   end
 
   def ensure_utf8(str)
-    return nil if str.nil?
-    str.to_s.force_encoding('UTF-8').scrub
+    str = str.to_s
+    str = str.dup if str.frozen?
+    str.force_encoding('UTF-8').scrub
   end
 end

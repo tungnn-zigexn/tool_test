@@ -14,6 +14,8 @@ module Loggable
   private
 
   def log_create
+    return if Current.user.nil?
+
     ActivityLog.create(
       user: Current.user,
       trackable: self,
@@ -23,6 +25,8 @@ module Loggable
   end
 
   def log_update
+    return if Current.user.nil?
+
     changes = saved_changes.except('updated_at')
     return if changes.empty?
 
@@ -46,12 +50,18 @@ module Loggable
       reflection = self.class.reflections.values.find { |r| r.belongs_to? && r.foreign_key.to_s == field.to_s }
 
       if reflection
-        klass = reflection.klass rescue nil
+        klass = begin
+          reflection.klass
+        rescue StandardError
+          nil
+        end
         if klass
-          resolver = ->(id) {
+          resolver = lambda { |id|
             return 'N/A' if id.blank?
+
             record = klass.unscoped.find_by(id: id)
             return id.to_s unless record
+
             record.try(:name) || record.try(:title) || record.try(:full_name) || id.to_s
           }
 

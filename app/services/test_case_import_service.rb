@@ -1,4 +1,3 @@
-# encoding: utf-8
 class TestCaseImportService
   attr_reader :errors, :imported_count, :skipped_count
 
@@ -17,37 +16,16 @@ class TestCaseImportService
     Rails.logger.info "Start import test cases from Google Sheet: #{@spreadsheet_id}"
 
     begin
-      all_sheet_data = @google_service.get_project_test_cases(@spreadsheet_id)
+      all_sheet_data = fetch_sheet_data
+      return false unless all_sheet_data
 
-      if all_sheet_data.nil? || all_sheet_data.empty?
-        @errors << 'Cannot get data from Google Sheet'
-        return false
-      end
-
-      all_sheet_data.each do |sheet_name, sheet_data|
-        # If the task is explicitly meant to match a specific sheet (subtask level),
-        # only process the matching sheet.
-        if @task.parent_id.present?
-          next unless name_match?(@task.title, sheet_name)
-        end
-
-        process_sheet(sheet_name, sheet_data)
-      end
-
-      # Update counts for all affected tasks
-      @task_counts.each do |target_task, count|
-        target_task.update(number_of_test_cases: count)
-      end
-
-      # Also update the primary task if it wasn't in the counts (meaning 0)
-      @task.update(number_of_test_cases: @task_counts[@task]) unless @task_counts.key?(@task)
+      process_all_sheets(all_sheet_data)
+      update_task_counts
 
       Rails.logger.info "Import hoàn tất: #{@imported_count} test cases across #{@task_counts.keys.count} tasks"
       true
     rescue StandardError => e
-      error_msg = ensure_utf8(e.message)
-      @errors << "Lỗi khi import: #{error_msg}"
-      Rails.logger.error "TestCaseImportService Error: #{error_msg}\n#{e.backtrace.join("\n")}"
+      add_import_error(e)
       false
     end
   end
@@ -58,27 +36,20 @@ class TestCaseImportService
     return if sheet_data.nil? || sheet_data.empty?
 
     Rails.logger.info "Processing sheet: #{ensure_utf8(sheet_name)} with #{sheet_data.length} rows"
-
-    # Skip 4 header rows
-    header_rows = sheet_data.first(4)
-    device_names_row = sheet_data[4] if sheet_data.length > 4
-
-    # Check if Row 5 is a data row or device names row
-    row_5_is_data = data_row?(device_names_row, header_rows.last)
-
-    # Determine how many rows to skip
-    if row_5_is_data
-      data_rows = sheet_data.drop(4)
-      starting_row_number = 5
-      device_names_row = nil
-      Rails.logger.info 'Row 5 is data row (TC01) - starting from row 5'
-    else
-      data_rows = sheet_data.drop(5)
-      starting_row_number = 6
-      Rails.logger.info 'Row 5 is device names row - starting from row 6'
+    header_index = find_header_row_index(sheet_data)
+    if header_index.nil?
+      Rails.logger.warn "Không tìm thấy header row trong sheet: #{sheet_name}"
+      return
     end
 
-    process_data_rows(data_rows, header_rows, device_names_row, sheet_name, starting_row_number)
+    start_point = determine_starting_point(sheet_data, header_index)
+    process_data_rows(
+      start_point[:data_rows],
+      [sheet_data[header_index]],
+      start_point[:device_names_row],
+      sheet_name,
+      start_point[:starting_row_number]
+    )
   end
 
   def process_data_rows(data_rows, header_rows, device_names_row, sheet_name, starting_row_number)
@@ -93,6 +64,72 @@ class TestCaseImportService
       @skipped_count += 1
       Rails.logger.warn "Bỏ qua dòng #{actual_row_number}: #{error_msg}"
     end
+  end
+
+  # Find the row index that contains "ID" and "Function/Funtion"
+  def find_header_row_index(sheet_data)
+    sheet_data.first(10).each_with_index do |row, index|
+      next if row.nil? || row.empty?
+
+      row_str = row.map { |c| ensure_utf8(c).to_s.downcase }.join(' ')
+      return index if header_row?(row_str)
+    end
+    nil
+  end
+
+  def fetch_sheet_data
+    data = @google_service.get_project_test_cases(@spreadsheet_id)
+    if data.nil? || data.empty?
+      @errors << 'Cannot get data from Google Sheet'
+      return nil
+    end
+    data
+  end
+
+  def process_all_sheets(all_sheet_data)
+    all_sheet_data.each do |sheet_name, sheet_data|
+      next if @task.parent_id.present? && !name_match?(@task.title, sheet_name)
+
+      process_sheet(sheet_name, sheet_data)
+    end
+  end
+
+  def update_task_counts
+    @task_counts.each do |target_task, count|
+      target_task.update(number_of_test_cases: count)
+    end
+    @task.update(number_of_test_cases: @task_counts[@task]) unless @task_counts.key?(@task)
+  end
+
+  def add_import_error(exception)
+    error_msg = ensure_utf8(exception.message)
+    @errors << "Lỗi khi import: #{error_msg}"
+    Rails.logger.error "TestCaseImportService Error: #{error_msg}\n#{exception.backtrace.join("\n")}"
+  end
+
+  def determine_starting_point(sheet_data, header_index)
+    header_row = sheet_data[header_index]
+    possible_next_row = sheet_data[header_index + 1] if sheet_data.length > header_index + 1
+
+    if data_row?(possible_next_row, header_row)
+      {
+        data_rows: sheet_data.drop(header_index + 1),
+        starting_row_number: header_index + 2,
+        device_names_row: nil
+      }
+    else
+      {
+        data_rows: sheet_data.drop(header_index + 2),
+        starting_row_number: header_index + 3,
+        device_names_row: possible_next_row
+      }
+    end
+  end
+
+  def header_row?(row_str)
+    return false unless row_str.include?('id') || row_str.include?('no')
+
+    ['funtion', 'function', 'test case', '項目'].any? { |k| row_str.include?(k) }
   end
 
   # Check if a row is a data row (contains test case data) or device names row
@@ -231,7 +268,9 @@ class TestCaseImportService
     t_title = ensure_utf8(task_title).downcase
     s_name = ensure_utf8(sheet_name).downcase
 
-    t_title == s_name || t_title.include?(s_name) || s_name.include?(t_title)
+    t_title == s_name ||
+      t_title.match?(/\b#{Regexp.escape(s_name)}\b/) ||
+      s_name.match?(/\b#{Regexp.escape(t_title)}\b/)
   end
 
   def extract_case_data(row, mapping)
@@ -371,8 +410,8 @@ class TestCaseImportService
   end
 
   def ensure_utf8(str)
-    return nil if str.nil?
-    # Force to UTF-8 and scrub invalid sequences
-    str.to_s.force_encoding('UTF-8').scrub
+    str = str.to_s
+    str = str.dup if str.frozen?
+    str.force_encoding('UTF-8').scrub
   end
 end
