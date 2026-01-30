@@ -37,6 +37,10 @@ RUN mkdir -p storage tmp/pids tmp/sockets log
 # Expose port
 EXPOSE 4000
 
+# Make entrypoint executable and set entrypoint
+RUN chmod +x bin/docker-entrypoint
+ENTRYPOINT ["bin/docker-entrypoint"]
+
 # Start the server
 CMD ["bin/dev"]
 
