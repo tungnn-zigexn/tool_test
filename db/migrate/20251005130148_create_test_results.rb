@@ -3,7 +3,7 @@ class CreateTestResults < ActiveRecord::Migration[8.0]
     create_table :test_results do |t|
       t.integer :run_id
       t.integer :case_id, null: false
-      t.string :result
+      t.string :status
       t.text :device
       t.integer :executed_by_id
       t.datetime :executed_at
