@@ -1,0 +1,16 @@
+- devices = local_assigns[:devices] || ['pc', 'sp', 'app']
+.table-responsive.border.rounded.mt-4
+  table.spreadsheet-table.spreadsheet-list-table
+    thead
+      tr
+        th.text-center style="width: 40px;" #
+        th style="width: 15%;" Test Case Title
+        th style="width: 12%;" Feature
+        th style="width: 20%;" Test Steps (Actions)
+        th style="width: 20%;" Expected Results & Media
+        th style="width: 80px;" Target
+        - devices.each do |device|
+          th.text-center style="min-width: 100px;" = device.to_s.upcase
+    tbody#test-cases-spreadsheet-list
+      - test_cases.each_with_index do |tc, index|
+        = render partial: 'test_cases/spreadsheet_row', locals: { test_case: tc, index: index + 1, devices: devices }

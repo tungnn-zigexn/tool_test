@@ -33,4 +33,29 @@ module TestStepsHelper
 
     'link'
   end
+
+  # Render media from URL (Image or Video)
+  def render_media(url)
+    return if url.blank?
+
+    # Process potential rich text containing links
+    return unless url.match?(%r{https?://[^\s<]+})
+
+    processed_url = url.match(%r{https?://[^\s<]+})[0]
+
+    processed_url = gyazo_to_image_url(processed_url) if processed_url.include?('gyazo.com')
+
+    if image_url?(processed_url)
+      link_to processed_url, target: '_blank', class: 'd-block mt-2' do
+        image_tag processed_url, class: 'img-fluid rounded border shadow-sm', style: 'max-height: 150px;'
+      end
+    elsif video_url?(processed_url)
+      content_tag :div, class: 'mt-2' do
+        video_tag processed_url, controls: true, class: 'img-fluid rounded border shadow-sm',
+                                 style: 'max-height: 150px;'
+      end
+    else
+      link_to processed_url, processed_url, target: '_blank', class: 'small text-primary d-block mt-1'
+    end
+  end
 end
