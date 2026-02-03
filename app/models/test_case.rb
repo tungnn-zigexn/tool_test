@@ -30,6 +30,7 @@ class TestCase < ApplicationRecord
     case test_type
     when 'feature' then 'Feature'
     when 'ui' then 'UI'
+    when 'data' then 'Data'
     else test_type&.titleize || 'N/A'
     end
   end

@@ -1,17 +1,17 @@
 - devices = local_assigns[:devices] || ['pc', 'sp', 'app']
 
 tr.test-case-row data-controller="editable-cell" data-test-case-id=test_case.id data-project-id=test_case.task.project_id data-task-id=test_case.task.id
-  td.text-center.fw-bold.bg-light.align-middle = index
+  td.text-center.fw-bold.bg-light.align-middle = "TC-#{index.to_s.rjust(3, '0')}"
   
+  td.text-center.align-middle
+    div.p-2
+      span.badge.bg-primary.bg-opacity-10.text-primary.px-2.py-1.fw-semibold
+        = test_case.test_type_display
+
   td.align-top
     div.p-2
       .fw-bold.mb-1 data-editable-cell-target="display" data-action="click->editable-cell#edit" data-field="title"
         = test_case.title
-
-  td.align-top
-    div.p-2.small
-      .text-muted data-editable-cell-target="display" data-action="click->editable-cell#edit" data-field="function"
-        = test_case.function
         
   td.p-0.align-top
     - if test_case.test_steps.any?
