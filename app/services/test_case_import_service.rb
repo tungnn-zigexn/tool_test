@@ -227,11 +227,12 @@ class TestCaseImportService
     case_data = extract_case_data(row, mapping)
     device_results = parse_device_results(row, mapping[:device_columns])
 
-    title = case_data[:test_case_title]
-    if title.blank?
-      title = build_test_case_title(case_data[:test_id], case_data[:function])
-      return skip_row(row_number) if title.blank?
-    end
+    # Determine Title Logic:
+    # We treat 'Function' column as the primary source for Title now.
+    # Fallback order: function -> test_case_title (legacy) -> test_id
+    title = case_data[:function].presence || case_data[:test_case_title].presence || case_data[:test_id]
+
+    return skip_row(row_number) if title.blank?
 
     # Intelligent task matching:
     # If the sheet name matches a subtask, use that subtask. Otherwise use current task.
@@ -287,17 +288,6 @@ class TestCaseImportService
     }
   end
 
-  def build_test_case_title(test_id, function)
-    if test_id.present? && function.present?
-      function_short = function.length > 100 ? "#{function[0..97]}..." : function
-      "#{test_id} - #{function_short}"
-    elsif test_id.present?
-      test_id
-    elsif function.present?
-      function
-    end
-  end
-
   def skip_row(row_number)
     Rails.logger.warn "Bỏ qua dòng #{row_number}: Không có tiêu đề test case"
     @skipped_count += 1
@@ -306,7 +296,7 @@ class TestCaseImportService
   def test_case_import_attributes(case_data, sheet_name, row_number)
     {
       test_type: normalize_test_type(case_data[:test_type]),
-      function: case_data[:function],
+      # function: case_data[:function], # REMOVED: Function is now mapped to Title
       target: normalize_target(case_data[:target]),
       description: "Imported from sheet: #{ensure_utf8(sheet_name)}, row: #{row_number}",
       acceptance_criteria_url: case_data[:ac_url],
@@ -365,6 +355,7 @@ class TestCaseImportService
 
     case ensure_utf8(test_type).downcase
     when 'ui', 'ユーザーインターフェース', 'giao diện' then 'ui'
+    when 'data', 'データ', 'dữ liệu' then 'data'
     else 'feature'
     end
   end

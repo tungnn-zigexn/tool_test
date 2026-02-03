@@ -3,11 +3,11 @@
   table.spreadsheet-table.spreadsheet-list-table
     thead
       tr
-        th.text-center style="width: 40px;" #
-        th style="width: 15%;" Test Case Title
-        th style="width: 12%;" Feature
-        th style="width: 20%;" Test Steps (Actions)
-        th style="width: 20%;" Expected Results & Media
+        th.text-center style="width: 90px;" ID
+        th style="width: 4%;" Test Type
+        th style="width: 10%;" Function
+        th style="width: 30%;" Test Steps (Actions)
+        th style="width: 30%;" Expected Results & Media
         th style="width: 80px;" Target
         - devices.each do |device|
           th.text-center style="min-width: 100px;" = device.to_s.upcase

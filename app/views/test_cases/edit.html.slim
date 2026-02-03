@@ -35,7 +35,7 @@
                   .col-md-6
                     / Title
                     .mb-3
-                      = f.label :title, "Tiêu đề Test Case *", class: 'form-label fw-semibold'
+                      = f.label :title, "Function *", class: 'form-label fw-semibold'
                       = f.text_field :title, class: 'form-control', required: true
                       - if @test_case.errors[:title].any?
                         .invalid-feedback.d-block = @test_case.errors[:title].join(', ')
@@ -43,12 +43,7 @@
                     / Test Type
                     .mb-3
                       = f.label :test_type, "Loại Test", class: 'form-label fw-semibold'
-                      = f.select :test_type, options_for_select([['Feature', 'feature'], ['UI', 'ui']], @test_case.test_type), {}, class: 'form-select'
-
-                    / Function
-                    .mb-3
-                      = f.label :function, "Chức năng", class: 'form-label fw-semibold'
-                      = f.text_field :function, class: 'form-control'
+                      = f.select :test_type, options_for_select([['Feature', 'feature'], ['UI', 'ui'], ['Data', 'data']], @test_case.test_type), {}, class: 'form-select'
 
                   .col-md-6
                     / Target
