@@ -1,4 +1,17 @@
-/* Sidebar Navigation Styles */
+.sidebar {
+  transition: all 0.3s ease-in-out;
+  overflow-x: hidden;
+
+  &.collapsed {
+    width: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+
+/* Existing styles */
 .hover-bg-light:hover {
   background-color: #f8f9fa;
 }

@@ -1,6 +1,6 @@
 class TestCasesController < ApplicationController
   before_action :set_task, except: [:index]
-  before_action :set_test_case, except: %i[index new create]
+  before_action :set_test_case, except: %i[index new create import_from_sheet]
 
   # GET /test_cases or /projects/:project_id/tasks/:task_id/test_cases
   def index
@@ -59,6 +59,7 @@ class TestCasesController < ApplicationController
           redirect_to project_task_path(@task.project, @task),
                       notice: 'Test case created successfully.'
         end
+        format.turbo_stream
         format.json { render json: @test_case, status: :created }
       end
     else
@@ -131,7 +132,7 @@ class TestCasesController < ApplicationController
 
   # POST /projects/:project_id/tasks/:task_id/test_cases/import_from_sheet
   def import_from_sheet
-    spreadsheet_id = params[:spreadsheet_id]
+    spreadsheet_id = extract_spreadsheet_id(params[:spreadsheet_id])
 
     if spreadsheet_id.blank?
       handle_missing_spreadsheet_id
@@ -148,6 +149,18 @@ class TestCasesController < ApplicationController
   end
 
   private
+
+  def extract_spreadsheet_id(input)
+    return input if input.blank?
+
+    # Extract ID from Google Sheets URL if present
+    if input.include?('docs.google.com/spreadsheets/d/')
+      match = input.match(%r{/d/([^/]+)})
+      match ? match[1] : input
+    else
+      input.strip
+    end
+  end
 
   def handle_missing_spreadsheet_id
     respond_to do |format|

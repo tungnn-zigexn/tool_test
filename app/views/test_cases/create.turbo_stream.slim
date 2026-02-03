@@ -1,0 +1,10 @@
+= turbo_stream.append "test-cases-spreadsheet-list" do
+  = render partial: 'test_cases/spreadsheet_row', locals: { test_case: @test_case, index: @task.test_cases.active.count }
+
+= turbo_stream.replace "inline-test-case-form" do
+  = render partial: "test_cases/spreadsheet_form", locals: { project: @project, task: @task, test_case: @task.test_cases.build }
+
+= turbo_stream.prepend "flash-messages" do
+  .alert.alert-success.alert-dismissible.fade.show role="alert" data-controller="flash"
+    | Test case created successfully.
+    button.btn-close type="button" data-bs-dismiss="alert" aria-label="Close"
