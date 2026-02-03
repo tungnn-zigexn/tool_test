@@ -50,4 +50,10 @@ class Task < ApplicationRecord
   def overdue?
     due_date.present? && due_date < Date.current && !resolved?
   end
+
+  def unique_devices
+    TestResult.active.joins(:test_case)
+              .where(test_cases: { task_id: id })
+              .pluck(:device).uniq.compact.sort
+  end
 end

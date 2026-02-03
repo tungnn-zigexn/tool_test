@@ -19,6 +19,7 @@ class TestCase < ApplicationRecord
 
   scope :by_type, ->(type) { where(test_type: type) }
   scope :by_target, ->(target) { where(target: target) }
+  scope :ordered, -> { order(id: :asc) }
 
   def step_count
     test_steps.count
@@ -56,5 +57,33 @@ class TestCase < ApplicationRecord
 
   def device_results?
     test_results.active.any?
+  end
+
+  def latest_status_for(device_or_category)
+    results = test_results.active.recent
+    # First try exact match
+    match = results.find { |r| r.device == device_or_category }
+    # Then try category match
+    match ||= results.find { |r| device_match?(r.device, device_or_category) }
+    match&.status || 'not_run'
+  end
+
+  private
+
+  def device_match?(device_name, category)
+    return false if device_name.blank?
+
+    name = device_name.downcase
+
+    case category.to_s.downcase
+    when 'pc'
+      name.match?(/chrome|firefox|safari|edge|prod|stg|pc/) && !name.match?(/android|ios|iphone|ipad/)
+    when 'sp'
+      name.match?(/android|ios|iphone|ipad|testflight|deploy.*gate|sp/)
+    when 'app'
+      name.match?(/app/) || (name.match?(/android|ios|iphone|ipad/) && name.match?(/2\.\d\.\d/)) # Example version match
+    else
+      name == category.to_s.downcase
+    end
   end
 end
