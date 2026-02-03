@@ -18,6 +18,9 @@
             button.btn.btn-success.text-nowrap.d-inline-flex.align-items-center data-bs-toggle="modal" data-bs-target="#importRedmineModal"
               i.bi.bi-cloud-download.me-2
               | Import từ Redmine
+            button.btn.btn-info.text-nowrap.d-inline-flex.align-items-center data-bs-toggle="modal" data-bs-target="#importRedmineUrlModal"
+              i.bi.bi-collection.me-2
+              | Bulk Import (4. Testing)
 
       - if @project.description.present?
         .border-top.pt-3.pb-3.mt-3.text-muted style="white-space: pre-wrap; max-width: 1000px; font-size: 0.95rem; line-height: 1.6;"
@@ -70,6 +73,32 @@
           .modal-footer
             button.btn.btn-secondary type="button" data-bs-dismiss="modal" Hủy
             = f.submit "Import", class: 'btn btn-success'
+
+  / Bulk Import Modal (4. Testing only)
+  .modal.fade#importRedmineUrlModal tabindex="-1" aria-hidden="true"
+    .modal-dialog
+      .modal-content
+        .modal-header.bg-info.text-white
+          h5.modal-title
+            i.bi.bi-collection.me-2
+            | Bulk Import - Chỉ lấy 4. Testing
+          button.btn-close.btn-close-white type="button" data-bs-dismiss="modal" aria-label="Close"
+        = form_with url: import_from_redmine_url_project_tasks_path(@project), method: :post do |f|
+          .modal-body
+            .mb-3
+              = label_tag :issues_url, "Redmine Issues URL", class: 'form-label fw-bold'
+              = text_field_tag :issues_url, "https://dev.zigexn.vn/issues.json", class: 'form-control', placeholder: 'https://dev.zigexn.vn/issues.json'
+              .form-text Nhập URL issues.json - chỉ import các issue có subject "4. Testing"
+            .alert.alert-info.d-flex.align-items-start
+              i.bi.bi-info-circle.me-2.mt-1
+              div
+                strong Lưu ý:
+                ul.mb-0.mt-1.small
+                  li Chỉ import các issue có subject bắt đầu với "4. Testing"
+                  li Mỗi issue sẽ tạo task tương ứng và import test cases từ Testcase Link (nếu có)
+          .modal-footer
+            button.btn.btn-secondary type="button" data-bs-dismiss="modal" Hủy
+            = f.submit "Bulk Import", class: 'btn btn-info'
 
 
 

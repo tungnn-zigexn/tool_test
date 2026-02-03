@@ -54,6 +54,7 @@ Rails.application.routes.draw do
       end
       collection do
         post :import_from_redmine
+        post :import_from_redmine_url
       end
       resources :test_cases do
         member do

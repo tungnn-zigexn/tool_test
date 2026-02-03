@@ -1,6 +1,6 @@
 class TasksController < ApplicationController
-  before_action :set_project, only: %i[new create import_from_redmine]
-  before_action :set_task, except: %i[index new create import_from_redmine]
+  before_action :set_project, only: %i[new create import_from_redmine import_from_redmine_url]
+  before_action :set_task, except: %i[index new create import_from_redmine import_from_redmine_url]
   # skip_before_action :verify_authenticity_token
   # skip_before_action :authenticate_user! # TODO: test postman
 
@@ -110,6 +110,20 @@ class TasksController < ApplicationController
     end
   end
 
+  # POST /projects/:project_id/tasks/import_from_redmine_url
+  # Bulk import từ Redmine issues URL - chỉ lấy các issue "4. Testing"
+  def import_from_redmine_url
+    issues_url = params[:issues_url].presence || "#{RedmineService::BASE_URL}/issues.json"
+
+    import_service = RedmineBulkImportService.new(@project.id, issues_url: issues_url)
+
+    if import_service.import
+      handle_bulk_import_success(import_service)
+    else
+      handle_bulk_import_failure(import_service)
+    end
+  end
+
   private
 
   def handle_missing_issue_id
@@ -142,6 +156,35 @@ class TasksController < ApplicationController
       format.html do
         redirect_to @project,
                     alert: "Import failed: #{service.errors.join(', ')}"
+      end
+      format.json do
+        render json: { errors: service.errors }, status: :unprocessable_entity
+      end
+    end
+  end
+
+  def handle_bulk_import_success(service)
+    count = service.imported_tasks.length
+    respond_to do |format|
+      format.html do
+        redirect_to @project,
+                    notice: "Bulk import hoàn tất: #{count} task(s) 4. Testing đã được import."
+      end
+      format.json do
+        render json: {
+          message: 'Bulk import successful',
+          imported_count: count,
+          tasks: service.imported_tasks.map { |t| { id: t.id, title: t.title } }
+        }, status: :created
+      end
+    end
+  end
+
+  def handle_bulk_import_failure(service)
+    respond_to do |format|
+      format.html do
+        redirect_to @project,
+                    alert: "Bulk import failed: #{service.errors.join('; ')}"
       end
       format.json do
         render json: { errors: service.errors }, status: :unprocessable_entity
