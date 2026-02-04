@@ -23,7 +23,7 @@ tr.test-case-row data-controller="editable-cell" data-test-case-id=test_case.id 
             td.p-2 style="word-break: break-word;"
               - step.action_contents.each do |content|
                 .rich-content data-editable-cell-target="display" data-action="click->editable-cell#edit" data-content-id=content.id data-field="content_value"
-                  == sanitize(content.content_value, tags: %w(span b i u br div), attributes: %w(style class))
+                  == format_content_with_media_links(content.content_value)
     - else
       .p-2.text-muted.small.fst-italic No steps defined
 
@@ -35,9 +35,7 @@ tr.test-case-row data-controller="editable-cell" data-test-case-id=test_case.id 
             td.p-2 style="word-break: break-word;"
               - step.expected_contents.each do |content|
                 .rich-content.mb-2 data-editable-cell-target="display" data-action="click->editable-cell#edit" data-content-id=content.id data-field="content_value"
-                  == sanitize(content.content_value, tags: %w(span b i u br div), attributes: %w(style class))
-                .media-preview
-                  = render_media(content.content_value) rescue nil
+                  == format_content_with_media_links(content.content_value)
     - else
       .p-2.text-muted.small.fst-italic No results defined
 
