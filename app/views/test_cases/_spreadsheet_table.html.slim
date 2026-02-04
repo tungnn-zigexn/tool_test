@@ -1,4 +1,18 @@
 - devices = local_assigns[:devices] || ['pc', 'sp', 'app']
+- row_metadata = {}
+- current_title = nil
+- start_index = 0
+- test_cases.each_with_index do |tc, i|
+  - title = tc.title
+  - if title != current_title
+    - if current_title
+      - row_metadata[start_index] = { rowspan: i - start_index }
+      - ((start_index + 1)...i).each { |k| row_metadata[k] = { hide: true } }
+    - current_title = title
+    - start_index = i
+  - if i == test_cases.size - 1
+    - row_metadata[start_index] = { rowspan: i - start_index + 1 }
+    - ((start_index + 1)..i).each { |k| row_metadata[k] = { hide: true } }
 .table-responsive.border.rounded.mt-4
   table.spreadsheet-table.spreadsheet-list-table
     thead
@@ -13,4 +27,4 @@
           th.text-center style="min-width: 100px;" = device.to_s.upcase
     tbody#test-cases-spreadsheet-list
       - test_cases.each_with_index do |tc, index|
-        = render partial: 'test_cases/spreadsheet_row', locals: { test_case: tc, index: index + 1, devices: devices }
+        = render partial: 'test_cases/spreadsheet_row', locals: { test_case: tc, index: index + 1, devices: devices, row_info: row_metadata[index] }

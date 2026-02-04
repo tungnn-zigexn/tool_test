@@ -33,6 +33,7 @@ class TestCaseImportService
   private
 
   def process_sheet(sheet_name, sheet_data)
+    @last_function_name = nil
     return if sheet_data.nil? || sheet_data.empty?
 
     Rails.logger.info "Processing sheet: #{ensure_utf8(sheet_name)} with #{sheet_data.length} rows"
@@ -225,20 +226,28 @@ class TestCaseImportService
 
   def process_test_case_row(row, mapping, sheet_name, row_number)
     case_data = extract_case_data(row, mapping)
+
+    # Handle grouped/merged cells for Function (Title) - Fill Down
+    if case_data[:function].present?
+      @last_function_name = case_data[:function]
+    elsif @last_function_name.present?
+      case_data[:function] = @last_function_name
+    end
+
     device_results = parse_device_results(row, mapping[:device_columns])
 
     # Determine Title Logic:
-    # We treat 'Function' column as the primary source for Title now.
-    # Fallback order: function -> test_case_title (legacy) -> test_id
     title = case_data[:function].presence || case_data[:test_case_title].presence || case_data[:test_id]
 
     return skip_row(row_number) if title.blank?
 
     # Intelligent task matching:
-    # If the sheet name matches a subtask, use that subtask. Otherwise use current task.
     target = find_target_task(sheet_name)
 
-    test_case = target.test_cases.find_or_initialize_by(title: title)
+    # Use description (row info) to identify specific row's test case, creating separate entities for each row
+    row_desc = "Imported from sheet: #{ensure_utf8(sheet_name)}, row: #{row_number}"
+    test_case = target.test_cases.find_or_initialize_by(description: row_desc)
+    test_case.title = title
     test_case.assign_attributes(test_case_import_attributes(case_data, sheet_name, row_number))
 
     if test_case.save
