@@ -8,7 +8,7 @@ tr.test-case-row data-controller="editable-cell" data-test-case-id=test_case.id 
       span.badge.bg-primary.bg-opacity-10.text-primary.px-2.py-1.fw-semibold
         = test_case.test_type_display
 
-  td.align-top
+  td.align-top.text-break style="max-width: 120px;"
     div.p-2
       .fw-bold.mb-1 data-editable-cell-target="display" data-action="click->editable-cell#edit" data-field="title"
         = test_case.title
