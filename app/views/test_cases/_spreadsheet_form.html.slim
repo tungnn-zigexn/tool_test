@@ -1,63 +1,94 @@
 = form_with model: [project, task, test_case], id: "inline-test-case-form", data: { spreadsheet_form_target: "formSection", action: "turbo:submit-end->spreadsheet-form#resetForm" }, class: "d-none spreadsheet-container mb-4" do |f|
-  .card.border-0
-    .card-header.bg-white.p-0.mb-3
-      .d-flex.justify-content-between.align-items-center
-        h5.mb-0.fw-bold.text-primary
-          i.bi.bi-grid-3x3-gap.me-2
-          | Tạo Test Case (Sheet View)
-        .d-flex.gap-2
-          button.btn.btn-outline-secondary.btn-sm type="button" data-action="click->spreadsheet-form#toggleForm"
-            | Hủy
-          = f.submit "Lưu Test Case", class: "btn btn-primary btn-sm"
+  .card.border.shadow-sm.rounded-3.overflow-hidden
     
-      / Formatting Toolbar
-      .formatting-toolbar.mb-3
-        .btn-group.me-2
-          button.btn-format type="button" data-command="bold" data-action="click->spreadsheet-form#applyStyle" title="Bold"
-            b B
-          button.btn-format type="button" data-command="italic" data-action="click->spreadsheet-form#applyStyle" title="Italic"
-            i I
-          button.btn-format type="button" data-command="underline" data-action="click->spreadsheet-form#applyStyle" title="Underline"
-            u U
+    / --- HEADER: Title & Actions ---
+    .card-header.bg-white.px-4.py-3.border-bottom
+      .d-flex.justify-content-between.align-items-center
+        .d-flex.align-items-center.gap-2
+          .bg-primary.bg-opacity-10.p-2.rounded-circle
+            i.bi.bi-pencil-square.text-primary.fs-5
+          div
+            h6.mb-0.fw-bold.text-dark Tạo Test Case Mới
+            small.text-muted.fs-7 Nhập thông tin chi tiết bên dưới
+
+        .d-flex.gap-2
+          button.btn.btn-light.text-muted.px-3.fw-medium type="button" data-action="click->spreadsheet-form#toggleForm"
+            | Hủy bỏ
+          = f.submit "Lưu Test Case", class: "btn btn-primary px-4 fw-bold shadow-sm"
+
+    .card-body.p-0
+      
+      / --- SECTION 1: Basic Info (Document Style) ---
+      .p-4.bg-light.bg-opacity-25
+        .row.g-3
+          / Function / Title (Prominent)
+          .col-12
+            .form-floating
+              = f.text_field :title, class: "form-control form-control-lg fw-bold border-0 border-bottom rounded-0 bg-transparent shadow-none ps-0", placeholder: "Nhập tên chức năng...", style: "min-height: 50px;", required: true
+              label.ps-0.text-muted Function (Tên chức năng)
+
+          / Meta Data (Type & Target)
+          .col-md-6
+            label.form-label.small.fw-bold.text-muted.text-uppercase
+              i.bi.bi-layers.me-1
+              | Loại Test
+            .input-group
+              = f.select :test_type, options_for_select([['Feature', 'feature'], ['UI', 'ui'], ['Data', 'data']], 'feature'), {}, class: "form-select border-0 shadow-sm bg-white"
+              span.input-group-text.bg-white.border-0.text-muted
+                i.bi.bi-chevron-down.fs-7
+
+          .col-md-6
+            label.form-label.small.fw-bold.text-muted.text-uppercase
+              i.bi.bi-phone.me-1
+              | Target Device
+            .input-group
+              = f.select :target, options_for_select([['PC + SP + APP', 'pc_sp_app'], ['PC + SP', 'pc_sp'], ['PC', 'pc'], ['SP', 'sp'], ['APP', 'app']], 'pc_sp_app'), {}, class: "form-select border-0 shadow-sm bg-white"
+              span.input-group-text.bg-white.border-0.text-muted
+                i.bi.bi-chevron-down.fs-7
+
+      / --- SECTION 2: Steps Editor ---
+      .border-top
         
-        .d-flex.align-items-center.gap-1.border-start.ps-2
-          span.text-muted.small.me-1 Color:
-          .color-dot style="background-color: #ef4444;" data-command="foreColor" data-value="#ef4444" data-action="click->spreadsheet-form#applyStyle" title="Red"
-          .color-dot style="background-color: #f59e0b;" data-command="foreColor" data-value="#f59e0b" data-action="click->spreadsheet-form#applyStyle" title="Orange"
-          .color-dot style="background-color: #10b981;" data-command="foreColor" data-value="#10b981" data-action="click->spreadsheet-form#applyStyle" title="Green"
-          .color-dot style="background-color: #3b82f6;" data-command="foreColor" data-value="#3b82f6" data-action="click->spreadsheet-form#applyStyle" title="Blue"
-          .color-dot style="background-color: #8b5cf6;" data-command="foreColor" data-value="#8b5cf6" data-action="click->spreadsheet-form#applyStyle" title="Purple"
-          .color-dot style="background-color: #000000;" data-command="foreColor" data-value="#000000" data-action="click->spreadsheet-form#applyStyle" title="Black"
+        / Formatting Toolbar (Sticky-like feel)
+        .bg-white.px-4.py-2.border-bottom.d-flex.align-items-center.gap-3.sticky-top style="z-index: 10;"
+          span.text-muted.small.fw-bold Format:
+          
+          .btn-group.shadow-sm
+            button.btn.btn-sm.btn-outline-light.text-dark.border type="button" data-command="bold" data-action="click->spreadsheet-form#applyStyle" title="In đậm (Bold)"
+              i.bi.bi-type-bold
+            button.btn.btn-sm.btn-outline-light.text-dark.border type="button" data-command="italic" data-action="click->spreadsheet-form#applyStyle" title="In nghiêng (Italic)"
+              i.bi.bi-type-italic
+            button.btn.btn-sm.btn-outline-light.text-dark.border type="button" data-command="underline" data-action="click->spreadsheet-form#applyStyle" title="Gạch chân (Underline)"
+              i.bi.bi-type-underline
+          
+          .vr.mx-1
 
-      / Basic Info Grid
-      .table-responsive.mb-3
-        table.spreadsheet-table data-spreadsheet-form-target="basicGrid"
-          thead
-            tr
-              th style="width: 40%;" Tiêu đề Test Case *
-              th style="width: 20%;" Loại Test
-              th style="width: 20%;" Feature (Chức năng)
-              th style="width: 20%;" Đối tượng test
-          tbody
-            tr
-              td = f.text_field :title, class: "form-control border-0 bg-transparent", placeholder: "Ví dụ: Test login functionality", required: true
-              td = f.select :test_type, options_for_select([['Feature', 'feature'], ['UI', 'ui']], 'feature'), {}, class: "form-select"
-              td = f.text_field :function, class: "form-control border-0 bg-transparent", placeholder: "Ví dụ: Auth"
-              td = f.select :target, options_for_select([['PC + SP + APP', 'pc_sp_app'], ['PC + SP', 'pc_sp'], ['PC', 'pc'], ['SP', 'sp'], ['APP', 'app']], 'pc_sp_app'), {}, class: "form-select"
+          .d-flex.align-items-center.gap-1
+            i.bi.bi-palette.text-muted
+            .color-dot style="background-color: #ef4444;" data-command="foreColor" data-value="#ef4444" data-action="click->spreadsheet-form#applyStyle" title="Red"
+            .color-dot style="background-color: #f59e0b;" data-command="foreColor" data-value="#f59e0b" data-action="click->spreadsheet-form#applyStyle" title="Orange"
+            .color-dot style="background-color: #10b981;" data-command="foreColor" data-value="#10b981" data-action="click->spreadsheet-form#applyStyle" title="Green"
+            .color-dot style="background-color: #3b82f6;" data-command="foreColor" data-value="#3b82f6" data-action="click->spreadsheet-form#applyStyle" title="Blue"
+            .color-dot style="background-color: #000000;" data-command="foreColor" data-value="#000000" data-action="click->spreadsheet-form#applyStyle" title="Black"
 
-      / Steps Grid
-      .table-responsive
-        table.spreadsheet-table
-          thead
-            tr
-              th.step-number #
-              th.text-start style="width: 45%;" Test Steps (Actions)
-              th.text-start style="width: 45%;" Expected Results
-              th.text-center style="width: 10%;"
-          tbody data-spreadsheet-form-target="stepsGrid"
-            / Steps will be inserted here by Stimulus
+        / Steps Grid
+        .table-responsive
+          table.table.table-hover.mb-0.align-middle
+            thead.bg-light.text-muted
+              tr
+                th.text-center style="width: 50px;" #
+                th style="width: 45%;"
+                  i.bi.bi-list-ol.me-2
+                  | Test Steps (Actions)
+                th style="width: 45%;"
+                  i.bi.bi-check-circle.me-2
+                  | Expected Results
+                th style="width: 50px;"
+            tbody data-spreadsheet-form-target="stepsGrid"
+              / Steps inserted by Stimulus
 
-      .mt-3
-        button.btn.btn-sm.btn-success type="button" data-action="click->spreadsheet-form#addStep"
-          i.bi.bi-plus-circle-fill.me-1
-          | Thêm Step
+        / Footer Action
+        .p-2.text-center.border-top.bg-light
+          button.btn.btn-link.text-decoration-none.fw-bold.text-primary type="button" data-action="click->spreadsheet-form#addStep"
+            i.bi.bi-plus-lg.me-1
+            | Thêm bước thực hiện (Add Step)

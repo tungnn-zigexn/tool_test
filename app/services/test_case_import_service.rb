@@ -33,6 +33,7 @@ class TestCaseImportService
   private
 
   def process_sheet(sheet_name, sheet_data)
+    @last_function_name = nil
     return if sheet_data.nil? || sheet_data.empty?
 
     Rails.logger.info "Processing sheet: #{ensure_utf8(sheet_name)} with #{sheet_data.length} rows"
@@ -225,19 +226,28 @@ class TestCaseImportService
 
   def process_test_case_row(row, mapping, sheet_name, row_number)
     case_data = extract_case_data(row, mapping)
-    device_results = parse_device_results(row, mapping[:device_columns])
 
-    title = case_data[:test_case_title]
-    if title.blank?
-      title = build_test_case_title(case_data[:test_id], case_data[:function])
-      return skip_row(row_number) if title.blank?
+    # Handle grouped/merged cells for Function (Title) - Fill Down
+    if case_data[:function].present?
+      @last_function_name = case_data[:function]
+    elsif @last_function_name.present?
+      case_data[:function] = @last_function_name
     end
 
+    device_results = parse_device_results(row, mapping[:device_columns])
+
+    # Determine Title Logic:
+    title = case_data[:function].presence || case_data[:test_case_title].presence || case_data[:test_id]
+
+    return skip_row(row_number) if title.blank?
+
     # Intelligent task matching:
-    # If the sheet name matches a subtask, use that subtask. Otherwise use current task.
     target = find_target_task(sheet_name)
 
-    test_case = target.test_cases.find_or_initialize_by(title: title)
+    # Use description (row info) to identify specific row's test case, creating separate entities for each row
+    row_desc = "Imported from sheet: #{ensure_utf8(sheet_name)}, row: #{row_number}"
+    test_case = target.test_cases.find_or_initialize_by(description: row_desc)
+    test_case.title = title
     test_case.assign_attributes(test_case_import_attributes(case_data, sheet_name, row_number))
 
     if test_case.save
@@ -287,17 +297,6 @@ class TestCaseImportService
     }
   end
 
-  def build_test_case_title(test_id, function)
-    if test_id.present? && function.present?
-      function_short = function.length > 100 ? "#{function[0..97]}..." : function
-      "#{test_id} - #{function_short}"
-    elsif test_id.present?
-      test_id
-    elsif function.present?
-      function
-    end
-  end
-
   def skip_row(row_number)
     Rails.logger.warn "Bỏ qua dòng #{row_number}: Không có tiêu đề test case"
     @skipped_count += 1
@@ -306,7 +305,7 @@ class TestCaseImportService
   def test_case_import_attributes(case_data, sheet_name, row_number)
     {
       test_type: normalize_test_type(case_data[:test_type]),
-      function: case_data[:function],
+      # function: case_data[:function], # REMOVED: Function is now mapped to Title
       target: normalize_target(case_data[:target]),
       description: "Imported from sheet: #{ensure_utf8(sheet_name)}, row: #{row_number}",
       acceptance_criteria_url: case_data[:ac_url],
@@ -365,6 +364,7 @@ class TestCaseImportService
 
     case ensure_utf8(test_type).downcase
     when 'ui', 'ユーザーインターフェース', 'giao diện' then 'ui'
+    when 'data', 'データ', 'dữ liệu' then 'data'
     else 'feature'
     end
   end
