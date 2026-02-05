@@ -200,8 +200,8 @@ class TestCaseImportService
     when /^target$/, /^対象$/, /^đối.*tượng$/ then mapping[:target] = index
     when /^ac$/, /^acceptance.*criteria$/, /^受入.*基準$/ then mapping[:acceptance_criteria] = index
     when /^us$/, /^user.*story$/, /^ユーザー.*ストーリー$/ then mapping[:user_story] = index
-    when /chrome|firefox|safari|edge|android|ios|iphone|ipad/,
-         /^prod$/i, /^stg/i, /environment|version|deploy.*gate|testflight/
+    when /chrome|firefox|safari|android|ios|/,
+         /^prod(uction)?$/i, /environment|version/
       device_columns << { index: index, name: ensure_utf8(col_name) }
     end
   end

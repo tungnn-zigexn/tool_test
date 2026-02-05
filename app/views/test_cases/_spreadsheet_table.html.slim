@@ -38,7 +38,7 @@ div data-controller="media-preview"
           th style="width: 30%;" Expected Results & Media
           th style="width: 80px;" Target
           - devices.each do |device|
-            th.text-center style="min-width: 100px;" = device.to_s.upcase
+            th.text-center style="min-width: 100px;" = format_device_name(device)
       tbody#test-cases-spreadsheet-list
       - test_cases.each_with_index do |tc, index|
         = render partial: 'test_cases/spreadsheet_row', locals: { test_case: tc, index: index + 1, devices: devices, row_info: row_metadata[index] }

@@ -52,8 +52,22 @@ class Task < ApplicationRecord
   end
 
   def unique_devices
-    TestResult.active.joins(:test_case)
-              .where(test_cases: { task_id: id })
-              .pluck(:device).uniq.compact.sort
+    devices = TestResult.active.joins(:test_case)
+                        .where(test_cases: { task_id: id })
+                        .pluck(:device).uniq.compact
+
+    # Sort devices, but put "prod" or "production" at the end (case-insensitive)
+    devices.sort do |a, b|
+      a_is_prod = a.to_s.downcase.match?(/^prod(uction)?$/)
+      b_is_prod = b.to_s.downcase.match?(/^prod(uction)?$/)
+
+      if a_is_prod && !b_is_prod
+        1
+      elsif !a_is_prod && b_is_prod
+        -1
+      else
+        a.to_s.downcase <=> b.to_s.downcase
+      end
+    end
   end
 end
