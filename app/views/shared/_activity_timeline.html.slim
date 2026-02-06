@@ -1,66 +1,128 @@
-.activity-history.mt-4
-  .d-flex.align-items-center.mb-3
-    i.bi.bi-clock-history.me-2.text-primary
-    h5.mb-0 Lịch sử thao tác
+/ Danh sách các field quan trọng để hiển thị
+- important_fields = %w[title description status assignee_id priority start_date due_date percent_done estimated_time spent_time device tester_id result notes]
 
-  - if logs.any?
-    .timeline.ps-2 style="border-left: 2px solid #dee2e6; margin-left: 10px;"
-      - logs.each do |log|
-        / Danh sách các field quan trọng để hiển thị
-        - important_fields = %w[title description status assignee_id priority start_date due_date percent_done estimated_time spent_time device tester_id result notes]
+/ Lọc chỉ lấy các log có thay đổi quan trọng
+- filtered_logs = logs.select do |log|
+  - has_important_changes = false
+  - if log.metadata.present?
+    - log.metadata.each do |field, values|
+      - next unless important_fields.include?(field)
+      - next if values.is_a?(Array) && values.size == 2 && (values[0].to_s.strip.empty? || values[0].to_s.downcase == 'n/a') && (values[1].to_s.strip.empty? || values[1].to_s.downcase == 'n/a')
+      - next if values.is_a?(Array) && values.size == 2 && values[0].to_s == values[1].to_s
+      - has_important_changes = true
+      - break
+  - has_important_changes || log.action_type.in?(%w[create delete restore soft_delete])
 
-        / Lọc để lấy các trường thay đổi quan trọng
-        - has_important_changes = false
-        - if log.metadata.present?
-          - log.metadata.each do |field, values|
-            - next unless important_fields.include?(field)
-            - next if values.is_a?(Array) && values.size == 2 && (values[0].to_s.strip.empty? || values[0].to_s.downcase == 'n/a') && (values[1].to_s.strip.empty? || values[1].to_s.downcase == 'n/a')
-            - next if values.is_a?(Array) && values.size == 2 && values[0].to_s == values[1].to_s
-            - has_important_changes = true
-            - break 
+/ Pagination settings
+- page = (params[:history_page] || 1).to_i
+- per_page = 5
+- total_logs = filtered_logs.size
+- total_pages = (total_logs.to_f / per_page).ceil
+- start_index = (page - 1) * per_page
+- end_index = start_index + per_page - 1
+- paginated_logs = filtered_logs[start_index..end_index] || []
 
-        / Chỉ hiển thị nếu có thay đổi quan trọng hoặc action create/delete
-        - if has_important_changes || log.action_type.in?(%w[create delete restore soft_delete])
-          .timeline-item.mb-4.position-relative style="margin-left: -11px;"
-            .timeline-marker.position-absolute.bg-white.rounded-circle.border.border-2.border-primary style="width: 20px; height: 20px; left: 0;"
-            .timeline-content.ps-4
-              .d-flex.justify-content-between.align-items-start
-                .user-action
-                  span.fw-bold = log.user&.name || 'System'
-                  span.text-muted.mx-1 = log.action_display
+.activity-history.mt-4#history
+  / Header
+  .d-flex.justify-content-between.align-items-center.mb-3.pb-3.border-bottom
+    .d-flex.align-items-center
+      i.bi.bi-clock-history.me-2.text-primary.fs-5
+      h5.mb-0.fw-bold Lịch sử thao tác
+    - if total_logs > 0
+      span.badge.bg-primary.bg-opacity-10.text-primary.px-3.py-2= "#{total_logs} thay đổi"
+
+  - if paginated_logs.any?
+    / History Items
+    - paginated_logs.each_with_index do |log, index|
+      - global_index = start_index + index + 1
+      .history-item.bg-white.border.rounded.mb-3.p-3.shadow-sm
+        .d-flex.gap-3
+          / Avatar
+          .flex-shrink-0
+            .rounded-circle.bg-primary.bg-opacity-10.d-flex.align-items-center.justify-content-center style="width: 40px; height: 40px;"
+              span.fw-bold.text-primary= (log.user&.name || 'System')[0].upcase
+
+          / Content
+          .flex-grow-1
+            / Header
+            .d-flex.justify-content-between.align-items-start.mb-2
+              div
+                span.fw-bold.text-dark= log.user&.name || 'System'
+                span.text-muted.mx-2 
+                  = log.action_display
+                  |  
                   span.fw-semibold = log.trackable_type == 'ActivityLog' ? '' : log.trackable_type
-                  - if log.metadata.present? && log.action_type == 'update'
-                    .small.mt-1
-                      - log.metadata.each do |field, values|
-                        - next unless important_fields.include?(field)
-                        - next if %w[id created_at updated_at deleted_at task_id project_id test_case_id].include?(field)
+                  span.small.text-muted.ms-2 title=log.created_at.strftime("%d/%m/%Y %H:%M")
+                    i.bi.bi-clock.me-1
+                    = "#{time_ago_in_words(log.created_at)} ago"
 
-                        / Bỏ qua các trường N/A -> N/A hoặc empty -> empty
-                        - if values.is_a?(Array) && values.size == 2
-                          - val0, val1 = values
-                          - next if (val0.to_s.strip.empty? || val0.to_s.downcase == 'n/a') && (val1.to_s.strip.empty? || val1.to_s.downcase == 'n/a')
-                          - next if val0.to_s == val1.to_s
+            / Changes details
+            - if log.metadata.present? && log.action_type == 'update'
+              .changes-details.mt-2.ps-3.border-start.border-2.border-primary.border-opacity-25
+                - log.metadata.each do |field, values|
+                  - next unless important_fields.include?(field)
+                  - next if %w[id created_at updated_at deleted_at task_id project_id test_case_id].include?(field)
+                  
+                  / Bỏ qua các trường N/A -> N/A hoặc empty -> empty
+                  - if values.is_a?(Array) && values.size == 2
+                    - val0, val1 = values
+                    - next if (val0.to_s.strip.empty? || val0.to_s.downcase == 'n/a') && (val1.to_s.strip.empty? || val1.to_s.downcase == 'n/a')
+                    - next if val0.to_s == val1.to_s
 
-                        .field-change
-                          span.text-secondary = "#{field.humanize}: "
+                  .change-item.mb-2.small
+                    .d-flex.align-items-start.gap-2
+                      i.bi.bi-arrow-right-circle.text-primary.mt-1
+                      div
+                        strong.text-secondary= "#{field.humanize}:"
+                        .d-flex.align-items-center.gap-2.mt-1
                           - if values.is_a?(Array) && values.size == 2
                             - val0, val1 = values
-                            / Smart resolution for common ID fields if they were saved as IDs
+                            / Smart resolution for common ID fields
                             - if %w[Assignee Developer Tester Created\ by].include?(field.humanize) || field.end_with?('_id')
                               - if val0.to_s.match?(/^\d+$/)
                                 - val0 = User.find_by(id: val0)&.name || val0
                               - if val1.to_s.match?(/^\d+$/)
                                 - val1 = User.find_by(id: val1)&.name || val1
-
-                            span.text-decoration-line-through.text-muted = val0.to_s.presence || '(trống)'
-                            i.bi.bi-arrow-right.mx-1.text-secondary
-                            span.fw-bold = val1.to_s.presence || '(trống)'
+                            
+                            span.badge.bg-danger.bg-opacity-10.text-danger.text-decoration-line-through= val0.to_s.presence || '(trống)'
+                            i.bi.bi-arrow-right.text-muted
+                            span.badge.bg-success.bg-opacity-10.text-success= val1.to_s.presence || '(trống)'
                           - else
-                            span.fw-bold = values.to_s
-                .timestamp.small.text-muted title=log.created_at.strftime("%d/%m/%Y %H:%M")
-                  = time_ago_in_words(log.created_at)
-                  |  trước
+                            span.badge.bg-info.bg-opacity-10.text-info= values.to_s
+
+    / Pagination
+    - if total_pages > 1
+      .pagination-wrapper.mt-4.d-flex.justify-content-center
+        nav
+          ul.pagination.pagination-sm
+            / Previous
+            li.page-item class=("disabled" if page <= 1)
+              - if page > 1
+                a.page-link href="?history_page=#{page - 1}#history" aria-label="Previous"
+                  span aria-hidden="true" &laquo;
+              - else
+                span.page-link
+                  span aria-hidden="true" &laquo;
+
+            / Page numbers
+            - (1..total_pages).each do |p|
+              - if total_pages <= 7 || (p <= 2) || (p >= total_pages - 1) || ((p - page).abs <= 1)
+                li.page-item class=("active" if p == page)
+                  a.page-link href="?history_page=#{p}#history"= p
+              - elsif (p == 3 && page > 4) || (p == total_pages - 2 && page < total_pages - 3)
+                li.page-item.disabled
+                  span.page-link ...
+
+            / Next
+            li.page-item class=("disabled" if page >= total_pages)
+              - if page < total_pages
+                a.page-link href="?history_page=#{page + 1}#history" aria-label="Next"
+                  span aria-hidden="true" &raquo;
+              - else
+                span.page-link
+                  span aria-hidden="true" &raquo;
+
   - else
-    .text-center.py-4.bg-light.rounded
+    .text-center.py-5.bg-light.rounded
       i.bi.bi-journals.text-muted.display-6
-      p.text-muted.mt-2 Chưa có lịch sử thao tác nào.
+      p.text-muted.mt-3.mb-0 Chưa có lịch sử thao tác nào.
