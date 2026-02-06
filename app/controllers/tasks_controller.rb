@@ -8,10 +8,15 @@ class TasksController < ApplicationController
   def index
     if params[:project_id]
       @project = Project.find(params[:project_id])
-      @tasks = @project.tasks.active.root_tasks.includes(:assignee, :test_cases)
+      base_scope = @project.tasks.active.root_tasks
     else
-      @tasks = Task.active.root_tasks.includes(:project, :assignee, :test_cases)
+      base_scope = Task.active.root_tasks
     end
+
+    # Options for status filter
+    @status_options = base_scope.distinct.pluck(:status).compact.sort
+
+    @tasks = base_scope.includes(:project, :assignee, :test_cases)
 
     # Filters
     @tasks = @tasks.where(status: params[:status]) if params[:status].present?

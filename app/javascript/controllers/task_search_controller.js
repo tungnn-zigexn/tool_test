@@ -10,11 +10,9 @@ export default class extends Controller {
 
     // Khi trang reload sau khi search, tự focus lại vào ô search
     if (this.hasInputTarget) {
-      // Đợi một tick để đảm bảo layout xong rồi mới focus
       setTimeout(() => {
         this.inputTarget.focus()
 
-        // Đưa con trỏ về cuối chuỗi để người dùng gõ tiếp
         const value = this.inputTarget.value
         this.inputTarget.setSelectionRange?.(value.length, value.length)
       }, 0)
@@ -22,16 +20,21 @@ export default class extends Controller {
   }
 
   keydown() {
-    // Debounce to avoid submitting on every single keystroke too fast
     clearTimeout(this.timeout)
     this.timeout = setTimeout(() => {
       if (this.hasFormTarget) {
         this.formTarget.requestSubmit()
       } else {
-        // Fallback: submit closest form element
         this.element.closest("form")?.requestSubmit()
       }
     }, 300)
   }
-}
 
+  submit() {
+    if (this.hasFormTarget) {
+      this.formTarget.requestSubmit()
+    } else {
+      this.element.closest("form")?.requestSubmit()
+    }
+  }
+}
