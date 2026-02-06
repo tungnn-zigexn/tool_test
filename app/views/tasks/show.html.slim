@@ -133,9 +133,6 @@
               span.text-muted Production:
               span.fw-bold.text-danger.ms-1= @task.prod_bugs
 
-      / Activity History
-      = render 'shared/activity_timeline', logs: ActivityLog.where(trackable_type: 'Task', trackable_id: @task.id).limit(10)
-
   / Subtasks Section
   - if @task.subtasks.any?
     .card.border-0.shadow-sm.mb-4
@@ -225,6 +222,9 @@
           button.btn.btn-success data-bs-toggle="modal" data-bs-target="#importTestCasesModal"
             i.bi.bi-cloud-download.me-2
             | Import từ Google Sheet
+
+  / Activity History Section
+  = render 'shared/activity_timeline', logs: ActivityLog.where(trackable_type: 'Task', trackable_id: @task.id).limit(10)
 
 / Import Test Cases Modal
 .modal.fade#importTestCasesModal tabindex="-1" aria-hidden="true"
