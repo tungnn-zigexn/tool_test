@@ -32,6 +32,35 @@
           .h2.fw-bold.text-warning= @tasks.where(status: ['Closed', 'resolved']).count
           .text-muted.small Completed
 
+  / Search & Filters
+  .row.mb-4
+    .col-12
+      .card.shadow-sm.border-0
+        .card-body.py-3 data-controller="task-search"
+          = form_with url: tasks_path,
+                      method: :get,
+                      local: true,
+                      html: { data: { "task-search-target": "form" } },
+                      class: "d-flex flex-wrap gap-3 align-items-center" do
+            .flex-grow-1
+              .input-group
+                span.input-group-text.bg-white.border-end-0
+                  i.bi.bi-search.text-muted
+                = text_field_tag :q,
+                                 params[:q],
+                                 class: "form-control border-start-0",
+                                 placeholder: "Search tasks by title, description, or Redmine ID...",
+                                 autocomplete: "off",
+                                 data: { controller: "", "task-search-target": "input", action: "keydown->task-search#keydown" }
+            .d-flex.align-items-center.gap-2
+              = select_tag :status,
+                            options_for_select([['Tất cả', ''], ['New', 'new'], ['In Progress', 'in_progress'], ['Resolved', 'resolved'], ['Closed', 'closed']], params[:status]),
+                            class: "form-select"
+
+            = submit_tag "Search", class: "btn btn-primary px-4 d-none d-md-inline-block"
+            - if params[:q].present? || params[:status].present?
+              = link_to "Clear", tasks_path, class: "btn btn-outline-secondary"
+
   / Tasks List
   .d-flex.flex-column.gap-4
     - @tasks.includes(:project, :test_cases, :subtasks).each do |task|

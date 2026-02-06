@@ -8,14 +8,32 @@ class TasksController < ApplicationController
   def index
     if params[:project_id]
       @project = Project.find(params[:project_id])
-      @tasks = @project.tasks.active.root_tasks.includes(:assignee, :test_cases)
+      base_scope = @project.tasks.active.root_tasks
     else
-      @tasks = Task.active.root_tasks.includes(:project, :assignee, :test_cases)
+      base_scope = Task.active.root_tasks
     end
+
+    # Options for status filter
+    @status_options = base_scope.distinct.pluck(:status).compact.sort
+
+    @tasks = base_scope.includes(:project, :assignee, :test_cases)
 
     # Filters
     @tasks = @tasks.where(status: params[:status]) if params[:status].present?
     @tasks = @tasks.where(assignee_id: params[:assignee_id]) if params[:assignee_id].present?
+
+    # Search (My Tasks / Global Tasklist)
+    if params[:q].present?
+      query = params[:q].to_s.strip
+      unless query.empty?
+        like_query = "%#{query.downcase}%"
+        @tasks = @tasks.where(
+          "LOWER(tasks.title) LIKE :q OR LOWER(tasks.description) LIKE :q OR CAST(tasks.redmine_id AS TEXT) LIKE :raw_q",
+          q: like_query,
+          raw_q: "%#{query}%"
+        )
+      end
+    end
 
     respond_to do |format|
       format.html
