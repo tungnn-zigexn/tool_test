@@ -51,14 +51,10 @@
                 span.text-muted.mx-2 
                   = log.action_display
                   |  
-                  span.fw-semibold= log.trackable_type
-                .small.text-muted.mt-1
-                  i.bi.bi-clock.me-1
-                  = time_ago_in_words(log.created_at)
-                  |  trước 
-                  span.text-muted= "(#{log.created_at.strftime("%d/%m/%Y %H:%M")})"
-              .d-flex.align-items-center.gap-2
-                span.badge.bg-light.text-muted.border= "##{global_index}"
+                  span.fw-semibold = log.trackable_type == 'ActivityLog' ? '' : log.trackable_type
+                  span.small.text-muted.ms-2 title=log.created_at.strftime("%d/%m/%Y %H:%M")
+                    i.bi.bi-clock.me-1
+                    = "#{time_ago_in_words(log.created_at)} ago"
 
             / Changes details
             - if log.metadata.present? && log.action_type == 'update'
