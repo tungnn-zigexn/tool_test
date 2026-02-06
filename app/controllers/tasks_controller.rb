@@ -17,6 +17,19 @@ class TasksController < ApplicationController
     @tasks = @tasks.where(status: params[:status]) if params[:status].present?
     @tasks = @tasks.where(assignee_id: params[:assignee_id]) if params[:assignee_id].present?
 
+    # Search (My Tasks / Global Tasklist)
+    if params[:q].present?
+      query = params[:q].to_s.strip
+      unless query.empty?
+        like_query = "%#{query.downcase}%"
+        @tasks = @tasks.where(
+          "LOWER(tasks.title) LIKE :q OR LOWER(tasks.description) LIKE :q OR CAST(tasks.redmine_id AS TEXT) LIKE :raw_q",
+          q: like_query,
+          raw_q: "%#{query}%"
+        )
+      end
+    end
+
     respond_to do |format|
       format.html
       format.json { render json: @tasks }
