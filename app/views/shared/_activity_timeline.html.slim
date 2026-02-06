@@ -44,25 +44,22 @@
                         - next if (val0.to_s.strip.empty? || val0.to_s.downcase == 'n/a') && (val1.to_s.strip.empty? || val1.to_s.downcase == 'n/a')
                         - next if val0.to_s == val1.to_s
 
-                      .field-change
-                        span.text-secondary = "#{field.humanize}: "
-                        - if values.is_a?(Array) && values.size == 2
-                          - val0, val1 = values
-                          / Smart resolution for common ID fields if they were saved as IDs
-                          - if %w[Assignee Developer Tester Created\ by].include?(field.humanize) || field.end_with?('_id')
-                            - if val0.to_s.match?(/^\d+$/)
-                              - val0 = User.find_by(id: val0)&.name || val0
-                            - if val1.to_s.match?(/^\d+$/)
-                              - val1 = User.find_by(id: val1)&.name || val1
+                    .field-change
+                      span.text-secondary = "#{field.humanize}: "
+                      - if values.is_a?(Array) && values.size == 2
+                        - val0, val1 = values
+                        / Smart resolution for common ID fields if they were saved as IDs
+                        - if %w[Assignee Developer Tester Created\ by].include?(field.humanize) || field.end_with?('_id')
+                          - if val0.to_s.match?(/^\d+$/)
+                            - val0 = User.find_by(id: val0)&.name || val0
+                          - if val1.to_s.match?(/^\d+$/)
+                            - val1 = User.find_by(id: val1)&.name || val1
 
-                          span.text-decoration-line-through.text-muted = val0.to_s.presence || 'N/A'
-                          i.bi.bi-arrow-right.mx-1.text-secondary
-                          span.fw-bold = val1.to_s.presence || 'N/A'
-                        - else
-                          span.fw-bold = values.to_s
-              .timestamp.small.text-muted title=log.created_at.strftime("%d/%m/%Y %H:%M")
-                = time_ago_in_words(log.created_at)
-                |  trước
+                        span.text-decoration-line-through.text-muted = val0.to_s.presence || 'N/A'
+                        i.bi.bi-arrow-right.mx-1.text-secondary
+                        span.fw-bold = val1.to_s.presence || 'N/A'
+                      - else
+                        span.fw-bold = values.to_s
   - else
     .text-center.py-4.bg-light.rounded
       i.bi.bi-journals.text-muted.display-6
