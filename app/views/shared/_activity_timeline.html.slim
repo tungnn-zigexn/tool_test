@@ -6,6 +6,24 @@
   - if logs.any?
     .timeline.ps-2 style="border-left: 2px solid #dee2e6; margin-left: 10px;"
       - logs.each do |log|
+        / Danh sách các field quan trọng để hiển thị
+        - important_fields = %w[title description status assignee_id project_id created_at updated_at deleted_at]
+
+        / Lọc để lấy các trường thay đổi quan trọng
+        - has_important_changes = false
+        - if log.metadata.present?
+          - log.metadata.each do |field, values|
+            - next unless important_fields.include?(field)
+            - next if values.is_a?(Array) && values.size == 2 && (values[0].to_s.strip.empty? || values[0].to_s.downcase == 'n/a') && (values[1].to_s.strip.empty? || values[1].to_s.downcase == 'n/a')
+            - next if values.is_a?(Array) && values.size == 2 && values[0].to_s == values[1].to_s
+            - has_important_changes = true
+            - break 
+
+        / Chỉ hiện thị nếu có thay đổi quan trọng hoặc action create/delete
+        - if has_important_changes || log.action_type.in?(%w[create delete restore soft_delete])
+
+
+
         .timeline-item.mb-4.position-relative style="margin-left: -11px;"
           .timeline-marker.position-absolute.bg-white.rounded-circle.border.border-2.border-primary style="width: 20px; height: 20px; left: 0;"
           .timeline-content.ps-4
@@ -14,11 +32,17 @@
                 span.fw-bold = log.user&.name || 'System'
                 span.text-muted.mx-1 = log.action_display
                 span.fw-semibold = log.trackable_type == 'ActivityLog' ? '' : log.trackable_type
-                - if log.metadata.present?
+                - if log.metadata.present? && log.action_type == 'update'
                   .small.mt-1
                     - log.metadata.each do |field, values|
-                      - next if %w[id created_at updated_at deleted_at task_id project_id].include?(field)
-                      - next if field.end_with?('_id') && log.metadata.key?(field.gsub(/_id$/, '').humanize)
+                      - next unless important_fields.include?(field)
+                      - next if %w[id created_at updated_at deleted_at task_id project_id test_case_id].include?(field)
+
+                      / Br qua các trường N/A -> N/A hoặc empty -> empty
+                      - if values.is_a?(Array) && values.size == 2
+                        - val0, val1 = values
+                        - next if (val0.to_s.strip.empty? || val0.to_s.downcase == 'n/a') && (val1.to_s.strip.empty? || val1.to_s.downcase == 'n/a')
+                        - next if val0.to_s == val1.to_s
 
                       .field-change
                         span.text-secondary = "#{field.humanize}: "
