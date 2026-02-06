@@ -25,6 +25,7 @@ class TasksController < ApplicationController
 
   # GET /tasks/:id or /projects/:project_id/tasks/:id
   def show
+    @test_case = @task.test_cases.build
     respond_to do |format|
       format.html
       format.json { render json: @task.as_json(include: %i[test_cases assignee]) }

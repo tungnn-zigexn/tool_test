@@ -1,0 +1,48 @@
+- devices = local_assigns[:devices] || ['pc', 'sp', 'app']
+
+tr.test-case-row data-controller="editable-cell" data-test-case-id=test_case.id data-project-id=test_case.task.project_id data-task-id=test_case.task.id
+  td.text-center.fw-bold.bg-light.align-middle = "TC-#{index.to_s.rjust(3, '0')}"
+  
+  td.text-center.align-middle
+    div.p-2
+      span.badge.bg-primary.bg-opacity-10.text-primary.px-2.py-1.fw-semibold
+        = test_case.test_type_display
+
+  - row_info = local_assigns[:row_info] || {}
+  - unless row_info[:hide]
+    td.align-middle.text-break style="max-width: 120px;" rowspan=row_info[:rowspan]
+      div.p-2
+        .fw-bold.mb-1 data-editable-cell-target="display" data-action="click->editable-cell#edit" data-field="title"
+          = test_case.title
+        
+  td.p-0.align-middle
+    - if test_case.test_steps.any?
+      table.table.table-sm.mb-0.border-0 style="table-layout: fixed; width: 100%;"
+        - test_case.test_steps.ordered.each do |step|
+          tr
+            td.p-2 style="word-break: break-word;"
+              - step.action_contents.each do |content|
+                .rich-content data-editable-cell-target="display" data-action="click->editable-cell#edit" data-content-id=content.id data-field="content_value"
+                  == format_content_with_media_links(content.content_value)
+    - else
+      .p-2.text-muted.small.fst-italic No steps defined
+
+  td.p-0.align-middle
+    - if test_case.test_steps.any?
+      table.table.table-sm.mb-0.border-0 style="table-layout: fixed; width: 100%;"
+        - test_case.test_steps.ordered.each do |step|
+          tr
+            td.p-2 style="word-break: break-word;"
+              - step.expected_contents.each do |content|
+                .rich-content.mb-2 data-editable-cell-target="display" data-action="click->editable-cell#edit" data-content-id=content.id data-field="content_value"
+                  == format_content_with_media_links(content.content_value)
+    - else
+      .p-2.text-muted.small.fst-italic No results defined
+
+  td.align-middle.text-center.fw-bold.small.px-2 style="white-space: nowrap;"
+    = test_case.target_display
+
+  - devices.each do |device|
+    - status = test_case.latest_status_for(device)
+    td.text-center.align-middle.px-1
+      = render 'test_cases/device_status_dropdown', test_case: test_case, device: device, status: status

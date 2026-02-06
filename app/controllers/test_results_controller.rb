@@ -53,9 +53,10 @@ class TestResultsController < ApplicationController
     if @test_result.save
       respond_to do |format|
         format.html do
-          redirect_to [@test_case.task.project, @test_case.task, @test_case],
+          redirect_to [@project, @task, @test_case],
                       notice: 'Test result created successfully.'
         end
+        format.turbo_stream
         format.json { render json: @test_result, status: :created }
       end
     else
