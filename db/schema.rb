@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_25_153626) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_05_031754) do
   create_table "activity_logs", force: :cascade do |t|
     t.integer "user_id", null: false
     t.string "trackable_type", null: false
@@ -140,7 +140,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_25_153626) do
   create_table "test_results", force: :cascade do |t|
     t.integer "run_id"
     t.integer "case_id", null: false
-    t.string "status"
+    t.string "result"
     t.text "device"
     t.integer "executed_by_id"
     t.datetime "executed_at"

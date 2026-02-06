@@ -1,7 +1,9 @@
 class Project < ApplicationRecord
   include SoftDeletable
+  include Loggable
 
   has_many :tasks, dependent: :destroy
+  has_many :activity_logs, as: :trackable, dependent: :destroy
 
   # Override soft_delete! to cascade to tasks
   def soft_delete!
