@@ -30,7 +30,7 @@
             / Description
             .mb-4
               = f.label :description, "Mô tả", class: 'form-label fw-semibold'
-              = f.text_area :description, class: 'form-control', rows: 6, placeholder: 'Mô tả chi tiết về project...'
+              = f.text_area :description, class: 'form-control', rows: 6, placeholder: 'Mô tả chi tiết về project...', style: 'resize: none;'
               .form-text Mô tả về mục đích, phạm vi của project
               - if @project.errors[:description].any?
                 .invalid-feedback.d-block = @project.errors[:description].join(', ')
