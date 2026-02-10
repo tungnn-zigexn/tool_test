@@ -117,7 +117,7 @@
               = link_to "Hủy", project_path(@project), class: 'btn btn-outline-secondary btn-lg'
 
   / Redmine Import Form
-  #redmine-form.row.justify-content-center style="display: none;" data-form-toggle-target="redmineForm"
+  #redmine-form.row.justify-content-center style="display: none;" data-form-toggle-target="redmineForm" data-controller="import-progress" data-import-progress-estimated-time-value="60"
     .col-lg-10
       .card.border-0.shadow-sm
         .card-header.bg-success.text-white
@@ -125,7 +125,7 @@
             i.bi.bi-cloud-download.me-2
             | Import từ Redmine
         .card-body.p-4
-          = form_with url: import_from_redmine_project_tasks_path(@project), method: :post, local: true do |f|
+          = form_with url: import_from_redmine_project_tasks_path(@project), method: :post, local: true, data: { import_progress_target: "form", action: "submit->import-progress#showProgress" } do |f|
             .text-center.mb-4
               .display-1.text-success.mb-3
                 i.bi.bi-cloud-arrow-down
@@ -152,10 +152,26 @@
                   li Các subtasks của issue
                   li Test cases từ Google Sheet (nếu có link trong issue)
 
+            / Progress Bar
+            .d-none.mt-4 data-import-progress-target="progress"
+              .alert.alert-success
+                .d-flex.align-items-center.justify-content-between.mb-2
+                  .d-flex.align-items-center
+                    .spinner-border.spinner-border-sm.me-2 role="status"
+                      span.visually-hidden Loading...
+                    strong Đang import task từ Redmine...
+                  span.time-remaining.badge.bg-light.text-dark.px-3.py-2 Đang tính toán...
+                .progress style="height: 28px;"
+                  .progress-bar.progress-bar-striped.progress-bar-animated.bg-success role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%"
+                    | 0%
+                small.text-muted.mt-2.d-block
+                  i.bi.bi-info-circle.me-1
+                  | Đang lấy thông tin từ Redmine, import subtasks và test cases. Vui lòng đợi...
+
             / Buttons
             .d-flex.gap-2.mt-4.justify-content-center
-              = f.submit "Import từ Redmine", class: 'btn btn-success btn-lg px-5'
-              = link_to "Hủy", project_path(@project), class: 'btn btn-outline-secondary btn-lg'
+              = f.submit "Import từ Redmine", class: 'btn btn-success btn-lg px-5', data: { import_progress_target: "submitButton" }
+              = link_to "Hủy", project_path(@project), class: 'btn btn-outline-secondary btn-lg', data: { import_progress_target: "cancelButton" }
 
 
 
