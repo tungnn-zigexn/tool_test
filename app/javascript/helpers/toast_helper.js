@@ -1,0 +1,99 @@
+/**
+ * Show a toast notification
+ * @param {string} message - The message to display
+ * @param {string} type - The type of toast (success, error, warning, info)
+ * @param {number} delay - Auto-hide delay in milliseconds (default: 5000)
+ */
+export function showToast(message, type = 'info', delay = 5000) {
+  // Check if Bootstrap is loaded
+  if (typeof bootstrap === 'undefined' || !bootstrap.Toast) {
+    console.error('Bootstrap Toast is not available')
+    return null
+  }
+
+  // Get or create toast container
+  let container = document.querySelector('.toast-container')
+  if (!container) {
+    container = document.createElement('div')
+    container.className = 'toast-container position-fixed top-0 end-0 p-3'
+    container.style.zIndex = '9999'
+    document.body.appendChild(container)
+  }
+
+  // Define colors and icons based on type
+  const typeConfig = {
+    success: {
+      bgClass: 'bg-success text-white',
+      icon: 'bi-check-circle-fill',
+      closeClass: 'btn-close-white'
+    },
+    error: {
+      bgClass: 'bg-danger text-white',
+      icon: 'bi-x-circle-fill',
+      closeClass: 'btn-close-white'
+    },
+    warning: {
+      bgClass: 'bg-warning text-dark',
+      icon: 'bi-exclamation-triangle-fill',
+      closeClass: ''
+    },
+    info: {
+      bgClass: 'bg-info text-white',
+      icon: 'bi-info-circle-fill',
+      closeClass: 'btn-close-white'
+    }
+  }
+
+  const config = typeConfig[type] || typeConfig.info
+
+  // Create toast element
+  const toastEl = document.createElement('div')
+  toastEl.className = `toast align-items-center border-0 shadow-lg ${config.bgClass}`
+  toastEl.setAttribute('role', 'alert')
+  toastEl.setAttribute('aria-live', 'assertive')
+  toastEl.setAttribute('aria-atomic', 'true')
+  
+  toastEl.innerHTML = `
+    <div class="d-flex">
+      <div class="toast-body d-flex align-items-center">
+        <i class="bi ${config.icon} fs-5 me-2"></i>
+        <span>${message}</span>
+      </div>
+      <button type="button" class="btn-close me-2 m-auto ${config.closeClass}" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+  `
+
+  // Add to container
+  container.appendChild(toastEl)
+
+  // Initialize and show toast (using global bootstrap object from CDN)
+  const toast = new bootstrap.Toast(toastEl, {
+    autohide: true,
+    delay: delay
+  })
+
+  toast.show()
+
+  // Remove element after hidden
+  toastEl.addEventListener('hidden.bs.toast', () => {
+    toastEl.remove()
+  })
+
+  return toast
+}
+
+/**
+ * Convenience methods
+ */
+export const toastSuccess = (message, delay) => showToast(message, 'success', delay)
+export const toastError = (message, delay) => showToast(message, 'error', delay)
+export const toastWarning = (message, delay) => showToast(message, 'warning', delay)
+export const toastInfo = (message, delay) => showToast(message, 'info', delay)
+
+// Make it available globally if needed
+window.showToast = showToast
+window.toastSuccess = toastSuccess
+window.toastError = toastError
+window.toastWarning = toastWarning
+window.toastInfo = toastInfo
+

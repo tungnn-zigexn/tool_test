@@ -29,15 +29,12 @@ html
       |   });
       | });
   body data-controller="layout"
-    .flash-container#flash-messages
+    / Toast Container (fixed position)
+    .toast-container.position-fixed.top-0.end-0.p-3 style="z-index: 9999;"
       - if notice.present?
-        .alert.alert-success.alert-dismissible.fade.show role="alert" data-controller="flash"
-          = notice
-          button.btn-close type="button" data-bs-dismiss="alert" aria-label="Close"
+        = render partial: 'shared/toast', locals: { message: notice, type: 'success' }
       - if alert.present?
-        .alert.alert-danger.alert-dismissible.fade.show role="alert" data-controller="flash"
-          = alert
-          button.btn-close type="button" data-bs-dismiss="alert" aria-label="Close"
+        = render partial: 'shared/toast', locals: { message: alert, type: 'error' }
 
     - if user_signed_in?
       = render 'shared/header'
