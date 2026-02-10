@@ -1,7 +1,7 @@
 # Bulk import tasks from Redmine issues URL.
 # Only imports issues where subject matches "4. Testing" (tracker Test, subject starts with "4. Testing")
 class RedmineBulkImportService
-  TESTING_SUBJECT_PATTERN = /\A4\.\s*Testing\b/i
+  TESTING_SUBJECT_PATTERN = /\A4\.\s*Testing\s*-\s*#/i
 
   attr_reader :errors, :imported_tasks, :skipped_count
 
@@ -13,7 +13,40 @@ class RedmineBulkImportService
     @skipped_count = 0
   end
 
-  def import(limit: 100, offset: 0)
+  def import(limit: 100, offset: 0, issue_ids: nil)
+    if issue_ids.present?
+      import_by_issue_ids(Array(issue_ids))
+    else
+      import_all(limit: limit, offset: offset)
+    end
+  end
+
+  def import_by_issue_ids(issue_ids)
+    Rails.logger.info "Start bulk import by issue_ids: #{issue_ids.inspect}"
+
+    issue_ids = issue_ids.map(&:to_s).reject(&:blank?).uniq
+    return true if issue_ids.empty?
+
+    issue_ids.each do |issue_id|
+      issue_data = RedmineService.get_issues(issue_id)
+      next unless issue_data
+
+      subject = ensure_utf8(issue_data['subject'].to_s)
+      next unless subject.match?(TESTING_SUBJECT_PATTERN)
+
+      import_single_issue(issue_data)
+    end
+
+    Rails.logger.info "Bulk import by IDs hoàn tất: #{@imported_tasks.length} tasks imported"
+    true
+  rescue StandardError => e
+    error_msg = ensure_utf8(e.message)
+    @errors << "Lỗi khi bulk import: #{error_msg}"
+    Rails.logger.error "RedmineBulkImportService Error: #{error_msg}\n#{e.backtrace.join("\n")}"
+    false
+  end
+
+  def import_all(limit: 100, offset: 0)
     Rails.logger.info "Start bulk import from Redmine URL: #{@issues_url} (full pages)"
 
     testing_issues = fetch_all_testing_issues(limit: limit, offset: offset)
