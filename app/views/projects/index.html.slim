@@ -23,6 +23,12 @@
       - @projects.each do |project|
         = render 'projects/project_card', project: project
 
+    / Pagination
+    - if @total_pages > 1
+      .row.mt-4
+        .col-12
+          = render 'shared/pagination', page: @current_page, total_pages: @total_pages, param_name: 'page'
+
   - else
     / Empty State
     .row

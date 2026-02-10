@@ -59,3 +59,9 @@
                   .text-muted
                     i.bi.bi-inbox.display-4.d-block.mb-3
                     h5 No archived projects found.
+
+  / Pagination
+  - if @total_pages > 1
+    .mt-4
+      = render 'shared/pagination', page: @current_page, total_pages: @total_pages, param_name: 'page'
+
