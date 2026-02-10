@@ -18,58 +18,275 @@
             button.btn.btn-success.text-nowrap.d-inline-flex.align-items-center data-bs-toggle="modal" data-bs-target="#importRedmineModal"
               i.bi.bi-cloud-download.me-2
               | Import từ Redmine
+            button.btn.btn-info.text-nowrap.d-inline-flex.align-items-center data-bs-toggle="modal" data-bs-target="#importRedmineUrlModal"
+              i.bi.bi-collection.me-2
+              | Bulk Import (4. Testing)
 
       - if @project.description.present?
         .border-top.pt-3.pb-3.mt-3.text-muted style="white-space: pre-wrap; max-width: 1000px; font-size: 0.95rem; line-height: 1.6;"
           = @project.description
 
-      .row.g-3
-        .col-md-3
-          .p-3.rounded.bg-primary.bg-opacity-10.text-center
-            .h2.fw-bold.text-primary.mb-0= @root_tasks.count
-            .small.text-muted Parent Tasks
-        .col-md-3
-          .p-3.rounded.bg-success.bg-opacity-10.text-center
-            .h2.fw-bold.text-success.mb-0= @tasks.sum(:number_of_test_cases)
-            .small.text-muted Test Cases
-        .col-md-3
-          .p-3.rounded.bg-info.bg-opacity-10.text-center
-            .h2.fw-bold.text-info.mb-0= @tasks.where.not(parent_id: nil).count
-            .small.text-muted Subtasks
-        .col-md-3
-          .p-3.rounded.bg-warning.bg-opacity-10.text-center
-            .h2.fw-bold.text-warning.mb-0= @tasks.where(status: ['Closed', 'resolved']).count
-            .small.text-muted Completed
+      / Unified Filter & Statistics Section
+      = form_with url: project_path(@project), method: :get, local: true, id: "task-filters-form" do |f|
+        .border-top.pt-3.mt-3
+          / 1. Date Presets (Simple buttons like Bulk Import)
+          .mb-3
+            label.form-label.fw-bold.small BỘ LỌC THỜI GIAN:
+            .d-flex.flex-wrap.gap-2.mb-2
+              - presets = [['Hôm nay', 'today'], ['Hôm qua', 'yesterday'], ['7 ngày qua', 'last_7_days'], ['30 ngày qua', 'last_30_days'], ['Tháng này', 'this_month'], ['Tháng trước', 'last_month'], ['Quý này', 'this_quarter'], ['Năm nay', 'this_year']]
+              - presets.each do |label, preset|
+                = link_to label, project_path(@project, date_preset: preset, q: params[:q], status: params[:status]), class: "btn btn-sm #{@selected_preset == preset ? 'btn-primary' : 'btn-outline-secondary'}"
+            
+            / Custom Date Range
+            .row.g-2
+              .col-auto
+                = date_field_tag :start_date, params[:start_date], class: "form-control form-control-sm", placeholder: "Từ ngày", onchange: "this.form.submit()"
+              .col-auto
+                = date_field_tag :end_date, params[:end_date], class: "form-control form-control-sm", placeholder: "Đến ngày", onchange: "this.form.submit()"
+              .col-auto
+                - if params[:start_date].present? && params[:end_date].present?
+                  span.small.text-muted.align-self-center
+                    = "#{Date.parse(params[:start_date]).strftime('%d/%m/%Y')} - #{Date.parse(params[:end_date]).strftime('%d/%m/%Y')}"
+
+          / 2. Main Filters (Status + Search)
+          .row.g-2.mb-4
+            .col-md-3
+              .dropdown
+                button.btn.btn-outline-secondary.w-100.dropdown-toggle.text-start.d-flex.justify-content-between.align-items-center type="button" data-bs-toggle="dropdown" aria-expanded="false"
+                  - if params[:status].present?
+                    span.badge class=status_badge_color(params[:status]).gsub('bg-', 'text-bg-') = params[:status]
+                  - else
+                    span.text-muted
+                      i.bi.bi-funnel.me-2
+                      | Trạng thái
+                
+                ul.dropdown-menu.shadow.w-100
+                  li
+                    = link_to project_path(@project, q: params[:q], date_preset: params[:date_preset], start_date: params[:start_date], end_date: params[:end_date]), class: "dropdown-item d-flex align-items-center justify-content-between #{params[:status].blank? ? 'active' : ''}" do
+                      span Tất cả trạng thái
+                      - if params[:status].blank?
+                        i.bi.bi-check-lg
+                  
+                  - @status_options.each do |status|
+                    li
+                      = link_to project_path(@project, status: status, q: params[:q], date_preset: params[:date_preset], start_date: params[:start_date], end_date: params[:end_date]), class: "dropdown-item d-flex align-items-center justify-content-between #{params[:status] == status ? 'active' : ''}" do
+                        span.badge class=status_badge_color(status).gsub('bg-', 'text-bg-') = status
+                        - if params[:status] == status
+                          i.bi.bi-check-lg
+
+            .col-md-7
+              .input-group
+                span.input-group-text.bg-white.border-end-0
+                  i.bi.bi-search.text-muted
+                = text_field_tag :q, params[:q], 
+                    class: "form-control border-start-0 ps-0", 
+                    placeholder: "Tìm kiếm task theo tên hoặc Redmine ID...", 
+                    autocomplete: "off"
+
+            .col-md-2
+              = button_tag type: "submit", class: "btn btn-primary w-100" do
+                | Tìm kiếm
+
+        / 3. Statistics Cards
+        .row.g-3
+          .col-md-3
+            .p-3.rounded.bg-primary.bg-opacity-10.text-center.border.border-primary.border-opacity-10
+              .h2.fw-bold.text-primary.mb-0= @total_tasks
+              .small.text-muted Parent Tasks
+          .col-md-3
+            .p-3.rounded.bg-success.bg-opacity-10.text-center.border.border-success.border-opacity-10
+              .h2.fw-bold.text-success.mb-0= @tasks.sum(:number_of_test_cases)
+              .small.text-muted Test Cases
+          .col-md-3
+            .p-3.rounded.bg-info.bg-opacity-10.text-center.border.border-info.border-opacity-10
+              .h2.fw-bold.text-info.mb-0= @tasks.where.not(parent_id: nil).count
+              .small.text-muted Subtasks
+          .col-md-3
+            .p-3.rounded.bg-warning.bg-opacity-10.text-center.border.border-warning.border-opacity-10
+              .h2.fw-bold.text-warning.mb-0= @tasks.where(status: ['Closed', 'resolved']).count
+              .small.text-muted Completed
+      
+      - if params[:q].present? || params[:status].present? || (params[:date_preset].present? && params[:date_preset] != 'all')
+        .text-end.mt-3
+          = link_to project_path(@project), class: "small text-muted text-decoration-none" do
+            i.bi.bi-arrow-counterclockwise.me-1
+            | Reset bộ lọc
+
+
 
   / Tasks List - Only Parent Tasks (Clickable to view details)
-  .d-flex.flex-column.gap-4
-    - @root_tasks.each do |task|
-      = render 'tasks/task_card', task: task
+  - if @root_tasks.any?
+    .d-flex.flex-column.gap-4.mb-4
+      - @root_tasks.each do |task|
+        = render 'tasks/task_card', task: task
 
-  / Empty State
-  - if @root_tasks.empty?
+    / Pagination
+    - if @total_pages > 1
+      .card.border-0.shadow-sm.mb-4
+        .card-body.p-2
+          = render 'shared/pagination', page: @tasks_page, total_pages: @total_pages, param_name: 'page'
+  - else
+    / Empty State
     .text-center.py-5
       .h1.text-muted.mb-3 📭
       h4.text-muted No tasks found
-      p.text-muted Create a new task or import from Redmine to get started.
+      - if params[:q].present?
+        p.text-muted Không tìm thấy task phù hợp với "#{params[:q]}"
+        - clear_search_params = { date_preset: params[:date_preset], start_date: params[:start_date], end_date: params[:end_date], status: params[:status] }.compact
+        = link_to project_path(@project, clear_search_params), class: "btn btn-outline-primary" do
+          i.bi.bi-arrow-clockwise.me-1
+          | Xóa bộ lọc tìm kiếm
+      - else
+        p.text-muted Create a new task or import from Redmine to get started.
+
 
 / Import Modal
 - if current_user&.admin?
-  .modal.fade#importRedmineModal tabindex="-1" aria-hidden="true"
+  .modal.fade#importRedmineModal tabindex="-1" aria-hidden="true" data-controller="import-progress" data-import-progress-estimated-time-value="60"
     .modal-dialog
       .modal-content
-        .modal-header
-          h5.modal-title Import Task từ Redmine
-          button.btn-close type="button" data-bs-dismiss="modal" aria-label="Close"
-        = form_with url: import_from_redmine_project_tasks_path(@project), method: :post do |f|
+        .modal-header.bg-success.text-white
+          h5.modal-title
+            i.bi.bi-cloud-download.me-2
+            | Import Task từ Redmine
+          button.btn-close.btn-close-white type="button" data-bs-dismiss="modal" aria-label="Close"
+        = form_with url: import_from_redmine_project_tasks_path(@project), method: :post, local: true, data: { import_progress_target: "form", action: "submit->import-progress#showProgress" } do |f|
           .modal-body
             .mb-3
               = label_tag :issue_id, "Redmine Issue ID *", class: 'form-label fw-bold'
               = text_field_tag :issue_id, nil, class: 'form-control', placeholder: '12345', required: true
               .form-text Nhập ID của issue từ Redmine
+
+            / Progress Bar
+            .d-none.mt-3 data-import-progress-target="progress"
+              .alert.alert-success.mb-0
+                .d-flex.align-items-center.justify-content-between.mb-2
+                  .d-flex.align-items-center
+                    .spinner-border.spinner-border-sm.me-2 role="status"
+                      span.visually-hidden Loading...
+                    strong Đang import task từ Redmine...
+                  span.time-remaining.badge.bg-light.text-dark.px-3.py-2 Đang tính toán...
+                .progress style="height: 28px;"
+                  .progress-bar.progress-bar-striped.progress-bar-animated.bg-success role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%"
+                    | 0%
+                small.text-muted.mt-2.d-block
+                  i.bi.bi-info-circle.me-1
+                  | Đang lấy thông tin từ Redmine, import subtasks và test cases. Vui lòng đợi...
+
           .modal-footer
-            button.btn.btn-secondary type="button" data-bs-dismiss="modal" Hủy
-            = f.submit "Import", class: 'btn btn-success'
+            button.btn.btn-secondary type="button" data-bs-dismiss="modal" data-import-progress-target="cancelButton" Hủy
+            = f.submit "Import", class: 'btn btn-success', data: { import_progress_target: "submitButton" }
+
+  / Bulk Import Modal (4. Testing only) - Tabs: Tải danh sách (filter theo project + thời gian) | Danh sách task (đã/chưa import, chọn để import)
+  .modal.fade#importRedmineUrlModal tabindex="-1" aria-hidden="true" data-controller="bulk-import import-progress" data-import-progress-estimated-time-value="120" data-bulk-import-list-url-value=list_redmine_issues_project_tasks_path(@project) data-bulk-import-import-url-value=import_selected_redmine_issues_project_tasks_path(@project)
+    .modal-dialog.modal-lg
+      .modal-content
+        .modal-header.bg-info.text-white
+          h5.modal-title
+            i.bi.bi-collection.me-2
+            | Bulk Import - Chỉ lấy 4. Testing
+          button.btn-close.btn-close-white type="button" data-bs-dismiss="modal" aria-label="Close"
+        .modal-body
+          / Tabs removed for single-screen view
+
+          / Tab 1: Tải danh sách (URL + Redmine Project + filter theo thời gian)
+          .bulk-import-list-tab data-bulk-import-target="listPanel"
+            .mb-3
+              input#bulk_issues_url type="hidden" name="issues_url" value="https://dev.zigexn.vn/issues.json" data-bulk-import-target="urlInput"
+
+            .mb-3
+              label.form-label.fw-bold Redmine Project *
+              select.form-select name="redmine_project_id" data-bulk-import-target="redmineProjectIdInput" data-action="change->bulk-import#onRedmineProjectChange"
+                option value="" Chọn project Redmine (theo tên)...
+                - (@redmine_projects || []).each do |p|
+                  option value=p[:id]
+                    = "#{p[:name]} (#{p[:identifier]})"
+                option value="__custom__" Nhập ID hoặc identifier...
+              .form-text Chọn project theo tên (đã hiện sẵn danh sách từ Redmine)
+              .mt-2.d-none data-bulk-import-target="redmineProjectFallbackWrap"
+                input.form-control type="text" placeholder="Ví dụ: 123 hoặc usedcar-ex" data-bulk-import-target="redmineProjectFallbackInput"
+
+            .mb-3
+              label.form-label.fw-bold Bộ lọc theo thời gian (created_on)
+              .d-flex.flex-wrap.gap-2.mb-2
+                button.btn.btn-sm.btn-outline-secondary type="button" data-preset="today" data-action="click->bulk-import#selectPreset" Hôm nay
+                button.btn.btn-sm.btn-outline-secondary type="button" data-preset="last_7_days" data-action="click->bulk-import#selectPreset" 7 ngày qua
+                button.btn.btn-sm.btn-outline-secondary type="button" data-preset="last_30_days" data-action="click->bulk-import#selectPreset" 30 ngày qua
+                button.btn.btn-sm.btn-outline-secondary type="button" data-preset="last_90_days" data-action="click->bulk-import#selectPreset" 90 ngày qua
+                button.btn.btn-sm.btn-outline-secondary type="button" data-preset="this_month" data-action="click->bulk-import#selectPreset" Tháng này
+                button.btn.btn-sm.btn-outline-secondary type="button" data-preset="last_month" data-action="click->bulk-import#selectPreset" Tháng trước
+                button.btn.btn-sm.btn-outline-secondary type="button" data-preset="this_year" data-action="click->bulk-import#selectPreset" Năm nay
+              .row.g-2
+                .col-auto
+                  input.form-control.form-control-sm type="date" data-bulk-import-target="startDate" data-bulk-import-date-preset-target="start" data-action="change->bulk-import#loadList"
+                .col-auto
+                  input.form-control.form-control-sm type="date" data-bulk-import-target="endDate" data-bulk-import-date-preset-target="end" data-action="change->bulk-import#loadList"
+                .col-auto
+                  input type="hidden" data-bulk-import-target="datePreset" value="last_30_days"
+            .alert.alert-info.d-flex.align-items-start.small
+              i.bi.bi-info-circle.me-2.mt-1
+              div
+                strong Lưu ý:
+                ul.mb-0.mt-1
+                  li Chọn Redmine Project theo tên (hoặc nhập ID/identifier) để chỉ lấy issue thuộc project đó
+                  li Chỉ hiển thị issue có subject bắt đầu "4. Testing"
+                  li Trạng thái "Đã import" = task đã có trong project (theo Redmine ID)
+
+            / Loading Indicator
+            .d-none.text-center.py-3 data-bulk-import-target="loadingIndicator"
+              .spinner-border.text-primary role="status"
+                span.visually-hidden Loading...
+              .mt-2.small.text-muted Đang tải danh sách task...
+
+          / Tab 2: Danh sách task (filter đã/chưa import, chọn để import)
+          .mt-3.d-none data-bulk-import-target="tableContainer"
+            .d-flex.justify-content-between.align-items-center.mb-2.flex-wrap.gap-2
+              .d-flex.align-items-center.gap-2
+                label.mb-0 Hiển thị:
+                select.form-select.form-select-sm style="width: auto;" data-bulk-import-target="filterSelect" data-action="change->bulk-import#filterTable"
+                  option value="all" Tất cả
+                  option value="not_imported" Chưa import
+                  option value="imported" Đã import
+              span.small.text-muted
+                | Đã chọn:
+                strong data-bulk-import-target="selectedCount" 0
+                |  task
+            .table-responsive style="max-height: 320px; overflow-y: auto;"
+              table.table.table-sm.table-hover
+                thead.sticky-top.bg-light
+                  tr
+                    th style="width: 40px;"
+                      input.form-check-input type="checkbox" data-action="change->bulk-import#toggleAll" title="Chọn tất cả (chưa import)"
+                    th style="width: 60px;" #
+                    th Subject
+                    th style="width: 100px;" Ngày tạo
+                    th style="width: 120px;" Assignee
+                    th style="width: 100px;" Trạng thái
+                tbody data-bulk-import-target="tableBody"
+                  tr
+                    td.text-muted.text-center.py-4 colspan="6"
+                      | Bấm "Tải danh sách" ở tab trên để xem danh sách.
+
+            = form_with url: import_selected_redmine_issues_project_tasks_path(@project), method: :post, local: true, data: { import_progress_target: "form", action: "submit->import-progress#showProgress", bulk_import_target: "importForm" } do |f|
+              / Hidden issue_ids[] will be added by JS when user clicks Import
+              .d-none data-import-progress-target="progress"
+                .alert.alert-info.mb-0
+                  .d-flex.align-items-center.justify-content-between.mb-2
+                    .d-flex.align-items-center
+                      .spinner-border.spinner-border-sm.me-2 role="status"
+                        span.visually-hidden Loading...
+                      strong Đang import tasks từ Redmine...
+                    span.time-remaining.badge.bg-light.text-dark.px-3.py-2 Đang tính toán...
+                  .progress style="height: 28px;"
+                    .progress-bar.progress-bar-striped.progress-bar-animated.bg-info role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%"
+                      | 0%
+              .mt-3.d-flex.justify-content-between.align-items-center
+                button.btn.btn-secondary type="button" data-bs-dismiss="modal" data-import-progress-target="cancelButton" Hủy
+                button.btn.btn-info data-bulk-import-target="submitButton" data-action="click->bulk-import#submitImport" type="button"
+                  i.bi.bi-cloud-download.me-2
+                  | Import đã chọn
+        .modal-footer.d-none
+          / Footer hidden - actions are inside modal-body for tab 2
 
 
 

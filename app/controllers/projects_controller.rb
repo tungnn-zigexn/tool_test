@@ -1,10 +1,43 @@
 class ProjectsController < ApplicationController
   before_action :set_project, except: %i[index new create archived]
   before_action :authorize_admin, except: %i[index show archived]
-  # skip_before_action :verify_authenticity_token
-  # skip_before_action :authenticate_user! # TODO: test postman
+  
+  # Date presets definition
+  DATE_PRESETS = {
+    "today" => -> { Date.current..Date.current },
+    "yesterday" => -> { Date.yesterday..Date.yesterday },
+    "last_7_days" => -> { 6.days.ago.to_date..Date.current },
+    "last_30_days" => -> { 29.days.ago.to_date..Date.current },
+    "this_week" => -> { Date.current.beginning_of_week..Date.current },
+    "last_week" => lambda {
+      1.week.ago.beginning_of_week.to_date..1.week.ago.end_of_week.to_date
+    },
+    "this_month" => -> { Date.current.beginning_of_month..Date.current },
+    "last_month" => lambda {
+      1.month.ago.beginning_of_month.to_date..1.month.ago.end_of_month.to_date
+    },
+    "this_quarter" => -> { Date.current.beginning_of_quarter..Date.current },
+    "last_quarter" => lambda {
+      1.quarter.ago.beginning_of_quarter.to_date..1.quarter.ago.end_of_quarter.to_date
+    },
+    "this_year" => -> { Date.current.beginning_of_year..Date.current },
+    "last_year" => lambda {
+      1.year.ago.beginning_of_year.to_date..1.year.ago.end_of_year.to_date
+    }
+  }.freeze
+  
   def index
-    @projects = Project.active.order(created_at: :desc)
+    projects_per_page = 12 # 12 projects for nice grid layout (3x4 or 4x3)
+    page = (params[:page] || 1).to_i
+    
+    all_projects = Project.active.order(created_at: :desc)
+    @total_projects = all_projects.count
+    @total_pages = (@total_projects.to_f / projects_per_page).ceil
+    @current_page = page
+    
+    # Paginate
+    offset = (page - 1) * projects_per_page
+    @projects = all_projects.limit(projects_per_page).offset(offset)
 
     respond_to do |format|
       format.html
@@ -13,7 +46,17 @@ class ProjectsController < ApplicationController
   end
 
   def archived
-    @projects = Project.deleted.order(deleted_at: :desc)
+    projects_per_page = 12
+    page = (params[:page] || 1).to_i
+    
+    all_archived = Project.deleted.order(deleted_at: :desc)
+    @total_projects = all_archived.count
+    @total_pages = (@total_projects.to_f / projects_per_page).ceil
+    @current_page = page
+    
+    # Paginate
+    offset = (page - 1) * projects_per_page
+    @projects = all_archived.limit(projects_per_page).offset(offset)
 
     respond_to do |format|
       format.html
@@ -22,14 +65,76 @@ class ProjectsController < ApplicationController
   end
 
   def show
-    @root_tasks = @project.root_tasks.includes(
-      :assignee,
-      :test_cases,
-      :subtasks
-    ).order(created_at: :desc)
+    # Calculate date range from params
+    @selected_preset = params[:date_preset].to_s.presence
+    
+    if params[:start_date].present? && params[:end_date].present?
+      # Custom date range
+      @start_date = Date.parse(params[:start_date]) rescue nil
+      @end_date = Date.parse(params[:end_date]) rescue nil
+      @selected_preset = 'custom' if @start_date && @end_date
+    elsif @selected_preset.present? && DATE_PRESETS.key?(@selected_preset)
+      # Preset range
+      range = DATE_PRESETS[@selected_preset].call
+      @start_date = range.begin
+      @end_date = range.end
+    else
+      # Default: last 30 days
+      range = DATE_PRESETS['last_30_days'].call
+      @start_date = range.begin
+      @end_date = range.end
+      @selected_preset = 'last_30_days'
+    end
+    
+    Rails.logger.info "[DATE FILTER DEBUG] Project: #{@project.id}, Preset: #{@selected_preset}, Range: #{@start_date} to #{@end_date}"
 
-    # We still need @tasks for some stats in the view (test cases sum etc)
+    # 1. Toàn bộ tasks của project (áp dụng filter ngày) - Dùng cho thống kê
     @tasks = @project.tasks.active
+    @tasks = @tasks.where(created_at: @start_date.beginning_of_day..@end_date.end_of_day) if @start_date && @end_date
+
+    # 2. Base query cho danh sách tasks chính (Root tasks + Filter ngày)
+    base_tasks = @project.root_tasks.includes(:assignee, :test_cases, :subtasks)
+    base_tasks = base_tasks.where(created_at: @start_date.beginning_of_day..@end_date.end_of_day) if @start_date && @end_date
+
+    # Search functionality
+    if params[:q].present?
+      search_query = params[:q].to_s.strip
+      unless search_query.empty?
+        like_query = "%#{search_query.downcase}%"
+        base_tasks = base_tasks.where(
+          "LOWER(tasks.title) LIKE :q OR CAST(tasks.id AS TEXT) LIKE :raw_q OR CAST(tasks.redmine_id AS TEXT) LIKE :raw_q",
+          q: like_query,
+          raw_q: "%#{search_query}%"
+        )
+      end
+    end
+
+    # Status filter
+    if params[:status].present?
+      base_tasks = base_tasks.where(status: params[:status])
+    end
+
+    # Pagination
+    @tasks_page = (params[:page] || 1).to_i
+    @tasks_per_page = 10
+    @all_root_tasks = base_tasks.order(created_at: :desc)
+    @total_tasks = @all_root_tasks.count(:all)
+    @total_pages = (@total_tasks.to_f / @tasks_per_page).ceil
+    
+    # Paginated tasks
+    tasks_start = (@tasks_page - 1) * @tasks_per_page
+    tasks_end = tasks_start + @tasks_per_page - 1
+    @root_tasks = @all_root_tasks.to_a[tasks_start..tasks_end] || []
+    
+    # Status options for filter dropdown
+    @status_options = @tasks.distinct.pluck(:status).compact.sort
+
+    # Danh sách Redmine project (theo tên) cho dropdown Bulk Import - hiện sẵn để user chọn
+    @redmine_projects = begin
+      current_user&.admin? ? RedmineService.get_projects_list : []
+    rescue StandardError
+      []
+    end
 
     respond_to do |format|
       format.html
