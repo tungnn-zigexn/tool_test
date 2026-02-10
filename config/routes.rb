@@ -53,8 +53,11 @@ Rails.application.routes.draw do
         patch :soft_delete
       end
       collection do
+        get :list_redmine_issues
+        get :redmine_projects
         post :import_from_redmine
         post :import_from_redmine_url
+        post :import_selected_redmine_issues
       end
       resources :test_cases do
         member do
