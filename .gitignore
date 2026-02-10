@@ -10,11 +10,16 @@
 # Ignore all environment files.
 /.env*
 
+*.md
 # Ignore all logfiles and tempfiles.
 /log/*
 /tmp/*
 !/log/.keep
 !/tmp/.keep
+
+# Ignore all file markdown
+*.md
+README.md
 
 # Ignore pidfiles, but keep the directory.
 /tmp/pids/*

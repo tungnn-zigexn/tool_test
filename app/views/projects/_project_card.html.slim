@@ -6,7 +6,7 @@
 
     .card-header.border-0.p-4 style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"
       .d-flex.justify-content-between.align-items-start
-        .bg-white.bg-opacity-25.rounded-circle.p-3.mb-3
+        .bg-white.bg-opacity-25.rounded-circle.mb-3.d-flex.align-items-center.justify-content-center style="width: 56px; height: 56px;"
           i.bi.bi-folder2-open.text-white.fs-4
         - if current_user&.admin?
           .dropdown.position-relative style="z-index: 2;"
@@ -23,7 +23,8 @@
       h4.card-title.text-white.fw-bold.mb-0 = project.name
       p.text-white.text-opacity-75.small.mb-0
         i.bi.bi-clock.me-1
-        | Created #{time_ago_in_words(project.created_at)} ago
+        span.me-1 = project.created_at.strftime("%d/%m/%Y %H:%M")
+        span = "(#{time_ago_in_words(project.created_at)} ago)"
 
     .card-body.p-4
       / Description

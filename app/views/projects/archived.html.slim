@@ -38,8 +38,10 @@
                         .fw-bold.text-dark = project.name
                         .small.text-muted = truncate(project.description, length: 50)
                   td
-                    .text-dark = project.deleted_at.strftime("%d/%m/%Y %H:%M")
-                    .small.text-muted = "#{time_ago_in_words(project.deleted_at)} ago"
+                    .text-dark
+                      i.bi.bi-clock.me-1
+                      span.me-1 = project.deleted_at.strftime("%d/%m/%Y %H:%M")
+                    .small.text-muted = "(#{time_ago_in_words(project.deleted_at)} ago)"
                   td.text-center
                     span.badge.bg-secondary.bg-opacity-10.text-secondary.px-3
                       = project.task_count

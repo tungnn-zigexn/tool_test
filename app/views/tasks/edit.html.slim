@@ -83,7 +83,7 @@
                 / Percent Done
                 .mb-3
                   = f.label :percent_done, "Hoàn thành (%)", class: 'form-label fw-semibold'
-                  = f.number_field :percent_done, class: 'form-control', min: 0, max: 100
+                  = f.number_field :percent_done, class: 'form-control', min: 0, max: 100, step: 10
                   - if @task.errors[:percent_done].any?
                     .invalid-feedback.d-block = @task.errors[:percent_done].join(', ')
 

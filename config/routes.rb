@@ -126,4 +126,5 @@ Rails.application.routes.draw do
   # Histories (read-only)
   resources :test_case_histories, only: [ :index, :show ]
   resources :task_histories, only: [ :index, :show ]
+  resources :project_histories, only: [ :index, :show ]
 end

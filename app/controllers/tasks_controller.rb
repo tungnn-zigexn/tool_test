@@ -8,14 +8,32 @@ class TasksController < ApplicationController
   def index
     if params[:project_id]
       @project = Project.find(params[:project_id])
-      @tasks = @project.tasks.active.root_tasks.includes(:assignee, :test_cases)
+      base_scope = @project.tasks.active.root_tasks
     else
-      @tasks = Task.active.root_tasks.includes(:project, :assignee, :test_cases)
+      base_scope = Task.active.root_tasks
     end
+
+    # Options for status filter
+    @status_options = base_scope.distinct.pluck(:status).compact.sort
+
+    @tasks = base_scope.includes(:project, :assignee, :test_cases)
 
     # Filters
     @tasks = @tasks.where(status: params[:status]) if params[:status].present?
     @tasks = @tasks.where(assignee_id: params[:assignee_id]) if params[:assignee_id].present?
+
+    # Search (My Tasks / Global Tasklist)
+    if params[:q].present?
+      query = params[:q].to_s.strip
+      unless query.empty?
+        like_query = "%#{query.downcase}%"
+        @tasks = @tasks.where(
+          "LOWER(tasks.title) LIKE :q OR LOWER(tasks.description) LIKE :q OR CAST(tasks.redmine_id AS TEXT) LIKE :raw_q",
+          q: like_query,
+          raw_q: "%#{query}%"
+        )
+      end
+    end
 
     respond_to do |format|
       format.html
@@ -26,6 +44,19 @@ class TasksController < ApplicationController
   # GET /tasks/:id or /projects/:project_id/tasks/:id
   def show
     @test_case = @task.test_cases.build
+    
+    # Pagination for test cases
+    @test_cases_page = (params[:tc_page] || 1).to_i
+    @test_cases_per_page = 10
+    @all_test_cases = @task.test_cases.active.includes(:test_steps, :test_results).ordered
+    @total_test_cases = @all_test_cases.size
+    @total_tc_pages = (@total_test_cases.to_f / @test_cases_per_page).ceil
+    
+    # Paginated test cases
+    tc_start = (@test_cases_page - 1) * @test_cases_per_page
+    tc_end = tc_start + @test_cases_per_page - 1
+    @paginated_test_cases = @all_test_cases.to_a[tc_start..tc_end] || []
+    
     respond_to do |format|
       format.html
       format.json { render json: @task.as_json(include: %i[test_cases assignee]) }
