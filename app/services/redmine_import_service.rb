@@ -16,20 +16,24 @@ class RedmineImportService
 
       return false if issue_data.nil?
 
-      create_or_update_task(issue_data)
-
-      import_subtasks_from_sheets
-      import_test_cases_if_available
-      import_bugs_if_available
-
-      Rails.logger.info "Import task thành công: #{ensure_utf8(@task.title)}"
-      true
+      import_from_issue_data(issue_data)
     rescue StandardError => e
       error_msg = ensure_utf8(e.message)
       @errors << "Lỗi khi import task: #{error_msg}"
       Rails.logger.error "RedmineImportService Error: #{error_msg}\n#{e.backtrace.join("\n")}"
       false
     end
+  end
+
+  # Import from pre-fetched issue data (used by bulk import)
+  def import_from_issue_data(issue_data)
+    @redmine_id = issue_data['id'].to_s
+    create_or_update_task(issue_data)
+    import_subtasks_from_sheets
+    import_test_cases_if_available
+    import_bugs_if_available
+    Rails.logger.info "Import task thành công: #{ensure_utf8(@task.title)}"
+    true
   end
 
   private

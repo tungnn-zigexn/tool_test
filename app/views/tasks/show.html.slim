@@ -1,4 +1,5 @@
-.container-fluid.px-4.py-4
+.container-fluid.px-4.py-4 data-controller="spreadsheet-form"
+  #flash-messages
   / Breadcrumb
   nav.mb-4 aria-label="breadcrumb"
     ol.breadcrumb
@@ -18,9 +19,9 @@
 
       / Layer 2: Actions & Status
       .d-flex.align-items-center.gap-2.flex-wrap.mb-3
-        = link_to new_project_task_test_case_path(@task.project, @task), class: "btn btn-light btn-sm text-nowrap d-inline-flex align-items-center shadow-sm" do
-          i.bi.bi-plus-circle.me-1
-          | Tạo Test Case
+        button.btn.btn-light.btn-sm.text-nowrap.d-inline-flex.align-items-center.shadow-sm data-action="click->spreadsheet-form#toggleForm"
+          i.bi.bi-grid-3x3-gap.me-1.text-primary
+          | Tạo Test Case (Sheet)
 
         = link_to new_project_task_bug_path(@project, @task), class: "btn btn-light btn-sm text-nowrap d-inline-flex align-items-center shadow-sm" do
           i.bi.bi-bug-fill.me-1.text-danger
@@ -132,9 +133,6 @@
               span.text-muted Production:
               span.fw-bold.text-danger.ms-1= @task.prod_bugs
 
-      / Activity History
-      = render 'shared/activity_timeline', logs: ActivityLog.where(trackable_type: 'Task', trackable_id: @task.id).limit(10)
-
   / Subtasks Section
   - if @task.subtasks.any?
     .card.border-0.shadow-sm.mb-4
@@ -157,80 +155,60 @@
                         = "#{subtask.number_of_test_cases} TCs"
                     small.text-muted
                       | Status: #{subtask.status}
+    
+  / Inline Test Case Form (Google Sheet Style)
+  = render partial: 'test_cases/spreadsheet_form', locals: { project: @task.project, task: @task, test_case: @test_case }
 
-  / Test Cases Section
-  - if @task.test_cases.any?
-    .card.border-0.shadow-sm
-      .card-header.bg-white.border-bottom
-        h5.mb-0.fw-bold.d-flex.align-items-center
-          i.bi.bi-check2-circle.me-2.text-success
-          | Test Cases (#{@task.test_cases.count})
+  / Test Cases Section (Spreadsheet View)
+  - if @all_test_cases.any?
+    .card.border-0.shadow-sm.mb-4#test-cases
+      .card-header.bg-white.py-3
+        .d-flex.justify-content-between.align-items-center
+          h5.mb-0.fw-bold.text-primary
+            i.bi.bi-grid-3x3-gap.me-2
+            | Test Cases 
+            span.badge.bg-primary.bg-opacity-10.text-primary.ms-2= @total_test_cases
+          - if @total_tc_pages > 1
+            .text-muted.small
+              | Trang #{@test_cases_page}/#{@total_tc_pages}
 
-      .card-body
-        .vstack.gap-3
-          - @task.test_cases.includes(:test_steps).each_with_index do |tc, index|
-            .card.border.hover-shadow style="cursor: pointer; transition: all 0.2s;"
-              .card-body
-                .d-flex.justify-content-between.align-items-start.mb-2
-                  div
-                    h6.fw-semibold.mb-1
-                      = link_to project_task_test_case_path(@task.project, @task, tc), class: "text-decoration-none text-dark" do
-                        = "#{index + 1}. #{tc.title}"
-                    - if tc.function.present?
-                      p.small.text-muted.mb-0
-                        strong Function:
-                        = " #{tc.function}"
-                  .d-flex.flex-column.align-items-end.gap-1
-                    span.badge.rounded-pill class=(tc.test_type == 'feature' ? 'bg-primary' : tc.test_type == 'ui' ? 'bg-success' : 'bg-warning text-dark')
-                      = tc.test_type.upcase
-                    small.text-muted= tc.target_display
+      .card-body.p-0
+        - devices = @task.unique_devices
+        - tc_start_index = (@test_cases_page - 1) * @test_cases_per_page
+        = render 'test_cases/spreadsheet_table', test_cases: @paginated_test_cases, devices: devices, start_index: tc_start_index
+      
+      / Pagination for Test Cases
+      - if @total_tc_pages > 1
+        .card-footer.bg-white.border-top-0
+          .pagination-wrapper.d-flex.justify-content-center.py-2
+            nav
+              ul.pagination.pagination-sm.mb-0
+                / Previous
+                li.page-item class=("disabled" if @test_cases_page <= 1)
+                  - if @test_cases_page > 1
+                    a.page-link href="?tc_page=#{@test_cases_page - 1}#test-cases" aria-label="Previous"
+                      span aria-hidden="true" &laquo;
+                  - else
+                    span.page-link
+                      span aria-hidden="true" &laquo;
 
-                / Device Test Results
-                - if tc.device_results?
-                  .mb-3.pb-3.border-bottom
-                    small.fw-semibold.text-muted.d-block.mb-2 📱 Device Test Results:
-                    .d-flex.flex-wrap.gap-2
-                      - tc.parsed_device_results.each do |result|
-                        - device_name = result[:device].to_s.split(' ').first
-                        - status_class = case result[:status].to_s
-                        - when 'pass' then 'bg-success'
-                        - when 'fail', 'failed' then 'bg-danger'
-                        - when 'not_run' then 'bg-secondary'
-                        - when 'blocked' then 'bg-warning text-dark'
-                        - else 'bg-secondary'
-                        - icon = case result[:status].to_s
-                        - when 'pass' then '✓'
-                        - when 'fail', 'failed' then '✗'
-                        - when 'not_run' then '○'
-                        - when 'blocked' then '△'
-                        - else '?'
-                        span.badge.rounded-pill class=status_class title="#{result[:device]} - #{result[:status].upcase}"
-                          = "#{icon} #{device_name}"
+                / Page numbers
+                - (1..@total_tc_pages).each do |p|
+                  - if @total_tc_pages <= 7 || (p <= 2) || (p >= @total_tc_pages - 1) || ((p - @test_cases_page).abs <= 1)
+                    li.page-item class=("active" if p == @test_cases_page)
+                      a.page-link href="?tc_page=#{p}#test-cases"= p
+                  - elsif (p == 3 && @test_cases_page > 4) || (p == @total_tc_pages - 2 && @test_cases_page < @total_tc_pages - 3)
+                    li.page-item.disabled
+                      span.page-link ...
 
-                / Test Steps
-                - if tc.test_steps.any?
-                  .border-top.pt-3.mt-3
-                    small.fw-semibold.text-muted.d-block.mb-2
-                      | Test Steps (#{tc.test_steps.count})
-                    - tc.test_steps.ordered.each_with_index do |step, step_idx|
-                      .mb-3.ps-3.border-start.border-primary.border-2
-                        .fw-medium.text-dark.mb-2 Step #{step.step_number}
-
-                        - if step.action_contents.any?
-                          .mb-2
-                            small.fw-semibold.text-muted Actions:
-                            ul.list-unstyled.ms-3.mb-0
-                              - step.action_contents.each do |content|
-                                li.small.text-muted= content.content_value
-
-                        - if step.expected_contents.any?
-                          div
-                            small.fw-semibold.text-success Expected Results:
-                            ul.list-unstyled.ms-3.mb-0
-                              - step.expected_contents.each do |content|
-                                li.small.text-success= content.content_value
-                - else
-                  p.small.text-muted.fst-italic.mb-0 No test steps defined
+                / Next
+                li.page-item class=("disabled" if @test_cases_page >= @total_tc_pages)
+                  - if @test_cases_page < @total_tc_pages
+                    a.page-link href="?tc_page=#{@test_cases_page + 1}#test-cases" aria-label="Next"
+                      span aria-hidden="true" &raquo;
+                  - else
+                    span.page-link
+                      span aria-hidden="true" &raquo;
   - else
     .card.border-0.shadow-sm
       .card-body.text-center.py-5
@@ -238,15 +216,18 @@
         h5.text-muted No Test Cases
         p.text-muted.mb-3 This task doesn't have any test cases yet.
         .d-flex.gap-2.justify-content-center
-          = link_to new_project_task_test_case_path(@task.project, @task), class: "btn btn-primary" do
+          button.btn.btn-primary data-action="click->spreadsheet-form#toggleForm"
             i.bi.bi-plus-circle.me-2
-            | Tạo Test Case thủ công
+            | Tạo Test Case (Sheet)
           button.btn.btn-success data-bs-toggle="modal" data-bs-target="#importTestCasesModal"
             i.bi.bi-cloud-download.me-2
             | Import từ Google Sheet
 
+  / Activity History Section
+  = render 'shared/activity_timeline', logs: ActivityLog.where(trackable_type: 'Task', trackable_id: @task.id).limit(10)
+
 / Import Test Cases Modal
-.modal.fade#importTestCasesModal tabindex="-1" aria-hidden="true"
+.modal.fade#importTestCasesModal tabindex="-1" aria-hidden="true" data-controller="import-progress" data-import-progress-estimated-time-value="45"
   .modal-dialog
     .modal-content
       .modal-header.bg-success.text-white
@@ -254,7 +235,7 @@
           i.bi.bi-cloud-download.me-2
           | Import Test Cases từ Google Sheet
         button.btn-close.btn-close-white type="button" data-bs-dismiss="modal" aria-label="Close"
-      = form_with url: import_from_sheet_project_task_test_cases_path(@task.project, @task), method: :post, local: true do |f|
+      = form_with url: import_from_sheet_project_task_test_cases_path(@task.project, @task), method: :post, local: true, data: { import_progress_target: "form", action: "submit->import-progress#showProgress" } do |f|
         .modal-body
           .mb-3
             label.form-label.fw-bold Google Sheet URL hoặc Spreadsheet ID *
@@ -267,9 +248,26 @@
               ul.mb-0.mt-1.small
                 li Google Sheet phải được chia sẻ với service account
                 li Định dạng sheet phải theo template chuẩn
+          
+          / Progress Bar
+          .d-none data-import-progress-target="progress"
+            .alert.alert-success.mb-0
+              .d-flex.align-items-center.justify-content-between.mb-2
+                .d-flex.align-items-center
+                  .spinner-border.spinner-border-sm.me-2 role="status"
+                    span.visually-hidden Loading...
+                  strong Đang import test cases từ Google Sheet...
+                span.time-remaining.badge.bg-light.text-dark.px-3.py-2 Đang tính toán...
+              .progress style="height: 28px;"
+                .progress-bar.progress-bar-striped.progress-bar-animated.bg-success role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%"
+                  | 0%
+              small.text-muted.mt-2.d-block
+                i.bi.bi-info-circle.me-1
+                | Đang lấy dữ liệu từ Google Sheet và tạo test cases...
+
         .modal-footer
-          button.btn.btn-secondary type="button" data-bs-dismiss="modal" Hủy
-          = f.submit "Import", class: 'btn btn-success'
+          button.btn.btn-secondary type="button" data-bs-dismiss="modal" data-import-progress-target="cancelButton" Hủy
+          = f.submit "Import", class: 'btn btn-success', data: { import_progress_target: "submitButton" }
 
 / Soft Delete Confirmation Modal
 .modal.fade#softDeleteModal tabindex="-1" aria-hidden="true"

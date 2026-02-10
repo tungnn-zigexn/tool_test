@@ -140,7 +140,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_05_031754) do
   create_table "test_results", force: :cascade do |t|
     t.integer "run_id"
     t.integer "case_id", null: false
-    t.string "result"
+    t.string "status"
     t.text "device"
     t.integer "executed_by_id"
     t.datetime "executed_at"

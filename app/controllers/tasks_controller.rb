@@ -1,30 +1,48 @@
 class TasksController < ApplicationController
-  before_action :set_project, only: %i[new create import_from_redmine]
-  before_action :set_task, except: %i[index new create import_from_redmine]
+  before_action :set_project, only: %i[new create import_from_redmine import_from_redmine_url list_redmine_issues redmine_projects import_selected_redmine_issues]
+  before_action :set_task, except: %i[index new create import_from_redmine import_from_redmine_url list_redmine_issues redmine_projects import_selected_redmine_issues]
   # skip_before_action :verify_authenticity_token
   # skip_before_action :authenticate_user! # TODO: test postman
+
+
+
 
   # GET /tasks or /projects/:project_id/tasks
   def index
     if params[:project_id]
       @project = Project.find(params[:project_id])
-      @tasks = @project.tasks.active.root_tasks.includes(:assignee, :test_cases)
+      base_scope = @project.tasks.active.root_tasks
     else
-      @tasks = Task.active.root_tasks.includes(:project, :assignee, :test_cases)
+      base_scope = Task.active.root_tasks
     end
+
+    # Options for status filter
+    @status_options = base_scope.distinct.pluck(:status).compact.sort
+
+    @tasks = base_scope.includes(:project, :assignee, :test_cases)
 
     # Filters
     @tasks = @tasks.where(status: params[:status]) if params[:status].present?
-    @tasks = @tasks.where(assignee_id: params[:assignee_id]) if params[:assignee_id].present?
-
-    respond_to do |format|
-      format.html
-      format.json { render json: @tasks }
-    end
+    
+    # ... rest of index ...
   end
 
   # GET /tasks/:id or /projects/:project_id/tasks/:id
   def show
+    @test_case = @task.test_cases.build
+    
+    # Pagination for test cases
+    @test_cases_page = (params[:tc_page] || 1).to_i
+    @test_cases_per_page = 10
+    @all_test_cases = @task.test_cases.active.includes(:test_steps, :test_results).ordered
+    @total_test_cases = @all_test_cases.size
+    @total_tc_pages = (@total_test_cases.to_f / @test_cases_per_page).ceil
+    
+    # Paginated test cases
+    tc_start = (@test_cases_page - 1) * @test_cases_per_page
+    tc_end = tc_start + @test_cases_per_page - 1
+    @paginated_test_cases = @all_test_cases.to_a[tc_start..tc_end] || []
+    
     respond_to do |format|
       format.html
       format.json { render json: @task.as_json(include: %i[test_cases assignee]) }
@@ -109,7 +127,97 @@ class TasksController < ApplicationController
     end
   end
 
+  # GET /projects/:project_id/tasks/redmine_projects
+  # List Redmine projects (id, name, identifier) for dropdown.
+  def redmine_projects
+    projects = RedmineService.get_projects_list
+    render json: { projects: projects }
+  end
+
+  # GET /projects/:project_id/tasks/list_redmine_issues
+  # List Redmine "4. Testing" issues with already_imported flag. Filter by Redmine project (ID hoặc identifier) and date range.
+  def list_redmine_issues
+    issues_url = params[:issues_url].presence || "#{RedmineService::BASE_URL}/issues.json"
+    redmine_project_input = params[:redmine_project_id].to_s.strip.presence
+    redmine_project_id = RedmineService.resolve_project_id(redmine_project_input) if redmine_project_input
+    if redmine_project_input.present? && redmine_project_id.blank?
+      render json: { issues: [], total_count: 0, errors: ['Không tìm thấy project Redmine với ID hoặc identifier đã nhập.'] }, status: :unprocessable_entity
+      return
+    end
+    start_date, end_date = bulk_list_date_range
+
+    list_service = RedmineBulkListService.new(@project.id, issues_url: issues_url)
+    issues = list_service.list(redmine_project_id: redmine_project_id, created_on_from: start_date, created_on_to: end_date)
+
+    render json: {
+      issues: issues,
+      total_count: issues.size,
+      errors: list_service.errors
+    }, status: list_service.errors.any? ? :unprocessable_entity : :ok
+  end
+
+  # POST /projects/:project_id/tasks/import_from_redmine_url
+  # Bulk import từ Redmine issues URL - chỉ lấy các issue "4. Testing"
+  def import_from_redmine_url
+    issues_url = params[:issues_url].presence || "#{RedmineService::BASE_URL}/issues.json"
+    issue_ids = params[:issue_ids].present? ? params[:issue_ids].reject(&:blank?) : nil
+
+    import_service = RedmineBulkImportService.new(@project.id, issues_url: issues_url)
+
+    if import_service.import(issue_ids: issue_ids)
+      handle_bulk_import_success(import_service)
+    else
+      handle_bulk_import_failure(import_service)
+    end
+  end
+
+  # POST /projects/:project_id/tasks/import_selected_redmine_issues
+  # Import only selected Redmine issue IDs (4. Testing).
+  def import_selected_redmine_issues
+    issue_ids = params[:issue_ids].present? ? params[:issue_ids].reject(&:blank?) : nil
+
+    if issue_ids.blank?
+      respond_to do |format|
+        format.html { redirect_to @project, alert: 'Vui lòng chọn ít nhất một task để import.' }
+        format.json { render json: { error: 'issue_ids is required' }, status: :unprocessable_entity }
+      end
+      return
+    end
+
+    import_service = RedmineBulkImportService.new(@project.id)
+    import_service.import_by_issue_ids(issue_ids)
+
+    if import_service.errors.empty? || import_service.imported_tasks.any?
+      handle_bulk_import_success(import_service)
+    else
+      handle_bulk_import_failure(import_service)
+    end
+  end
+
   private
+
+  def bulk_list_date_range
+    preset = params[:date_preset].to_s
+    start_param = params[:start_date].to_s
+    end_param = params[:end_date].to_s
+
+    range = if start_param.present? && end_param.present?
+              begin
+                [Date.parse(start_param), Date.parse(end_param)]
+              rescue ArgumentError
+                [nil, nil]
+              end
+            elsif ProjectsController::DATE_PRESETS.key?(preset)
+              r = ProjectsController::DATE_PRESETS[preset].call
+              [r.begin, r.end]
+            else
+              # Mặc định 30 ngày gần đây nếu không có filter
+              r = ProjectsController::DATE_PRESETS['last_30_days'].call
+              [r.begin, r.end]
+            end
+    
+    range
+  end
 
   def handle_missing_issue_id
     respond_to do |format|
@@ -141,6 +249,50 @@ class TasksController < ApplicationController
       format.html do
         redirect_to @project,
                     alert: "Import failed: #{service.errors.join(', ')}"
+      end
+      format.json do
+        render json: { errors: service.errors }, status: :unprocessable_entity
+      end
+    end
+  end
+
+  def handle_bulk_import_success(service)
+    tasks = service.imported_tasks
+    task_count = tasks.length
+    # Tổng test cases thực tế (đã import từ Sheet) để biết import test case có thành công không
+    total_test_cases = tasks.sum { |t| t.test_cases.where(deleted_at: nil).count }
+    tasks_with_tc = tasks.count { |t| t.test_cases.where(deleted_at: nil).exists? }
+
+    notice = "Bulk import hoàn tất: #{task_count} task(s) 4. Testing đã import. "
+    notice += if total_test_cases.positive?
+                "Test cases: #{total_test_cases} (trong #{tasks_with_tc} task có test case)."
+              elsif task_count.positive?
+                "Test cases: 0 — kiểm tra testcase_link và Import từ Sheet trong từng task để lấy test case."
+              else
+                "Không có task nào được import."
+              end
+
+    respond_to do |format|
+      format.html do
+        redirect_to @project, notice: notice
+      end
+      format.json do
+        render json: {
+          message: 'Bulk import successful',
+          imported_tasks_count: task_count,
+          total_test_cases: total_test_cases,
+          tasks_with_test_cases: tasks_with_tc,
+          tasks: tasks.map { |t| { id: t.id, title: t.title, test_cases_count: t.test_cases.where(deleted_at: nil).count } }
+        }, status: :created
+      end
+    end
+  end
+
+  def handle_bulk_import_failure(service)
+    respond_to do |format|
+      format.html do
+        redirect_to @project,
+                    alert: "Bulk import failed: #{service.errors.join('; ')}"
       end
       format.json do
         render json: { errors: service.errors }, status: :unprocessable_entity

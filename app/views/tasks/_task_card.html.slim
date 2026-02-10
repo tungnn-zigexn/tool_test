@@ -29,7 +29,7 @@
               | #{task.number_of_test_cases}
 
         div
-          span.badge.rounded-pill.px-3.py-2 class=((task.status == 'Closed' || task.status == 'resolved') ? 'bg-success' : 'bg-warning text-dark')
+          span.badge.rounded-pill.px-3.py-2 class=status_badge_color(task.status)
             = task.status
 
     / Task Stats Grid

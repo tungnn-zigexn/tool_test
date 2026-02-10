@@ -28,27 +28,24 @@ html
       |     toggle.setAttribute('aria-expanded', 'false');
       |   });
       | });
-  body
-    .flash-container
+  body data-controller="layout"
+    / Toast Container (fixed position)
+    .toast-container.position-fixed.top-0.end-0.p-3 style="z-index: 9999;"
       - if notice.present?
-        .alert.alert-success.alert-dismissible.fade.show role="alert" data-controller="flash"
-          = notice
-          button.btn-close type="button" data-bs-dismiss="alert" aria-label="Close"
+        = render partial: 'shared/toast', locals: { message: notice, type: 'success' }
       - if alert.present?
-        .alert.alert-danger.alert-dismissible.fade.show role="alert" data-controller="flash"
-          = alert
-          button.btn-close type="button" data-bs-dismiss="alert" aria-label="Close"
+        = render partial: 'shared/toast', locals: { message: alert, type: 'error' }
 
     - if user_signed_in?
       = render 'shared/header'
       .container-fluid
         .row
           / === Sidebar ===
-          .col-md-3.col-lg-2.px-0.bg-white.border-end.min-vh-100
+          .sidebar.col-md-3.col-lg-2.px-0.bg-white.border-end.min-vh-100 data-layout-target="sidebar" style="transition: all 0.3s ease-in-out;"
             = render "shared/sidebar"
 
           / === Main content ===
-          .col-md-9.col-lg-10.p-4
+          .col-md-9.col-lg-10.p-4 data-layout-target="content" style="transition: all 0.3s ease-in-out;"
             = yield
     - else
       / For login/signup pages

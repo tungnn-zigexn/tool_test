@@ -1,0 +1,45 @@
+- devices = local_assigns[:devices] || ['pc', 'sp', 'app']
+- global_start_index = local_assigns[:start_index] || 0
+- row_metadata = {}
+- current_title = nil
+- row_start_index = 0
+- test_cases.each_with_index do |tc, i|
+  - title = tc.title
+  - if title != current_title
+    - if current_title
+      - row_metadata[row_start_index] = { rowspan: i - row_start_index }
+      - ((row_start_index + 1)...i).each { |k| row_metadata[k] = { hide: true } }
+    - current_title = title
+    - row_start_index = i
+  - if i == test_cases.size - 1
+    - row_metadata[row_start_index] = { rowspan: i - row_start_index + 1 }
+    - ((row_start_index + 1)..i).each { |k| row_metadata[k] = { hide: true } }
+
+div data-controller="media-preview"
+  / Modal for Media Preview
+  #mediaPreviewModal.modal.fade tabindex="-1" aria-labelledby="mediaPreviewModalLabel" aria-hidden="true"
+    .modal-dialog.modal-dialog-centered.modal-xl
+      .modal-content
+        .modal-header
+          h5#mediaPreviewModalLabel.modal-title Media Preview
+          button.btn-close type="button" data-bs-dismiss="modal" aria-label="Close"
+        .modal-body.text-center.p-0.bg-light
+          img.d-none data-media-preview-target="modalImage" style="max-width: 100%; max-height: 85vh; width: auto; object-fit: contain;"
+          video.img-fluid.d-none controls=true data-media-preview-target="modalVideo" style="max-height: 85vh;"
+            source data-media-preview-target="modalVideoSource"
+          div.d-none data-media-preview-target="modalLink"
+  .table-responsive.border.rounded.mt-4
+    table.spreadsheet-table.spreadsheet-list-table
+      thead
+        tr
+          th.text-center style="width: 60px;" ID
+          th style="width: 4%;" Test Type
+          th style="width: 120px;" Function
+          th style="width: 30%;" Test Steps (Actions)
+          th style="width: 30%;" Expected Results & Media
+          th style="width: 80px;" Target
+          - devices.each do |device|
+            th.text-center style="min-width: 100px;" = format_device_name(device)
+      tbody#test-cases-spreadsheet-list
+      - test_cases.each_with_index do |tc, index|
+        = render partial: 'test_cases/spreadsheet_row', locals: { test_case: tc, index: global_start_index + index + 1, devices: devices, row_info: row_metadata[index] }

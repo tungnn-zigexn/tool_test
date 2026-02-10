@@ -18,3 +18,127 @@
  .status-testing { color: #17a2b8; }
  .status-done { color: #28a745; }
  .status-pending { color: #6c757d; }
+ 
+/* Import Progress Bar Styles */
+.import-progress-container {
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+}
+
+.import-progress-text {
+  font-weight: 600;
+  color: #2e7d32;
+  margin-bottom: 0.75rem;
+}
+
+.progress {
+  height: 28px;
+  border-radius: 14px;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+  background-color: #e9ecef;
+}
+
+.progress-bar {
+  font-weight: 600;
+  font-size: 0.875rem;
+  line-height: 28px;
+  transition: width 0.3s ease-out;
+  border-radius: 14px;
+}
+
+.progress-bar-animated {
+  animation: progress-bar-stripes 1s linear infinite;
+}
+
+@keyframes progress-bar-stripes {
+  0% {
+    background-position: 1rem 0;
+  }
+  100% {
+    background-position: 0 0;
+  }
+}
+
+/* Time remaining badge */
+.time-remaining {
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  animation: pulse-badge 2s ease-in-out infinite;
+}
+
+@keyframes pulse-badge {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+/* Spinner animation */
+.spinner-border-sm {
+  width: 1rem;
+  height: 1rem;
+  border-width: 0.15em;
+}
+
+/* Toast Notifications */
+.toast-container {
+  z-index: 9999 !important;
+}
+
+.toast {
+  min-width: 300px;
+  max-width: 500px;
+  border-radius: 12px;
+  animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.toast.hiding {
+  animation: slideOutRight 0.3s ease-in;
+}
+
+@keyframes slideOutRight {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+.toast-body {
+  font-size: 0.95rem;
+  font-weight: 500;
+  padding: 1rem 0.75rem;
+}
+
+.toast .btn-close {
+  opacity: 0.8;
+}
+
+.toast .btn-close:hover {
+  opacity: 1;
+}
+
+/* Toast icons */
+.toast-body i {
+  font-size: 1.25rem;
+}
