@@ -35,6 +35,10 @@
           i.bi.bi-cloud-download.me-1
           | Import từ Sheet
 
+        button.btn.btn-light.btn-sm.text-nowrap.d-inline-flex.align-items-center.shadow-sm data-bs-toggle="modal" data-bs-target="#autoGenerateTCModal"
+          i.bi.bi-magic.me-1.text-purple
+          | Tạo TC Auto
+
         .dropdown
           button.btn.btn-light.btn-sm.dropdown-toggle.shadow-sm type="button" data-bs-toggle="dropdown" aria-expanded="false"
             i.bi.bi-gear.me-1
@@ -47,6 +51,10 @@
                         data: { turbo_confirm: "Bạn có chắc chắn muốn chuyển toàn bộ #{@task.test_cases.active.count} Test Case vào một Subtask mới?" } do
                 i.bi.bi-arrow-up-right-square.me-2
                 | Gom tất cả vào Subtask
+            li
+              button.dropdown-item.text-info type="button" data-bs-toggle="modal" data-bs-target="#deviceConfigModal"
+                i.bi.bi-phone.me-2
+                | Cấu hình Device
             li
               hr.dropdown-divider
             li
@@ -88,7 +96,7 @@
           .h4.fw-bold.text-info.mb-0= "#{@task.percent_done || 0}%"
           small.text-muted Progress
         .col-6.col-md
-          .h4.fw-bold.text-warning.mb-0= @task.test_cases.count
+          .h4.fw-bold.text-warning.mb-0= @task.total_test_cases_count
           small.text-muted Test Cases
         .col-6.col-md
           .h4.fw-bold.text-secondary.mb-0= @task.subtasks.count
@@ -240,6 +248,9 @@
           button.btn.btn-success data-bs-toggle="modal" data-bs-target="#importTestCasesModal"
             i.bi.bi-cloud-download.me-2
             | Import từ Google Sheet
+          button.btn.btn-info.text-white data-bs-toggle="modal" data-bs-target="#autoGenerateTCModal"
+            i.bi.bi-magic.me-2
+            | Tạo TC Auto
 
   / Activity History Section
   = render 'shared/activity_timeline', logs: ActivityLog.where(trackable_type: 'Task', trackable_id: @task.id).limit(10)
@@ -427,3 +438,47 @@
     | .btn-xs { padding: 0.1rem 0.25rem; font-size: 0.75rem; border-radius: 0.2rem; }
 
 
+  / Device Configuration Modal
+  .modal.fade#deviceConfigModal tabindex="-1" aria-hidden="true"
+    .modal-dialog.modal-dialog-centered
+      .modal-content
+        .modal-header.bg-info.text-white
+          h5.modal-title
+            i.bi.bi-phone.me-2
+            | Cấu hình Device hiển thị
+          button.btn-close.btn-close-white type="button" data-bs-dismiss="modal" aria-label="Close"
+        = form_with url: update_device_config_project_task_path(@project, @task), method: :post, local: true do |f|
+          .modal-body
+            .mb-3
+              label.form-label.fw-bold for="device_config" Danh sách Device (phân cách bằng dấu phẩy)
+              = text_field_tag :device_config, @task.device_config, class: 'form-control', placeholder: 'ví dụ: BROWSER, FIREFOX, SAFARI, IOS, APP'
+              .form-text.mt-2
+                | Nhập các Device bạn muốn hiển thị cột status trong bảng Spreadsheet. 
+                br
+                | Nếu để trống, hệ thống sẽ tự động hiển thị từ kết quả test hoặc kế thừa từ Task cha.
+            
+            - if @task.parent_id.present? && @task.parent&.device_config.present?
+              .alert.alert-light.border.small
+                i.bi.bi-info-circle.me-2
+                | Đang kế thừa từ Task cha: 
+                strong= @task.parent.device_config
+
+          .modal-footer
+            button.btn.btn-secondary type="button" data-bs-dismiss="modal" Hủy
+            = f.submit "Lưu cấu hình", class: 'btn btn-info text-white'
+  / Auto-generate TC Modal (Placeholder)
+  .modal.fade#autoGenerateTCModal tabindex="-1" aria-hidden="true"
+    .modal-dialog
+      .modal-content
+        .modal-header.bg-info.text-white
+          h5.modal-title
+            i.bi.bi-magic.me-2
+            | Tạo Test Case Tự Động (AI)
+          button.btn-close.btn-close-white type="button" data-bs-dismiss="modal" aria-label="Close"
+        .modal-body.py-4
+          .text-center
+            .display-4.mb-3 ✨
+            h5.fw-bold Tính năng đang được phát triển!
+            p.text-muted Hệ thống sẽ sớm hỗ trợ tạo Test Case tự động dựa trên mô tả Task và file thiết kế.
+        .modal-footer
+          button.btn.btn-secondary type="button" data-bs-dismiss="modal" Đóng

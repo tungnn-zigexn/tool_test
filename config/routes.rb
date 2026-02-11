@@ -54,6 +54,7 @@ Rails.application.routes.draw do
         post :create_subtask
         post :promote_to_subtask
         post :promote_all_to_subtask
+        post :update_device_config
       end
       collection do
         get :list_redmine_issues

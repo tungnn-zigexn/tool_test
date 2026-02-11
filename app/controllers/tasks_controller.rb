@@ -195,6 +195,15 @@ class TasksController < ApplicationController
     end
   end
 
+  # POST /tasks/:id/update_device_config
+  def update_device_config
+    if @task.update(device_config: params[:device_config])
+      redirect_to project_task_path(@project, @task), notice: 'Cấu hình Device đã được cập nhật thành công.'
+    else
+      redirect_to project_task_path(@project, @task), alert: 'Có lỗi xảy ra khi cập nhật cấu hình Device.'
+    end
+  end
+
   # POST /tasks/:id/promote_all_to_subtask
   def promote_all_to_subtask
     subtask_title = "#{@task.title} - All Test Cases"
@@ -427,7 +436,7 @@ class TasksController < ApplicationController
     params.require(:task).permit(
       :title, :description, :status, :assignee_id, :parent_id,
       :estimated_time, :spent_time, :percent_done, :start_date, :due_date,
-      :testcase_link, :bug_link, :issue_link
+      :testcase_link, :bug_link, :issue_link, :device_config
     )
   end
 end

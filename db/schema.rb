@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_05_031754) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_11_071558) do
   create_table "activity_logs", force: :cascade do |t|
     t.integer "user_id", null: false
     t.string "trackable_type", null: false
@@ -110,6 +110,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_05_031754) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "issue_link"
+    t.string "device_config"
     t.index ["assignee_id"], name: "index_tasks_on_assignee_id"
     t.index ["parent_id"], name: "index_tasks_on_parent_id"
     t.index ["project_id"], name: "index_tasks_on_project_id"
