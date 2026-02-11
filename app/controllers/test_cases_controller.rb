@@ -139,7 +139,8 @@ class TestCasesController < ApplicationController
       return
     end
 
-    import_service = TestCaseImportService.new(@task, spreadsheet_id)
+    wipe_existing = params[:wipe_existing] == '1'
+    import_service = TestCaseImportService.new(@task, spreadsheet_id, wipe_existing: wipe_existing)
 
     if import_service.import
       handle_import_success(import_service)

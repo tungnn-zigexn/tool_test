@@ -15,7 +15,7 @@
         | Tạo Task mới
 
   / Toggle Buttons
-  .row.mb-4
+  .row.mb-4.justify-content-center
     .col-lg-10
       .btn-group.w-100 role="group" aria-label="Chọn phương thức tạo task"
         input#btn-manual.btn-check type="radio" name="task-mode" autocomplete="off" checked=true data-action="change->form-toggle#toggle"
@@ -28,7 +28,7 @@
           | Import từ Redmine
 
   / Manual Form
-  #manual-form.row.justify-content-center data-form-toggle-target="manualForm"
+  #manual-form.row.justify-content-center data-form-toggle-target="manualForm" data-controller="import-progress" data-import-progress-estimated-time-value="45"
     .col-lg-10
       .card.border-0.shadow-sm
         .card-header.bg-primary.text-white
@@ -36,7 +36,7 @@
             i.bi.bi-pencil-square.me-2
             | Tạo Task thủ công
         .card-body.p-4
-          = form_for [@project, @task], html: { class: 'needs-validation' } do |f|
+          = form_for [@project, @task], html: { class: 'needs-validation', data: { import_progress_target: "form", action: "submit->import-progress#showProgress" } } do |f|
             .row
               / Left Column
               .col-md-6
@@ -111,10 +111,26 @@
                       - if @task.errors[:due_date].any?
                         .invalid-feedback.d-block = @task.errors[:due_date].join(', ')
 
+            / Progress Bar
+            .d-none.mt-4 data-import-progress-target="progress"
+              .alert.alert-primary
+                .d-flex.align-items-center.justify-content-between.mb-2
+                  .d-flex.align-items-center
+                    .spinner-border.spinner-border-sm.me-2 role="status"
+                      span.visually-hidden Loading...
+                    strong Đang tạo task và import dữ liệu...
+                  span.time-remaining.badge.bg-light.text-dark.px-3.py-2 Đang tính toán...
+                .progress style="height: 28px;"
+                  .progress-bar.progress-bar-striped.progress-bar-animated.bg-primary role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%"
+                    | 0%
+                small.text-muted.mt-2.d-block
+                  i.bi.bi-info-circle.me-1
+                  | Hệ thống đang xử lý yêu cầu của bạn. Vui lòng không đóng trình duyệt...
+
             / Buttons
             .d-flex.gap-2.mt-4
-              = f.submit "Tạo Task", class: 'btn btn-primary btn-lg px-5'
-              = link_to "Hủy", project_path(@project), class: 'btn btn-outline-secondary btn-lg'
+              = f.submit "Tạo Task", class: 'btn btn-primary btn-lg px-5', data: { import_progress_target: "submitButton" }
+              = link_to "Hủy", project_path(@project), class: 'btn btn-outline-secondary btn-lg', data: { import_progress_target: "cancelButton" }
 
   / Redmine Import Form
   #redmine-form.row.justify-content-center style="display: none;" data-form-toggle-target="redmineForm" data-controller="import-progress" data-import-progress-estimated-time-value="60"
