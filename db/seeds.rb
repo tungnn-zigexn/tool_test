@@ -33,19 +33,6 @@ user.save! if user.new_record? || user.changed?
 
 puts "Regular user created/updated: #{user.email}"
 
-# Create sample developer user
-developer = User.find_or_initialize_by(email: "developer@zigexn.vn")
-developer.assign_attributes(
-  name: "Developer User",
-  password: "password123",
-  password_confirmation: "password123",
-  role: :developer,
-  provider: "local"
-)
-developer.save! if developer.new_record? || developer.changed?
-
-puts "Developer user created/updated: #{developer.email}"
-
 # Create sample projects
 project1 = Project.find_or_create_by!(
   name: "Test Management System"
@@ -69,7 +56,7 @@ puts "Sample projects created: #{Project.count} projects"
     status: [ "new", "in_progress", "resolved" ].sample
   ) do |t|
     t.description = "Mô tả cho task #{i + 1}"
-    t.assignee = [ admin, user, developer ].sample
+    t.assignee = [ admin, user ].sample
   end
 end
 
@@ -78,4 +65,3 @@ puts "\n=== Seed completed ==="
 puts "You can login with:"
 puts "  Admin: admin@zigexn.vn / password123"
 puts "  User: user@zigexn.vn / password123"
-puts "  Developer: developer@zigexn.vn / password123"

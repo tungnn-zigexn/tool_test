@@ -48,6 +48,7 @@ Rails.application.routes.draw do
       patch :soft_delete
       patch :restore
     end
+    resources :daily_import_runs, only: [ :index, :show ]
     resources :tasks do
       member do
         patch :soft_delete
@@ -98,17 +99,16 @@ Rails.application.routes.draw do
   resources :test_cases, only: [ :index ]
   resources :bugs, only: [ :index ]
   resources :test_runs, only: [ :index ]
-  resources :test_results, only: [ :index, :show ]
 
-  # Test environments
-  resources :test_environments do
+  # Test results (index, show, soft_delete)
+  resources :test_results do
     member do
       patch :soft_delete
     end
   end
 
-  # Test results
-  resources :test_results do
+  # Test environments
+  resources :test_environments do
     member do
       patch :soft_delete
     end
@@ -130,4 +130,16 @@ Rails.application.routes.draw do
   resources :test_case_histories, only: [ :index, :show ]
   resources :task_histories, only: [ :index, :show ]
   resources :project_histories, only: [ :index, :show ]
+  resource :app_configuration, only: [:edit, :update]
+
+  # Global notifications (header dropdown)
+  resources :notifications, only: [:index] do
+    collection do
+      post :mark_all_read
+    end
+    member do
+      get :read_and_go  
+      post :mark_read
+    end
+  end
 end

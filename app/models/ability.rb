@@ -55,6 +55,10 @@ class Ability
       # User cannot delete Users or Projects
       cannot :destroy, User
       cannot :destroy, Project
+
+      # Global notifications (header)
+      can :read, Notification
+      can :manage, NotificationRead, user_id: user.id
     else
       # Guest user (not logged in) - no permissions
       cannot :manage, :all
