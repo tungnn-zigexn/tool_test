@@ -3,7 +3,7 @@
 class RedmineBulkImportService
   TESTING_SUBJECT_PATTERN = /\A4\.\s*Testing\s*-\s*#/i
 
-  attr_reader :errors, :imported_tasks, :skipped_count
+  attr_reader :errors, :imported_tasks, :skipped_count, :found_count
 
   def initialize(project_id, issues_url: nil)
     @project = Project.find(project_id)
@@ -11,13 +11,14 @@ class RedmineBulkImportService
     @errors = []
     @imported_tasks = []
     @skipped_count = 0
+    @found_count = 0
   end
 
-  def import(limit: 100, offset: 0, issue_ids: nil)
+  def import(limit: 100, offset: 0, issue_ids: nil, &block)
     if issue_ids.present?
-      import_by_issue_ids(Array(issue_ids))
+      import_by_issue_ids(Array(issue_ids), &block)
     else
-      import_all(limit: limit, offset: offset)
+      import_all(limit: limit, offset: offset, &block)
     end
   end
 
@@ -26,6 +27,9 @@ class RedmineBulkImportService
 
     issue_ids = issue_ids.map(&:to_s).reject(&:blank?).uniq
     return true if issue_ids.empty?
+
+    @found_count = issue_ids.length
+    yield @found_count if block_given?
 
     issue_ids.each do |issue_id|
       issue_data = RedmineService.get_issues(issue_id)
@@ -51,6 +55,9 @@ class RedmineBulkImportService
 
     testing_issues = fetch_all_testing_issues(limit: limit, offset: offset)
     return false if testing_issues.nil?
+
+    @found_count = testing_issues.length
+    yield @found_count if block_given?
 
     if testing_issues.empty?
       @errors << 'Không tìm thấy issue nào có subject bắt đầu với "4. Testing"'

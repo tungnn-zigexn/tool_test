@@ -63,7 +63,10 @@ class RedmineService
         nil
       end
     else
-      puts %(Error when call API Redmine: #{response.status} #{response.body['errors'].join(', ')})
+      parsed = (JSON.parse(response.body) rescue {})
+      errors = Array(parsed['errors']).join(', ')
+      Rails.logger.error "RedmineService: API error #{response.status} #{errors}"
+      puts "Error when call API Redmine: #{response.status} #{errors}"
       nil
     end
   rescue Faraday::Error => e
@@ -73,9 +76,17 @@ class RedmineService
   end
 
   # Build issues URL with optional filters: project_id, date range (created_on)
+  # Returns path + query (e.g. "/issues.json?limit=100&..."). Use with BASE_URL for full URL.
   def self.build_issues_url(base_url, limit: 100, offset: 0, project_id: nil, created_on_from: nil, created_on_to: nil)
     uri = URI(base_url)
-    path = uri.path.end_with?('.json') ? uri.path : "#{uri.path}.json"
+    base_path = uri.path.presence || "/"
+    path = if base_path.end_with?('.json')
+             base_path
+           elsif base_path == "/" || base_path.empty?
+             "/issues.json"
+           else
+             "#{base_path}.json"
+           end
     
     query_params = []
     query_params << uri.query if uri.query.present?
@@ -139,12 +150,6 @@ class RedmineService
   end
 
   def self.connection
-    Faraday.new(url: BASE_URL) do |faraday|
-      faraday.headers['Content-Type'] = 'application/json'
-      faraday.headers['X-Redmine-API-Key'] = API_KEY
-      faraday.basic_auth(USERNAME, PASSWORD)
-      faraday.response :logger
-      faraday.adapter Faraday.default_adapter
-    end
+    connection_for_url(BASE_URL)
   end
 end
