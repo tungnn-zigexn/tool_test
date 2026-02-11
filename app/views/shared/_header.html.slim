@@ -28,8 +28,6 @@ nav.navbar.navbar-expand-lg.navbar-dark.shadow-sm style="background: linear-grad
                     - case current_user.role
                     - when "admin"
                       | 👑 Admin
-                    - when "developer"
-                      | 💻 Developer
                     - else
                       | 👤 User
               - if current_user.provider == 'local'

@@ -16,7 +16,7 @@ class User < ApplicationRecord
   has_many :task_histories
 
   # Enum for roles: 0 = admin, 1 = user
-  enum :role, { admin: 0, user: 1, developer: 2 }, default: :user
+  enum :role, { admin: 0, user: 1 }, default: :user
 
   # Validations
   validates :email, presence: true, uniqueness: true, format: {

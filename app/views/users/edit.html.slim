@@ -53,7 +53,7 @@
             / Role
             .mb-4
               = f.label :role, "Role", class: 'form-label fw-semibold'
-              = f.select :role, options_for_select([['User', 'user'], ['Developer', 'developer'], ['Admin', 'admin']], @user.role), {}, class: 'form-select form-select-lg'
+              = f.select :role, options_for_select([['User', 'user'], ['Admin', 'admin']], @user.role), {}, class: 'form-select form-select-lg'
               - if @user.errors[:role].any?
                 .invalid-feedback.d-block = @user.errors[:role].join(', ')
 

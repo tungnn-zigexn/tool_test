@@ -51,7 +51,7 @@
             / Role
             .mb-4
               = f.label :role, "Role", class: 'form-label fw-semibold'
-              = f.select :role, options_for_select([['User (Mặc định)', 'user'], ['Developer', 'developer'], ['Admin', 'admin']], @user.role || 'user'), {}, class: 'form-select form-select-lg'
+              = f.select :role, options_for_select([['User (Mặc định)', 'user'], ['Admin', 'admin']], @user.role || 'user'), {}, class: 'form-select form-select-lg'
               .form-text User mặc định có role = 1 (User)
               - if @user.errors[:role].any?
                 .invalid-feedback.d-block = @user.errors[:role].join(', ')

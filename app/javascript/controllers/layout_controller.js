@@ -20,16 +20,10 @@ export default class extends Controller {
   applyCollapsedState(collapsed) {
     if (collapsed) {
       this.sidebarTarget.classList.add("collapsed")
-      this.sidebarTarget.classList.remove("col-md-3", "col-lg-2")
-      this.contentTarget.classList.remove("col-md-9", "col-lg-10")
-      this.contentTarget.classList.add("col-12")
       this.toggleIconTarget.classList.remove("bi-layout-sidebar-inset")
       this.toggleIconTarget.classList.add("bi-layout-sidebar")
     } else {
       this.sidebarTarget.classList.remove("collapsed")
-      this.sidebarTarget.classList.add("col-md-3", "col-lg-2")
-      this.contentTarget.classList.add("col-md-9", "col-lg-10")
-      this.contentTarget.classList.remove("col-12")
       this.toggleIconTarget.classList.remove("bi-layout-sidebar")
       this.toggleIconTarget.classList.add("bi-layout-sidebar-inset")
     }
