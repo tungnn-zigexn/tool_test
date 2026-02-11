@@ -6,6 +6,11 @@
           span.badge.bg-primary.me-2 = "TC-#{@test_case.id.to_s.rjust(3, '0')}"
           span.fw-bold = @test_case.title
         .d-flex.gap-2
+          = link_to edit_project_task_test_case_path(@project, @task, @test_case), 
+                    data: { turbo_frame: "test_case_modal_content" }, 
+                    class: "btn btn-sm btn-success me-2" do
+            i.bi.bi-plus-circle.me-1
+            | Thêm Step
           - if @prev_test_case
             = link_to project_task_test_case_path(@project, @task, @prev_test_case), 
                       data: { turbo_frame: "test_case_modal_content" }, 

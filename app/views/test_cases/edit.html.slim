@@ -1,72 +1,116 @@
-.container-fluid.px-4.py-4
-  / Header
-  .row.mb-4
-    .col
-      nav aria-label="breadcrumb"
-        ol.breadcrumb
-          li.breadcrumb-item
-            = link_to "Projects", projects_path
-          li.breadcrumb-item
-            = link_to @task.project.name, project_path(@task.project)
-          li.breadcrumb-item
-            = link_to @task.title, project_task_path(@task.project, @task)
-          li.breadcrumb-item
-            = link_to @test_case.title, project_task_test_case_path(@task.project, @task, @test_case)
-          li.breadcrumb-item.active aria-current="page" Chỉnh sửa
+= turbo_frame_tag "test_case_modal_content" do
+  .container-fluid.px-4.py-4
+    / Header
+    .row.mb-4
+      .col
+        nav aria-label="breadcrumb"
+          ol.breadcrumb
+            li.breadcrumb-item
+              | Projects
+            li.breadcrumb-item
+              = @task.project.name
+            li.breadcrumb-item
+              = @task.title
+            li.breadcrumb-item
+              = @test_case.title
+            li.breadcrumb-item.active aria-current="page" Chỉnh sửa
 
-      h1.display-6.fw-bold.text-dark
-        i.bi.bi-pencil.me-2
-        | Chỉnh sửa Test Case
+        h1.display-6.fw-bold.text-dark
+          i.bi.bi-pencil.me-2
+          | Chỉnh sửa Test Case
 
-  / Form
-  .row
-    .col-12
-      .card.border-0.shadow-sm
-        .card-body.p-4
-          = form_for [@task.project, @task, @test_case], html: { class: 'needs-validation' } do |f|
-            / Basic Information
-            .card.mb-4
-              .card-header.bg-light
-                h5.mb-0.fw-bold
-                  i.bi.bi-info-circle.me-2
-                  | Thông tin cơ bản
-              .card-body
-                .row
-                  .col-md-6
-                    / Title
-                    .mb-3
-                      = f.label :title, "Function *", class: 'form-label fw-semibold'
-                      = f.text_field :title, class: 'form-control', required: true
-                      - if @test_case.errors[:title].any?
-                        .invalid-feedback.d-block = @test_case.errors[:title].join(', ')
+    / Form
+    .row
+      .col-12
+        .card.border-0.shadow-sm
+          .card-body.p-4
+            = form_for [@task.project, @task, @test_case], html: { class: 'needs-validation', id: 'test-case-form', data: { controller: 'dynamic-form' } } do |f|
+              / Basic Information
+              .card.mb-4
+                .card-header.bg-light
+                  h5.mb-0.fw-bold
+                    i.bi.bi-info-circle.me-2
+                    | Thông tin cơ bản
+                .card-body
+                  .row
+                    .col-md-6
+                      / Title
+                      .mb-3
+                        = f.label :title, "Function *", class: 'form-label fw-semibold'
+                        = f.text_field :title, class: 'form-control', required: true
+                        - if @test_case.errors[:title].any?
+                          .invalid-feedback.d-block = @test_case.errors[:title].join(', ')
 
-                    / Test Type
-                    .mb-3
-                      = f.label :test_type, "Loại Test", class: 'form-label fw-semibold'
-                      = f.select :test_type, options_for_select([['Feature', 'feature'], ['UI', 'ui'], ['Data', 'data']], @test_case.test_type), {}, class: 'form-select'
+                      / Test Type
+                      .mb-3
+                        = f.label :test_type, "Loại Test", class: 'form-label fw-semibold'
+                        = f.select :test_type, options_for_select([['Feature', 'feature'], ['UI', 'ui'], ['Data', 'data']], @test_case.test_type), {}, class: 'form-select'
 
-                  .col-md-6
-                    / Target
-                    .mb-3
-                      = f.label :target, "Đối tượng test", class: 'form-label fw-semibold'
-                      = f.select :target, options_for_select([['PC + SP + APP', 'pc_sp_app'], ['PC + SP', 'pc_sp'], ['PC', 'pc'], ['SP', 'sp'], ['APP', 'app']], @test_case.target), {}, class: 'form-select'
+                    .col-md-6
+                      / Target
+                      .mb-3
+                        = f.label :target, "Đối tượng test", class: 'form-label fw-semibold'
+                        = f.select :target, options_for_select([['PC + SP + APP', 'pc_sp_app'], ['PC + SP', 'pc_sp'], ['PC', 'pc'], ['SP', 'sp'], ['APP', 'app']], @test_case.target), {}, class: 'form-select'
 
-                    / Description
-                    .mb-3
-                      = f.label :description, "Mô tả", class: 'form-label fw-semibold'
-                      = f.text_area :description, class: 'form-control', rows: 3
+                      / Description
+                      .mb-3
+                        = f.label :description, "Mô tả", class: 'form-label fw-semibold'
+                        = f.text_area :description, class: 'form-control', rows: 3
 
-                .row
-                  .col-md-6
-                    .mb-3
-                      = f.label :acceptance_criteria_url, "Acceptance Criteria URL", class: 'form-label fw-semibold'
-                      = f.url_field :acceptance_criteria_url, class: 'form-control', placeholder: 'https://...'
-                  .col-md-6
-                    .mb-3
-                      = f.label :user_story_url, "User Story URL", class: 'form-label fw-semibold'
-                      = f.url_field :user_story_url, class: 'form-control', placeholder: 'https://...'
+                  .row
+                    .col-md-6
+                      .mb-3
+                        = f.label :acceptance_criteria_url, "Acceptance Criteria URL", class: 'form-label fw-semibold'
+                        = f.url_field :acceptance_criteria_url, class: 'form-control', placeholder: 'https://...'
+                    .col-md-6
+                      .mb-3
+                        = f.label :user_story_url, "User Story URL", class: 'form-label fw-semibold'
+                        = f.url_field :user_story_url, class: 'form-control', placeholder: 'https://...'
 
-            / Buttons
-            .d-flex.gap-2
-              = f.submit "Lưu thay đổi", class: 'btn btn-primary btn-lg px-5'
-              = link_to "Hủy", project_task_test_case_path(@task.project, @task, @test_case), class: 'btn btn-outline-secondary btn-lg'
+              / Test Steps
+              .card.mb-4
+                .card-header.bg-light.d-flex.justify-content-between.align-items-center
+                  h5.mb-0.fw-bold
+                    i.bi.bi-list-ol.me-2
+                    | Test Steps
+                  button.btn.btn-sm.btn-success type="button" data-action="click->dynamic-form#addStep"
+                    i.bi.bi-plus-circle.me-1
+                    | Thêm Step
+
+                .card-body#test-steps-container data-dynamic-form-target="container"
+                   = f.fields_for :test_steps, @test_case.test_steps.ordered do |sf|
+                    .card.mb-3.test-step
+                      .card-header.bg-white.d-flex.justify-content-between.align-items-center
+                        h6.mb-0.fw-bold.step-title Step #{sf.object.step_number}
+                        .d-flex.gap-2
+                          .form-check.form-switch.mb-0
+                            = sf.check_box :_destroy, class: "form-check-input"
+                            = sf.label :_destroy, "Xóa", class: "form-check-label small text-danger"
+                      .card-body
+                        = sf.hidden_field :step_number, class: "step-number-input"
+                        .mb-3
+                          = sf.label :description, "Mô tả Step", class: "form-label fw-semibold"
+                          = sf.text_field :description, class: "form-control"
+                        .row
+                          .col-md-6
+                            h6.small.fw-bold Actions
+                            = sf.fields_for :test_step_contents, sf.object.action_contents do |cf|
+                              = cf.hidden_field :content_type
+                              = cf.hidden_field :content_category
+                              = cf.hidden_field :display_order
+                              = cf.text_area :content_value, class: "form-control mb-2", rows: 3
+                          .col-md-6
+                            h6.small.fw-bold Expected Results & Evidence
+                            = sf.fields_for :test_step_contents, sf.object.expected_contents do |cf|
+                              = cf.hidden_field :content_type
+                              = cf.hidden_field :content_category
+                              = cf.hidden_field :display_order
+                              - if cf.object.content_type == 'text'
+                                = cf.text_area :content_value, class: "form-control mb-2", rows: 3
+                              - else
+                                = cf.url_field :content_value, class: "form-control", placeholder: "https://gyazo.com/..."
+
+              / Buttons
+              .d-flex.gap-2
+                = f.submit "Lưu thay đổi", class: 'btn btn-primary btn-lg px-5'
+                = link_to "Hủy", project_task_test_case_path(@task.project, @task, @test_case), class: 'btn btn-outline-secondary btn-lg'
