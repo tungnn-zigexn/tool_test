@@ -17,7 +17,7 @@ class AppConfigurationsController < ApplicationController
     end
     update_project_redmine_links
     if @configuration.update(configuration_params)
-      redirect_to edit_app_configuration_path, notice: "Configuration updated successfully."
+      redirect_to edit_app_configuration_path, notice: 'Configuration updated successfully.'
     else
       set_edit_vars
       render :edit

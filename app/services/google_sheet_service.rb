@@ -43,7 +43,7 @@ class GoogleSheetService
       end
 
       all_data
-    rescue Google::Apis::Error => e
+    rescue StandardError => e
       puts "Error when call Google Sheets API (batch_get): #{e.message}"
       Rails.logger.error "GoogleSheetService: Error API (batch_get): #{e.message}"
       nil
@@ -71,7 +71,7 @@ class GoogleSheetService
     response = @service.get_spreadsheet_values(spreadsheet_id, range_name)
 
     response.values || []
-  rescue Google::Apis::Error => e
+  rescue StandardError => e
     puts "Error when call Google Sheets API (get_data): #{e.message}"
     Rails.logger.error "GoogleSheetService: Error API (get_data): #{e.message}"
     nil
@@ -80,7 +80,7 @@ class GoogleSheetService
   def get_all_sheet_names(spreadsheet_id)
     response = @service.get_spreadsheet(spreadsheet_id, fields: 'sheets(properties.title)')
     response.sheets.map { |sheet| ensure_utf8(sheet.properties.title) }
-  rescue Google::Apis::Error => e
+  rescue StandardError => e
     puts "Error when get sheet names: #{e.message}"
     Rails.logger.error "GoogleSheetService: Error get sheet names: #{e.message}"
     nil
@@ -94,7 +94,7 @@ class GoogleSheetService
         sheet_id: sheet.properties.sheet_id.to_s
       }
     end
-  rescue Google::Apis::Error => e
+  rescue StandardError => e
     puts "Error when get sheets info: #{e.message}"
     Rails.logger.error "GoogleSheetService: Error get sheets info: #{e.message}"
     nil

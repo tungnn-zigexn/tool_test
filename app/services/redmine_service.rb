@@ -13,7 +13,9 @@ class RedmineService
     response = conn.get('/projects.json?limit=1000')
     return [] unless response.success?
 
-    parsed = JSON.parse(response.body)
+    parsed = safe_parse_json(response)
+    return [] if parsed.nil?
+
     projects = parsed['projects'] || []
     projects.map { |p| { id: p['id'], name: p['name'].to_s, identifier: p['identifier'].to_s } }
   rescue JSON::ParserError, Faraday::Error => e
@@ -30,7 +32,9 @@ class RedmineService
     response = conn.get("/projects/#{id_escaped}.json")
     return nil unless response.success?
 
-    parsed = JSON.parse(response.body)
+    parsed = safe_parse_json(response)
+    return nil if parsed.nil?
+
     parsed['project']
   rescue JSON::ParserError, Faraday::Error => e
     Rails.logger.error "RedmineService: get_project #{e.message}"
@@ -53,17 +57,10 @@ class RedmineService
     response = conn.get("/issues/#{issue_id}.json")
 
     if response.success?
-      begin
-        raw_body = response.body
-        parsed_json = JSON.parse(raw_body)
-        parsed_json['issue']
-      rescue JSON::ParserError => e
-        puts "Error parse JSON: #{e.message}"
-        Rails.logger.error "RedmineService: error parse JSON: #{e.message}"
-        nil
-      end
+      parsed_json = safe_parse_json(response)
+      parsed_json ? parsed_json['issue'] : nil
     else
-      parsed = (JSON.parse(response.body) rescue {})
+      parsed = (safe_parse_json(response) rescue {})
       errors = Array(parsed['errors']).join(', ')
       Rails.logger.error "RedmineService: API error #{response.status} #{errors}"
       puts "Error when call API Redmine: #{response.status} #{errors}"
@@ -118,18 +115,15 @@ class RedmineService
     response = conn.get(path)
 
     if response.success?
-      begin
-        parsed = JSON.parse(response.body)
+        parsed = safe_parse_json(response)
+        return nil if parsed.nil?
+
         {
           issues: parsed['issues'] || [],
           total_count: parsed['total_count'] || 0,
           offset: parsed['offset'] || offset,
           limit: parsed['limit'] || limit
         }
-      rescue JSON::ParserError => e
-        Rails.logger.error "RedmineService: error parse JSON: #{e.message}"
-        nil
-      end
     else
       Rails.logger.error "RedmineService: API error #{response.status}"
       nil
@@ -151,5 +145,33 @@ class RedmineService
 
   def self.connection
     connection_for_url(BASE_URL)
+  end
+
+  def self.safe_parse_json(response)
+    return nil if response.nil? || response.body.blank?
+
+    begin
+      # 1. Clean up body: remove UTF-8 BOM if present
+      body = response.body.to_s
+      body.sub!("\xEF\xBB\xBF", "")
+      
+      # 2. Aggressively replace all non-breaking spaces (\u00A0) with standard spaces
+      # This fixes issues where Indentation or spacing uses \u00A0 which breaks JSON.parse
+      body = body.gsub("\u00A0", " ")
+
+      # 3. Strip leading/trailing invisible characters
+      body = body.strip.gsub(/\A[\u0000-\u0020]+/, '').gsub(/[\u0000-\u0020]+\z/, '')
+
+      JSON.parse(body)
+    rescue StandardError => e
+      # Log the failure with the raw body snippet for debugging
+      # Rescuing StandardError catches MultiJson::ParseError and other unexpected gems errors
+      raw_snippet = response.body.to_s.first(200).inspect
+      error_msg = "RedmineService JSON Parsing Error: #{e.message}. Status: #{response.status}. Raw body (first 200 chars): #{raw_snippet}"
+      
+      puts error_msg
+      Rails.logger.error error_msg
+      nil
+    end
   end
 end

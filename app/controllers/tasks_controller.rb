@@ -137,10 +137,14 @@ class TasksController < ApplicationController
   end
 
   # GET /projects/:project_id/tasks/redmine_projects
-  # List Redmine projects (id, name, identifier) for dropdown.
   def redmine_projects
-    projects = RedmineService.get_projects_list
-    render json: { projects: projects }
+    begin
+      projects = RedmineService.get_projects_list
+      render json: { projects: projects }
+    rescue StandardError => e
+      Rails.logger.error "TasksController#redmine_projects Error: #{e.message}"
+      render json: { projects: [], error: "Lỗi khi tải danh sách project từ Redmine: #{e.message}" }, status: :internal_server_error
+    end
   end
 
   # POST /tasks/:id/create_subtask
@@ -241,16 +245,21 @@ class TasksController < ApplicationController
       render json: { issues: [], total_count: 0, errors: ['Không tìm thấy project Redmine với ID hoặc identifier đã nhập.'] }, status: :unprocessable_entity
       return
     end
-    start_date, end_date = bulk_list_date_range
+    begin
+      start_date, end_date = bulk_list_date_range
 
-    list_service = RedmineBulkListService.new(@project.id, issues_url: issues_url)
-    issues = list_service.list(redmine_project_id: redmine_project_id, created_on_from: start_date, created_on_to: end_date)
+      list_service = RedmineBulkListService.new(@project.id, issues_url: issues_url)
+      issues = list_service.list(redmine_project_id: redmine_project_id, created_on_from: start_date, created_on_to: end_date)
 
-    render json: {
-      issues: issues,
-      total_count: issues.size,
-      errors: list_service.errors
-    }, status: list_service.errors.any? ? :unprocessable_entity : :ok
+      render json: {
+        issues: issues,
+        total_count: issues.size,
+        errors: list_service.errors
+      }, status: list_service.errors.any? ? :unprocessable_entity : :ok
+    rescue StandardError => e
+      Rails.logger.error "TasksController#list_redmine_issues Error: #{e.message}"
+      render json: { issues: [], total_count: 0, errors: ["Lỗi khi tải danh sách từ Redmine: #{e.message}"] }, status: :internal_server_error
+    end
   end
 
   # POST /projects/:project_id/tasks/import_from_redmine_url
