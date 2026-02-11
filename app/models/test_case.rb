@@ -69,7 +69,24 @@ class TestCase < ApplicationRecord
     match&.status || 'not_run'
   end
 
+  after_save :update_task_counter
+  after_destroy :update_task_counter
+
   private
+
+  def update_task_counter
+    # Update current task
+    task.update_columns(number_of_test_cases: task.test_cases.active.count) if task
+    
+    # If task_id changed, update the previous task as well
+    if saved_change_to_task_id?
+      old_task_id = saved_changes[:task_id].first
+      if old_task_id
+        old_task = Task.find_by(id: old_task_id)
+        old_task.update_columns(number_of_test_cases: old_task.test_cases.active.count) if old_task
+      end
+    end
+  end
 
   def device_match?(device_name, category)
     return false if device_name.blank?

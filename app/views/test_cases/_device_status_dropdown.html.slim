@@ -1,7 +1,7 @@
 .dropdown data-controller="device-status" id="test-case-#{test_case.id}-#{device.parameterize}-status"
   - status_class = { 'pass' => 'bg-success', 'fail' => 'bg-danger', 'failed' => 'bg-danger', 'blocked' => 'bg-warning text-dark' }[status] || 'bg-secondary'
   
-  button.btn.btn-sm.w-100.status-badge class=status_class type="button" data-bs-toggle="dropdown" aria-expanded="false"
+  button.btn.btn-sm.w-100.status-badge class=status_class type="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-popper-config='{"strategy":"fixed"}'
     = (status == 'not_run' ? '-' : status.upcase)
   
   ul.dropdown-menu.shadow-sm

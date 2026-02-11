@@ -24,7 +24,7 @@
         i.bi.bi-plus-lg.me-1
         | Tạo Bug mới
       - if @task.bug_link.present?
-        = button_to import_from_sheet_project_task_bugs_path(@project, @task), method: :post, class: 'btn btn-outline-primary text-nowrap' do
+        button.btn.btn-outline-primary.text-nowrap data-bs-toggle="modal" data-bs-target="#importBugsModal"
           i.bi.bi-arrow-repeat.me-1
           | Sync from Sheet
         a.btn.btn-outline-secondary.text-nowrap href=@task.bug_link target="_blank"
@@ -38,16 +38,17 @@
         table.table.table-hover.align-middle.mb-0
           thead.bg-light
             tr
-              th.ps-4.py-3 width="60" ID
+              th.ps-4.py-3 width="80" No
               th.py-3 Content
               th.py-3 width="120" App
               th.py-3 width="150" Dev / Test
               th.py-3 width="120" Status
               th.py-3 width="150" Actions
           tbody
-            - @bugs.each do |bug|
+            - offset = (@page - 1) * @per_page
+            - @bugs.each_with_index do |bug, index|
               tr
-                td.ps-4.fw-medium = "##{bug.id}"
+                td.ps-4.fw-medium = "#{offset + index + 1}"
                 td
                   = link_to project_task_bug_path(@project, @task, bug), class: 'text-decoration-none fw-semibold text-dark d-block mb-1 text-truncate', style: 'max-width: 450px;', title: bug.title do
                     = bug.title
@@ -72,8 +73,41 @@
                       i.bi.bi-eye
                     = link_to edit_project_task_bug_path(@project, @task, bug), class: 'btn btn-sm btn-outline-primary', title: 'Sửa' do
                       i.bi.bi-pencil
-                    = link_to project_task_bug_path(@project, @task, bug), method: :delete, data: { confirm: 'Bạn có chắc chắn muốn xóa bug này không?' }, class: 'btn btn-sm btn-outline-danger', title: 'Xóa' do
+                    = link_to project_task_bug_path(@project, @task, bug), data: { turbo_method: :delete, turbo_confirm: 'Bạn có chắc chắn muốn xóa bug này không?' }, class: 'btn btn-sm btn-outline-danger', title: 'Xóa' do
                       i.bi.bi-trash
+      
+      / Pagination UI
+      - if @total_pages > 1
+        .card-footer.bg-white.border-top
+          .pagination-wrapper.d-flex.justify-content-center.py-2
+            nav
+              ul.pagination.pagination-sm.mb-0
+                / Previous
+                li.page-item class=("disabled" if @page <= 1)
+                  - if @page > 1
+                    a.page-link href="?page=#{@page - 1}" aria-label="Previous"
+                      span aria-hidden="true" &laquo;
+                  - else
+                    span.page-link
+                      span aria-hidden="true" &laquo;
+
+                / Page numbers
+                - (1..@total_pages).each do |p|
+                  - if @total_pages <= 7 || (p <= 2) || (p >= @total_pages - 1) || ((p - @page).abs <= 1)
+                    li.page-item class=("active" if p == @page)
+                      a.page-link href="?page=#{p}"= p
+                  - elsif (p == 3 && @page > 4) || (p == @total_pages - 2 && @page < @total_pages - 3)
+                    li.page-item.disabled
+                      span.page-link ...
+
+                / Next
+                li.page-item class=("disabled" if @page >= @total_pages)
+                  - if @page < @total_pages
+                    a.page-link href="?page=#{@page + 1}" aria-label="Next"
+                      span aria-hidden="true" &raquo;
+                  - else
+                    span.page-link
+                      span aria-hidden="true" &raquo;
 
   / Empty State
   - if @bugs.empty?
@@ -86,5 +120,58 @@
           i.bi.bi-plus-lg.me-1
           | Tạo Bug mới
         - if @task.bug_link.present?
-          = button_to import_from_sheet_project_task_bugs_path(@project, @task), method: :post, class: 'btn btn-outline-primary' do
+          button.btn.btn-outline-primary data-bs-toggle="modal" data-bs-target="#importBugsModal"
             | Import từ Sheet
+
+/ Import Bugs Modal
+.modal.fade#importBugsModal tabindex="-1" aria-hidden="true" data-controller="import-progress" data-import-progress-estimated-time-value="15"
+  .modal-dialog
+    .modal-content
+      .modal-header.bg-primary.text-white
+        h5.modal-title
+          i.bi.bi-arrow-repeat.me-2
+          | Đồng bộ Bug từ Google Sheet
+        button.btn-close.btn-close-white type="button" data-bs-dismiss="modal" aria-label="Close"
+      = form_with url: import_from_sheet_project_task_bugs_path(@project, @task), method: :post, local: true, data: { import_progress_target: "form", action: "submit->import-progress#showProgress" } do |f|
+        .modal-body
+          .mb-3
+            label.form-label.fw-bold Google Sheet URL (Lấy từ Task)
+            input.form-control type="text" value=@task.bug_link disabled=true
+            .form-text Link sheet này đã được cấu hình trong Task.
+          
+          - if @bugs.exists?
+            .alert.alert-warning.mt-3
+              .d-flex.align-items-center.mb-2
+                i.bi.bi-exclamation-triangle-fill.me-2.fs-4
+                strong Cảnh báo thay thế dữ liệu
+              p.small.mb-2 Bạn đang thực hiện đồng bộ lại dữ liệu. Nếu chọn "Thay thế", toàn bộ các Bug hiện tại của task này sẽ bị xóa để nạp lại từ Sheet.
+              .form-check
+                = check_box_tag :wipe_existing, '1', false, class: 'form-check-input', id: 'checkWipeExisting'
+                label.form-check-label.fw-bold.text-danger for="checkWipeExisting"
+                  | Xóa dữ liệu cũ trước khi nạp mới (Thay thế)
+
+          .alert.alert-info.d-flex.align-items-start.mt-3
+            i.bi.bi-info-circle.me-2.mt-1
+            div
+              strong Lưu ý:
+              ul.mb-0.mt-1.small
+                li Hệ thống sẽ tìm các dòng có nội dung Bug để nạp vào.
+                li Nếu không chọn "Thay thế", hệ thống sẽ chỉ thêm Bug mới dựa trên tiêu đề.
+          
+          / Progress Bar
+          .d-none data-import-progress-target="progress"
+            .mt-3
+              .d-flex.justify-content-between.align-items-center.mb-1
+                strong.text-primary.small
+                  i.bi.bi-arrow-repeat.spin.me-1
+                  span.status-text Đang đồng bộ bug từ Google Sheet...
+                span.time-remaining.text-muted.small Còn khoảng 15 giây...
+              .progress style="height: 10px;"
+                .progress-bar.progress-bar-striped.progress-bar-animated.bg-primary role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" 0%
+              p.text-muted.mt-2.x-small.mb-0 
+                i.bi.bi-info-circle.me-1
+                | Đang kết nối với Google API và xử lý dữ liệu bug...
+
+        .modal-footer.bg-light
+          button.btn.btn-secondary type="button" data-bs-dismiss="modal" data-import-progress-target="cancelButton" Hủy
+          = f.submit 'Bắt đầu đồng bộ', class: 'btn btn-primary', data: { import_progress_target: "submitButton" }

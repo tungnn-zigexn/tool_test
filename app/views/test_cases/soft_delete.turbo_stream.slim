@@ -1,0 +1,5 @@
+= turbo_stream.remove "test-case-row-#{@test_case.id}"
+
+/ Close the modal
+script
+  | document.querySelector('#testCaseDetailsModal [data-bs-dismiss="modal"]')?.click();

@@ -30,7 +30,7 @@
 
         div
           span.badge.rounded-pill.px-3.py-2 class=status_badge_color(task.status)
-            = task.status
+            = task.status.to_s.titleize
 
     / Task Stats Grid
     .card-body.p-4.bg-light.bg-opacity-10

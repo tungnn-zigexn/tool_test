@@ -1,7 +1,12 @@
 - devices = local_assigns[:devices] || ['pc', 'sp', 'app']
 
-tr.test-case-row data-controller="editable-cell" data-test-case-id=test_case.id data-project-id=test_case.task.project_id data-task-id=test_case.task.id
-  td.text-center.fw-bold.bg-light.align-middle = "TC-#{index.to_s.rjust(3, '0')}"
+tr.test-case-row id="test-case-row-#{test_case.id}" data-controller="editable-cell" data-test-case-id=test_case.id data-project-id=test_case.task.project_id data-task-id=test_case.task.id
+  td.text-center.fw-bold.bg-light.align-middle
+    = link_to project_task_test_case_path(test_case.task.project, test_case.task, test_case), 
+              data: { turbo_frame: "test_case_modal_content", 
+                      action: "click->test-case-modal#open" }, 
+              class: "text-primary text-decoration-none" do
+      = "TC-#{index.to_s.rjust(3, '0')}"
   
   td.text-center.align-middle
     div.p-2

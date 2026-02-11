@@ -1,7 +1,7 @@
 class ProjectsController < ApplicationController
   before_action :set_project, except: %i[index new create archived]
   before_action :authorize_admin, except: %i[index show archived]
-  
+
   # Date presets definition
   DATE_PRESETS = {
     "today" => -> { Date.current..Date.current },
@@ -111,7 +111,7 @@ class ProjectsController < ApplicationController
 
     # Status filter
     if params[:status].present?
-      base_tasks = base_tasks.where(status: params[:status])
+      base_tasks = base_tasks.where("LOWER(status) = ?", params[:status].downcase)
     end
 
     # Pagination
@@ -127,7 +127,8 @@ class ProjectsController < ApplicationController
     @root_tasks = @all_root_tasks.to_a[tasks_start..tasks_end] || []
     
     # Status options for filter dropdown
-    @status_options = @tasks.distinct.pluck(:status).compact.sort
+    # Status options for filter dropdown - unique case-insensitively
+    @status_options = @tasks.where.not(status: [nil, ""]).pluck(:status).map(&:downcase).uniq.sort
 
     # Danh sách Redmine project (theo tên) cho dropdown Bulk Import - hiện sẵn để user chọn
     @redmine_projects = begin

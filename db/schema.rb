@@ -276,6 +276,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_11_140000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "issue_link"
+    t.string "device_config"
     t.index ["assignee_id"], name: "index_tasks_on_assignee_id"
     t.index ["parent_id"], name: "index_tasks_on_parent_id"
     t.index ["project_id"], name: "index_tasks_on_project_id"

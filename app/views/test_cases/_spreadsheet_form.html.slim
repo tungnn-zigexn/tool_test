@@ -34,8 +34,6 @@
               | Loại Test
             .input-group
               = f.select :test_type, options_for_select([['Feature', 'feature'], ['UI', 'ui'], ['Data', 'data']], 'feature'), {}, class: "form-select border-0 shadow-sm bg-white"
-              span.input-group-text.bg-white.border-0.text-muted
-                i.bi.bi-chevron-down.fs-7
 
           .col-md-6
             label.form-label.small.fw-bold.text-muted.text-uppercase
@@ -43,8 +41,6 @@
               | Target Device
             .input-group
               = f.select :target, options_for_select([['PC + SP + APP', 'pc_sp_app'], ['PC + SP', 'pc_sp'], ['PC', 'pc'], ['SP', 'sp'], ['APP', 'app']], 'pc_sp_app'), {}, class: "form-select border-0 shadow-sm bg-white"
-              span.input-group-text.bg-white.border-0.text-muted
-                i.bi.bi-chevron-down.fs-7
 
       / --- SECTION 2: Steps Editor ---
       .border-top
