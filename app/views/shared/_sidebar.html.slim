@@ -24,6 +24,11 @@
         = link_to project_histories_path, class: "nav-link d-flex align-items-center rounded-3 p-3 #{controller_name == 'project_histories' ? 'active shadow-sm' : 'text-secondary hover-bg-light'}" do
           i.bi.bi-clock-history.me-3
           span Project History
+      
+      li.nav-item.mb-2
+        = link_to edit_app_configuration_path, class: "nav-link d-flex align-items-center rounded-3 p-3 #{controller_name == 'app_configurations' ? 'active shadow-sm' : 'text-secondary hover-bg-light'}" do
+          i.bi.bi-gear-fill.me-3
+          span Settings
 
       hr.my-4.text-muted.opacity-25
 

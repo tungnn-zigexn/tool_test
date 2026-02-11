@@ -8,8 +8,22 @@
 #     command: "SoftDeletedRecord.due.delete_all"
 #     priority: 2
 #     schedule: at 5am every day
+#
+# Note: Schedule uses server/Rails timezone. App has config.time_zone = "Asia/Ho_Chi_Minh" → 11:18 = 11h18 giờ VN.
+# Cron format: "phút giờ * * *" (ví dụ "18 11 * * *" = 11:18 mỗi ngày).
 
 production:
   clear_solid_queue_finished_jobs:
     command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
     schedule: every hour at minute 12
+  daily_import_task:
+    class: DailyImportJob
+    queue: default
+    schedule: every day at 8am
+
+development:
+  daily_import_task:
+    class: DailyImportJob
+    queue: default
+    # Giờ VN (khi Rails time_zone = Asia/Ho_Chi_Minh)
+    schedule: every day at 8:00am
