@@ -1,8 +1,11 @@
+version: '3.8'
+
 services:
   web:
     build:
       context: .
       dockerfile: Dockerfile.dev
+    command: bin/dev
     volumes:
       - .:/rails
       - bundle_cache:/usr/local/bundle
@@ -11,15 +14,12 @@ services:
       - "4000:4000"
     environment:
       - RAILS_ENV=development
-    command: >
-      bash -c "
-        bundle check || bundle install &&
-        npm install &&
-        bin/dev
-      "
-    tty: true
+      - RAILS_MAX_THREADS=5
     stdin_open: true
+    tty: true
 
 volumes:
   bundle_cache:
   node_modules:
+
+
