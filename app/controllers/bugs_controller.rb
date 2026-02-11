@@ -4,9 +4,21 @@ class BugsController < ApplicationController
   before_action :set_bug, only: %i[show edit update destroy]
 
   def index
-    @bugs = @task.bugs.order(created_at: :desc)
-    @bugs = @bugs.by_category(params[:category]) if params[:category].present?
-    @bugs = @bugs.by_priority(params[:priority]) if params[:priority].present?
+    # Sorting and Pagination
+    @page = (params[:page] || 1).to_i
+    @per_page = 20
+
+    # Base scope - only show active (non-deleted) bugs
+    @all_bugs = @task.bugs.active.order(id: :asc)
+    @all_bugs = @all_bugs.by_category(params[:category]) if params[:category].present?
+    @all_bugs = @all_bugs.by_priority(params[:priority]) if params[:priority].present?
+
+    @total_bugs = @all_bugs.count
+    @total_pages = (@total_bugs.to_f / @per_page).ceil
+
+    # Paginated data
+    offset = (@page - 1) * @per_page
+    @bugs = @all_bugs.offset(offset).limit(@per_page)
   end
 
   def show; end
@@ -35,7 +47,7 @@ class BugsController < ApplicationController
   end
 
   def destroy
-    @bug.soft_delete
+    @bug.soft_delete!
     redirect_to project_task_bugs_path(@project, @task), notice: 'Bug đã được xóa thành công.'
   end
 
@@ -46,7 +58,8 @@ class BugsController < ApplicationController
     end
 
     spreadsheet_id = extract_spreadsheet_id(@task.bug_link)
-    import_service = BugImportService.new(@task, spreadsheet_id)
+    wipe_existing = params[:wipe_existing] == '1'
+    import_service = BugImportService.new(@task, spreadsheet_id, wipe_existing: wipe_existing)
 
     if import_service.import
       notice = "Import thành công: #{import_service.imported_count} mới, #{import_service.updated_count} cập nhật."
@@ -68,7 +81,7 @@ class BugsController < ApplicationController
   end
 
   def set_bug
-    @bug = @task.bugs.find(params[:id])
+    @bug = @task.bugs.active.find(params[:id])
   end
 
   def bug_params

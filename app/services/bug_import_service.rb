@@ -1,9 +1,10 @@
 class BugImportService
   attr_reader :errors, :imported_count, :updated_count
 
-  def initialize(task, spreadsheet_id)
+  def initialize(task, spreadsheet_id, wipe_existing: false)
     @task = task
     @spreadsheet_id = spreadsheet_id
+    @wipe_existing = wipe_existing
     @google_service = GoogleSheetService.new
     @errors = []
     @imported_count = 0
@@ -15,6 +16,8 @@ class BugImportService
     begin
       target_sheets = find_target_sheets
       return false unless target_sheets
+
+      wipe_existing_bugs if @wipe_existing && @errors.empty?
 
       target_sheets.each do |sheet|
         sheet_data = @google_service.get_data(@spreadsheet_id, sheet[:title])
@@ -30,6 +33,13 @@ class BugImportService
   end
 
   private
+
+  def wipe_existing_bugs
+    Rails.logger.info "Wiping existing bugs for task #{@task.id}"
+    @task.bugs.destroy_all
+    @imported_count = 0
+    @updated_count = 0
+  end
 
   def find_target_sheets
     gid = extract_gid(@task.bug_link)
