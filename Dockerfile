@@ -1,46 +1,58 @@
-# Dockerfile for Production
-FROM ruby:3.4.6-slim AS base
+# =========================
+# 1. Builder
+# =========================
+FROM ruby:3.4.6-slim AS builder
 
-# Install dependencies
 RUN apt-get update -qq && \
     apt-get install -y --no-install-recommends \
-    build-essential libyaml-dev pkg-config\
-    libsqlite3-0 \
-    nodejs \
-    npm \
-    curl \
+      build-essential \
+      libyaml-dev \
+      pkg-config \
+      nodejs \
+      npm \
+      curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Set working directory
 WORKDIR /rails
 
-# Set production environment
-ENV RAILS_ENV="production" \
+ENV RAILS_ENV=production \
     BUNDLE_WITHOUT="development:test" \
-    BUNDLE_DEPLOYMENT="1"
+    BUNDLE_DEPLOYMENT=1
 
-# Install application gems
 COPY Gemfile Gemfile.lock ./
-RUN bundle install && \
-    rm -rf ~/.bundle/ "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git
+RUN bundle install
 
-# Install node packages
 COPY package.json package-lock.json ./
-RUN npm ci --production=false
+RUN npm ci
 
-# Copy application code
 COPY . .
-
-# Precompile assets
 RUN bundle exec rake assets:precompile
 
-# Create storage directories
-RUN mkdir -p storage tmp/pids tmp/sockets
+# =========================
+# 2. Runtime (NHẸ)
+# =========================
+FROM ruby:3.4.6-slim
 
-# Expose port
+RUN apt-get update -qq && \
+    apt-get install -y --no-install-recommends \
+      libyaml-0-2 \
+      libsqlite3-0 \
+      curl \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /rails
+
+ENV RAILS_ENV=production \
+    BUNDLE_WITHOUT="development:test" \
+    BUNDLE_DEPLOYMENT=1
+
+# copy gems đã build
+COPY --from=builder /usr/local/bundle /usr/local/bundle
+
+# copy app + assets
+COPY --from=builder /rails /rails
+
+RUN mkdir -p tmp/pids tmp/sockets storage
+
 EXPOSE 4000
-
-# Start the server with thruster
 CMD ["bundle", "exec", "thrust", "bin/rails", "server"]
-
-
