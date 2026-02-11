@@ -5,8 +5,15 @@ class ApplicationController < ActionController::Base
   # Devise authentication
   before_action :authenticate_user!
   before_action :set_current_user
+  before_action :set_header_notifications
 
   private
+
+  def set_header_notifications
+    return unless current_user
+    @header_notifications = Notification.unread_for(current_user).recent.limit(10)
+    @header_notifications_unread_count = Notification.unread_for(current_user).count
+  end
 
   def set_current_user
     Current.user = current_user
