@@ -33,7 +33,7 @@ class Ability
 
     if user.admin?
       can :manage, :all
-    elsif user.user? || user.developer?
+    elsif user.user?
       can :read, Project
       can :read, Task
       can :read, TestCase
@@ -51,9 +51,6 @@ class Ability
       # User can create and update bugs
       can %i[create update], Bug
       can %i[create update], BugComment
-
-      # Developer has the same permissions as user
-      can [:update], Bug, dev_id: user.id if user.developer?
 
       # User cannot delete Users or Projects
       cannot :destroy, User

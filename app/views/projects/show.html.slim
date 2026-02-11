@@ -95,7 +95,7 @@
               .small.text-muted Parent Tasks
           .col-md-3
             .p-3.rounded.bg-success.bg-opacity-10.text-center.border.border-success.border-opacity-10
-              .h2.fw-bold.text-success.mb-0= @tasks.sum(:number_of_test_cases)
+              .h2.fw-bold.text-success.mb-0= @tasks.where(parent_id: nil).sum(:number_of_test_cases)
               .small.text-muted Test Cases
           .col-md-3
             .p-3.rounded.bg-info.bg-opacity-10.text-center.border.border-info.border-opacity-10

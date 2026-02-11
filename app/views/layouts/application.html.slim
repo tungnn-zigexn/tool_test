@@ -39,13 +39,13 @@ html
     - if user_signed_in?
       = render 'shared/header'
       .container-fluid
-        .row
+        .row.g-0
           / === Sidebar ===
-          .sidebar.col-md-3.col-lg-2.px-0.bg-white.border-end.min-vh-100 data-layout-target="sidebar" style="transition: all 0.3s ease-in-out;"
+          .sidebar.px-0.bg-white.border-end.min-vh-100 data-layout-target="sidebar" style="transition: all 0.3s ease-in-out; width: 260px; min-width: 260px; flex: 0 0 260px;"
             = render "shared/sidebar"
 
           / === Main content ===
-          .col-md-9.col-lg-10.p-4 data-layout-target="content" style="transition: all 0.3s ease-in-out;"
+          .col.p-4 data-layout-target="content" style="transition: all 0.3s ease-in-out;"
             = yield
     - else
       / For login/signup pages
