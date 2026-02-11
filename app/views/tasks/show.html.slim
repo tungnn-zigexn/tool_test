@@ -1,4 +1,4 @@
-.container-fluid.px-4.py-4 data-controller="spreadsheet-form"
+.container-fluid.px-4.py-4 data-controller="spreadsheet-form test-case-modal"
   #flash-messages
   / Breadcrumb
   nav.mb-4 aria-label="breadcrumb"
@@ -40,6 +40,15 @@
             i.bi.bi-gear.me-1
             | Tùy chọn
           ul.dropdown-menu.dropdown-menu-end
+            li
+              = button_to promote_all_to_subtask_project_task_path(@project, @task), 
+                        method: :post, 
+                        class: "dropdown-item text-purple", 
+                        data: { turbo_confirm: "Bạn có chắc chắn muốn chuyển toàn bộ #{@task.test_cases.active.count} Test Case vào một Subtask mới?" } do
+                i.bi.bi-arrow-up-right-square.me-2
+                | Gom tất cả vào Subtask
+            li
+              hr.dropdown-divider
             li
               = link_to edit_project_task_path(@task.project, @task), class: "dropdown-item" do
                 i.bi.bi-pencil.me-2.text-primary
@@ -137,9 +146,13 @@
   - if @task.subtasks.any?
     .card.border-0.shadow-sm.mb-4
       .card-header.bg-white.border-bottom
-        h5.mb-0.fw-bold.d-flex.align-items-center
-          i.bi.bi-list-task.me-2.text-purple
-          | Subtasks (#{@task.subtasks.count})
+        h5.mb-0.fw-bold.d-flex.align-items-center.justify-content-between.w-100
+          .d-flex.align-items-center
+            i.bi.bi-list-task.me-2.text-purple
+            | Subtasks (#{@task.subtasks.count})
+          button.btn.btn-purple.btn-sm.text-white data-bs-toggle="modal" data-bs-target="#createSubtaskModal"
+            i.bi.bi-plus-circle.me-1
+            | Thêm Subtask
 
       .card-body
         .row.g-3
@@ -171,6 +184,11 @@
           - if @total_tc_pages > 1
             .text-muted.small
               | Trang #{@test_cases_page}/#{@total_tc_pages}
+          
+          - if @archived_test_cases.any?
+            button.btn.btn-outline-secondary.btn-sm.ms-auto data-bs-toggle="modal" data-bs-target="#archivedTestCasesModal"
+              i.bi.bi-archive.me-1
+              | Archived TCs (#{@archived_test_cases.count})
 
       .card-body.p-0
         - devices = @task.unique_devices
@@ -226,103 +244,186 @@
   / Activity History Section
   = render 'shared/activity_timeline', logs: ActivityLog.where(trackable_type: 'Task', trackable_id: @task.id).limit(10)
 
-/ Import Test Cases Modal
-.modal.fade#importTestCasesModal tabindex="-1" aria-hidden="true" data-controller="import-progress" data-import-progress-estimated-time-value="45"
-  .modal-dialog
-    .modal-content
-      .modal-header.bg-success.text-white
-        h5.modal-title
-          i.bi.bi-cloud-download.me-2
-          | Import Test Cases từ Google Sheet
-        button.btn-close.btn-close-white type="button" data-bs-dismiss="modal" aria-label="Close"
-      = form_with url: import_from_sheet_project_task_test_cases_path(@task.project, @task), method: :post, local: true, data: { import_progress_target: "form", action: "submit->import-progress#showProgress" } do |f|
+  / Import Test Cases Modal
+  .modal.fade#importTestCasesModal tabindex="-1" aria-hidden="true" data-controller="import-progress" data-import-progress-estimated-time-value="45"
+    .modal-dialog
+      .modal-content
+        .modal-header.bg-success.text-white
+          h5.modal-title
+            i.bi.bi-cloud-download.me-2
+            | Import Test Cases từ Google Sheet
+          button.btn-close.btn-close-white type="button" data-bs-dismiss="modal" aria-label="Close"
+        = form_with url: import_from_sheet_project_task_test_cases_path(@task.project, @task), method: :post, local: true, data: { import_progress_target: "form", action: "submit->import-progress#showProgress" } do |f|
+          .modal-body
+            .mb-3
+              label.form-label.fw-bold Google Sheet URL hoặc Spreadsheet ID *
+              = text_field_tag :spreadsheet_id, @task.testcase_link, class: 'form-control', placeholder: 'https://docs.google.com/spreadsheets/d/xxx/edit hoặc spreadsheet_id', required: true
+              .form-text Nhập URL hoặc ID của Google Sheet chứa test cases
+            
+            - if @task.test_cases.active.exists? || @task.subtasks.exists?
+              .alert.alert-warning.mt-3
+                .d-flex.align-items-center.mb-2
+                  i.bi.bi-exclamation-triangle-fill.me-2.fs-4
+                  strong Cảnh báo thay thế dữ liệu
+                p.small.mb-2 Bạn đang thực hiện đồng bộ lại dữ liệu. Nếu chọn "Thay thế", toàn bộ các Test Case hiện tại của task này (và subtasks) sẽ bị xóa để nạp lại từ Sheet.
+                .form-check
+                  = check_box_tag :wipe_existing, '1', false, class: 'form-check-input', id: 'checkWipeExisting'
+                  label.form-check-label.fw-bold.text-danger for="checkWipeExisting"
+                    | Xóa dữ liệu cũ trước khi import (Thay thế)
+  
+            .alert.alert-info.d-flex.align-items-start.mt-3
+              i.bi.bi-info-circle.me-2.mt-1
+              div
+                strong Lưu ý:
+                ul.mb-0.mt-1.small
+                  li Google Sheet phải được chia sẻ with service account
+                  li Định dạng sheet phải theo template chuẩn
+            
+            / Progress Bar
+            .d-none data-import-progress-target="progress"
+              .alert.alert-success.mb-0
+                .d-flex.align-items-center.justify-content-between.mb-2
+                  .d-flex.align-items-center
+                    .spinner-border.spinner-border-sm.me-2 role="status"
+                      span.visually-hidden Loading...
+                    strong Đang import test cases từ Google Sheet...
+                  span.time-remaining.badge.bg-light.text-dark.px-3.py-2 Đang tính toán...
+                .progress style="height: 28px;"
+                  .progress-bar.progress-bar-striped.progress-bar-animated.bg-success role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%"
+                    | 0%
+                small.text-muted.mt-2.d-block
+                  i.bi.bi-info-circle.me-1
+                  | Đang lấy dữ liệu từ Google Sheet và tạo test cases...
+  
+          .modal-footer
+            button.btn.btn-secondary type="button" data-bs-dismiss="modal" data-import-progress-target="cancelButton" Hủy
+            = f.submit "Import", class: 'btn btn-success', data: { import_progress_target: "submitButton" }
+  
+  / Soft Delete Confirmation Modal
+  .modal.fade#softDeleteModal tabindex="-1" aria-hidden="true"
+    .modal-dialog.modal-dialog-centered
+      .modal-content
+        .modal-header.bg-warning
+          h5.modal-title
+            i.bi.bi-archive.me-2
+            | Xác nhận Soft Delete
+          button.btn-close type="button" data-bs-dismiss="modal" aria-label="Close"
         .modal-body
-          .mb-3
-            label.form-label.fw-bold Google Sheet URL hoặc Spreadsheet ID *
-            = text_field_tag :spreadsheet_id, @task.testcase_link, class: 'form-control', placeholder: 'https://docs.google.com/spreadsheets/d/xxx/edit hoặc spreadsheet_id', required: true
-            .form-text Nhập URL hoặc ID của Google Sheet chứa test cases
-          
-          - if @task.test_cases.active.exists? || @task.subtasks.exists?
-            .alert.alert-warning.mt-3
-              .d-flex.align-items-center.mb-2
-                i.bi.bi-exclamation-triangle-fill.me-2.fs-4
-                strong Cảnh báo thay thế dữ liệu
-              p.small.mb-2 Bạn đang thực hiện đồng bộ lại dữ liệu. Nếu chọn "Thay thế", toàn bộ các Test Case hiện tại của task này (và subtasks) sẽ bị xóa để nạp lại từ Sheet.
-              .form-check
-                = check_box_tag :wipe_existing, '1', false, class: 'form-check-input', id: 'checkWipeExisting'
-                label.form-check-label.fw-bold.text-danger for="checkWipeExisting"
-                  | Xóa dữ liệu cũ trước khi import (Thay thế)
-
-          .alert.alert-info.d-flex.align-items-start.mt-3
-            i.bi.bi-info-circle.me-2.mt-1
+          p Bạn có chắc chắn muốn soft delete task này?
+          .alert.alert-warning.d-flex.align-items-center
+            i.bi.bi-exclamation-triangle.me-2
             div
-              strong Lưu ý:
-              ul.mb-0.mt-1.small
-                li Google Sheet phải được chia sẻ với service account
-                li Định dạng sheet phải theo template chuẩn
-          
-          / Progress Bar
-          .d-none data-import-progress-target="progress"
-            .alert.alert-success.mb-0
-              .d-flex.align-items-center.justify-content-between.mb-2
-                .d-flex.align-items-center
-                  .spinner-border.spinner-border-sm.me-2 role="status"
-                    span.visually-hidden Loading...
-                  strong Đang import test cases từ Google Sheet...
-                span.time-remaining.badge.bg-light.text-dark.px-3.py-2 Đang tính toán...
-              .progress style="height: 28px;"
-                .progress-bar.progress-bar-striped.progress-bar-animated.bg-success role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%"
-                  | 0%
-              small.text-muted.mt-2.d-block
-                i.bi.bi-info-circle.me-1
-                | Đang lấy dữ liệu từ Google Sheet và tạo test cases...
-
+              strong Task:
+              = @task.title
+          p.text-muted.small.mb-0 Task sẽ bị ẩn khỏi danh sách nhưng vẫn có thể khôi phục.
         .modal-footer
-          button.btn.btn-secondary type="button" data-bs-dismiss="modal" data-import-progress-target="cancelButton" Hủy
-          = f.submit "Import", class: 'btn btn-success', data: { import_progress_target: "submitButton" }
+          button.btn.btn-secondary type="button" data-bs-dismiss="modal" Hủy
+          = button_to "Soft Delete", soft_delete_project_task_path(@task.project, @task), method: :patch, class: "btn btn-warning"
+  
+  / Delete Confirmation Modal
+  .modal.fade#deleteModal tabindex="-1" aria-hidden="true"
+    .modal-dialog.modal-dialog-centered
+      .modal-content
+        .modal-header.bg-danger.text-white
+          h5.modal-title
+            i.bi.bi-trash.me-2
+            | Xác nhận Xóa vĩnh viễn
+          button.btn-close.btn-close-white type="button" data-bs-dismiss="modal" aria-label="Close"
+        .modal-body
+          p Bạn có chắc chắn muốn <strong>XÓA VĨNH VIỄN</strong> task này?
+          .alert.alert-danger.d-flex.align-items-center
+            i.bi.bi-exclamation-octagon.me-2
+            div
+              strong Task:
+              = @task.title
+          p.text-danger.small.mb-0
+            i.bi.bi-exclamation-triangle.me-1
+            | Hành động này không thể hoàn tác! Tất cả test cases và dữ liệu liên quan sẽ bị xóa.
+        .modal-footer
+          button.btn.btn-secondary type="button" data-bs-dismiss="modal" Hủy
+          = button_to "Xóa vĩnh viễn", project_task_path(@task.project, @task), method: :delete, class: "btn btn-danger"
+  
+  / Archived Test Cases Modal
+  .modal.fade#archivedTestCasesModal tabindex="-1" aria-hidden="true"
+    .modal-dialog.modal-lg.modal-dialog-centered
+      .modal-content
+        .modal-header.bg-secondary.text-white
+          h5.modal-title
+            i.bi.bi-archive.me-2
+            | Archived Test Cases
+          button.btn-close.btn-close-white type="button" data-bs-dismiss="modal" aria-label="Close"
+        .modal-body.p-0
+          .table-responsive
+            table.table.table-hover.align-middle.mb-0
+              thead.bg-light
+                tr
+                  th.ps-3 ID
+                  th Title
+                  th Deleted At
+                  th.text-end.pe-3 Actions
+              tbody
+                - if @archived_test_cases.any?
+                  - @archived_test_cases.each do |tc|
+                    tr
+                      td.ps-3.fw-bold = "TC-#{tc.id.to_s.rjust(3, '0')}"
+                      td = tc.title
+                      td.small.text-muted = tc.deleted_at&.strftime("%Y-%m-%d %H:%M")
+                      td.text-end.pe-3
+                        = button_to restore_project_task_test_case_path(@project, @task, tc), method: :patch, class: "btn btn-sm btn-outline-success" do
+                          i.bi.bi-arrow-counterclockwise.me-1
+                          | Restore
+                - else
+                  tr
+                    td.text-center.py-4 colspan="4" No archived test cases.
+        .modal-footer
+          button.btn.btn-secondary type="button" data-bs-dismiss="modal" Đóng
+  
+  / Test Case Detail/Edit/Navigation Modal
+  .modal.fade#testCaseDetailsModal tabindex="-1" aria-hidden="true" data-test-case-modal-target="modal"
+    .modal-dialog.modal-xl.modal-dialog-centered
+      .modal-content
+        = turbo_frame_tag "test_case_modal_content" do
+          .modal-body.text-center.py-5
+            .spinner-border.text-primary role="status"
+              span.visually-hidden Loading...
 
-/ Soft Delete Confirmation Modal
-.modal.fade#softDeleteModal tabindex="-1" aria-hidden="true"
-  .modal-dialog.modal-dialog-centered
-    .modal-content
-      .modal-header.bg-warning
-        h5.modal-title
-          i.bi.bi-archive.me-2
-          | Xác nhận Soft Delete
-        button.btn-close type="button" data-bs-dismiss="modal" aria-label="Close"
-      .modal-body
-        p Bạn có chắc chắn muốn soft delete task này?
-        .alert.alert-warning.d-flex.align-items-center
-          i.bi.bi-exclamation-triangle.me-2
-          div
-            strong Task:
-            = @task.title
-        p.text-muted.small.mb-0 Task sẽ bị ẩn khỏi danh sách nhưng vẫn có thể khôi phục.
-      .modal-footer
-        button.btn.btn-secondary type="button" data-bs-dismiss="modal" Hủy
-        = button_to "Soft Delete", soft_delete_project_task_path(@task.project, @task), method: :patch, class: "btn btn-warning"
+  / Create Subtask Modal
+  .modal.fade#createSubtaskModal tabindex="-1" aria-hidden="true"
+    .modal-dialog.modal-dialog-centered
+      .modal-content
+        .modal-header.bg-purple.text-white
+          h5.modal-title
+            i.bi.bi-plus-circle.me-2
+            | Tạo Subtask mới
+          button.btn-close.btn-close-white type="button" data-bs-dismiss="modal" aria-label="Close"
+        = form_with model: [@project, Task.new], url: create_subtask_project_task_path(@project, @task), method: :post, local: true do |f|
+          .modal-body
+            .mb-3
+              = f.label :title, "Tiêu đề Subtask *", class: 'form-label fw-bold'
+              = f.text_field :title, class: 'form-control', placeholder: 'Nhập tiêu đề subtask', required: true, value: "#{@task.title} - "
+            .mb-3
+              = f.label :description, "Mô tả", class: 'form-label fw-bold'
+              = f.text_area :description, class: 'form-control', rows: 3, placeholder: 'Mô tả ngắn gọn về subtask này'
+            .row
+              .col-md-6
+                .mb-3
+                  = f.label :estimated_time, "Ước lượng (h)", class: 'form-label fw-bold'
+                  = f.number_field :estimated_time, class: 'form-control', step: 0.5, value: 0
+              .col-md-6
+                .mb-3
+                  = f.label :status, "Trạng thái", class: 'form-label fw-bold'
+                  = f.select :status, ['New', 'In Progress', 'Resolved', 'Feedback', 'Closed'], { selected: 'New' }, { class: 'form-select' }
+          .modal-footer
+            button.btn.btn-secondary type="button" data-bs-dismiss="modal" Hủy
+            = f.submit "Tạo Subtask", class: 'btn btn-purple text-white'
 
-/ Delete Confirmation Modal
-.modal.fade#deleteModal tabindex="-1" aria-hidden="true"
-  .modal-dialog.modal-dialog-centered
-    .modal-content
-      .modal-header.bg-danger.text-white
-        h5.modal-title
-          i.bi.bi-trash.me-2
-          | Xác nhận Xóa vĩnh viễn
-        button.btn-close.btn-close-white type="button" data-bs-dismiss="modal" aria-label="Close"
-      .modal-body
-        p Bạn có chắc chắn muốn <strong>XÓA VĨNH VIỄN</strong> task này?
-        .alert.alert-danger.d-flex.align-items-center
-          i.bi.bi-exclamation-octagon.me-2
-          div
-            strong Task:
-            = @task.title
-        p.text-danger.small.mb-0
-          i.bi.bi-exclamation-triangle.me-1
-          | Hành động này không thể hoàn tác! Tất cả test cases và dữ liệu liên quan sẽ bị xóa.
-      .modal-footer
-        button.btn.btn-secondary type="button" data-bs-dismiss="modal" Hủy
-        = button_to "Xóa vĩnh viễn", project_task_path(@task.project, @task), method: :delete, class: "btn btn-danger"
+  style
+    | .text-purple { color: #764ba2 !important; }
+    | .bg-purple { background-color: #764ba2 !important; }
+    | .btn-purple { background-color: #764ba2 !important; border-color: #764ba2 !important; }
+    | .btn-purple:hover { background-color: #667eea !important; border-color: #667eea !important; }
+    | .btn-outline-purple { color: #764ba2; border-color: #764ba2; }
+    | .btn-outline-purple:hover { background-color: #764ba2; color: white; }
+    | .btn-xs { padding: 0.1rem 0.25rem; font-size: 0.75rem; border-radius: 0.2rem; }
 
 

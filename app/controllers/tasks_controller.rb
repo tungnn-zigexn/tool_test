@@ -1,12 +1,12 @@
 class TasksController < ApplicationController
-  before_action :set_project, only: %i[new create import_from_redmine import_from_redmine_url list_redmine_issues redmine_projects import_selected_redmine_issues]
-  before_action :set_task, except: %i[index new create import_from_redmine import_from_redmine_url list_redmine_issues redmine_projects import_selected_redmine_issues]
+  before_action :set_project,
+                only: %i[new create import_from_redmine import_from_redmine_url list_redmine_issues redmine_projects 
+                         import_selected_redmine_issues]
+  before_action :set_task,
+                except: %i[index new create import_from_redmine import_from_redmine_url list_redmine_issues 
+                           redmine_projects import_selected_redmine_issues]
   # skip_before_action :verify_authenticity_token
   # skip_before_action :authenticate_user! # TODO: test postman
-
-
-
-
   # GET /tasks or /projects/:project_id/tasks
   def index
     if params[:project_id]
@@ -23,26 +23,29 @@ class TasksController < ApplicationController
 
     # Filters
     @tasks = @tasks.where(status: params[:status]) if params[:status].present?
-    
+
     # ... rest of index ...
   end
 
   # GET /tasks/:id or /projects/:project_id/tasks/:id
   def show
     @test_case = @task.test_cases.build
-    
+
     # Pagination for test cases
     @test_cases_page = (params[:tc_page] || 1).to_i
     @test_cases_per_page = 10
     @all_test_cases = @task.test_cases.active.includes(:test_steps, :test_results).ordered
     @total_test_cases = @all_test_cases.size
     @total_tc_pages = (@total_test_cases.to_f / @test_cases_per_page).ceil
-    
+
     # Paginated test cases
     tc_start = (@test_cases_page - 1) * @test_cases_per_page
     tc_end = tc_start + @test_cases_per_page - 1
     @paginated_test_cases = @all_test_cases.to_a[tc_start..tc_end] || []
-    
+
+    # Fetch archived (soft-deleted) test cases for the restoration modal
+    @archived_test_cases = @task.test_cases.deleted.ordered
+
     respond_to do |format|
       format.html
       format.json { render json: @task.as_json(include: %i[test_cases assignee]) }
@@ -140,6 +143,85 @@ class TasksController < ApplicationController
     render json: { projects: projects }
   end
 
+  # POST /tasks/:id/create_subtask
+  def create_subtask
+    @subtask = @task.subtasks.build(task_params)
+    @subtask.project = @project
+    @subtask.created_by_name = current_user.name || current_user.email
+
+    if @subtask.save
+      redirect_to project_task_path(@project, @task), notice: 'Subtask created successfully.'
+    else
+      redirect_to project_task_path(@project, @task), alert: "Failed to create subtask: #{@subtask.errors.full_messages.join(', ')}"
+    end
+  end
+
+  # POST /tasks/:id/promote_to_subtask
+  def promote_to_subtask
+    function_name = params[:function]
+
+    if function_name.blank?
+      redirect_to project_task_path(@project, @task), alert: 'Function name is required.'
+      return
+    end
+
+    # Create the subtask
+    subtask_title = "#{@task.title} - #{function_name}"
+    @subtask = @task.subtasks.create(
+      project: @project,
+      title: subtask_title.truncate(255),
+      status: 'New',
+      created_by_name: current_user.name || current_user.email
+    )
+
+    if @subtask.persisted?
+      # Move test cases with the same title (which is our function display) to the subtask
+      # Try title first, then function column
+      test_cases_to_move = @task.test_cases.where(title: function_name)
+      test_cases_to_move = @task.test_cases.where(function: function_name) if test_cases_to_move.none?
+
+      count = test_cases_to_move.count
+      test_cases_to_move.update_all(task_id: @subtask.id)
+
+      # Update counts for both parent and subtask
+      @task.update(number_of_test_cases: @task.test_cases.active.count)
+      @subtask.update(number_of_test_cases: @subtask.test_cases.active.count)
+
+      redirect_to project_task_path(@project, @subtask),
+                  notice: "Promoted '#{function_name}' to subtask successfully. Moved #{count} test cases."
+    else
+      redirect_to project_task_path(@project, @task), 
+                  alert: "Failed to create subtask: #{@subtask.errors.full_messages.join(', ')}"
+    end
+  end
+
+  # POST /tasks/:id/promote_all_to_subtask
+  def promote_all_to_subtask
+    subtask_title = "#{@task.title} - All Test Cases"
+    @subtask = @task.subtasks.create(
+      project: @project,
+      title: subtask_title.truncate(255),
+      status: 'New',
+      created_by_name: current_user.name || current_user.email
+    )
+
+    if @subtask.persisted?
+      test_cases_to_move = @task.test_cases.active
+      count = test_cases_to_move.count
+      test_cases_to_move.update_all(task_id: @subtask.id)
+
+      # Update counts for both parent and subtask
+      @task.update(number_of_test_cases: @task.test_cases.active.count)
+      @subtask.update(number_of_test_cases: @subtask.test_cases.active.count)
+
+      redirect_to project_task_path(@project, @subtask),
+                  notice: "Moved all #{count} test cases to new subtask successfully."
+    else
+      redirect_to project_task_path(@project, @task),
+                  alert: "Failed to create subtask: #{@subtask.errors.full_messages.join(', ')}"
+    end
+  end
+
   # GET /projects/:project_id/tasks/list_redmine_issues
   # List Redmine "4. Testing" issues with already_imported flag. Filter by Redmine project (ID hoặc identifier) and date range.
   def list_redmine_issues
@@ -207,22 +289,20 @@ class TasksController < ApplicationController
     start_param = params[:start_date].to_s
     end_param = params[:end_date].to_s
 
-    range = if start_param.present? && end_param.present?
-              begin
-                [Date.parse(start_param), Date.parse(end_param)]
-              rescue ArgumentError
-                [nil, nil]
-              end
-            elsif ProjectsController::DATE_PRESETS.key?(preset)
-              r = ProjectsController::DATE_PRESETS[preset].call
-              [r.begin, r.end]
-            else
-              # Mặc định 30 ngày gần đây nếu không có filter
-              r = ProjectsController::DATE_PRESETS['last_30_days'].call
-              [r.begin, r.end]
-            end
-    
-    range
+    if start_param.present? && end_param.present?
+      begin
+        [Date.parse(start_param), Date.parse(end_param)]
+      rescue ArgumentError
+        [nil, nil]
+      end
+    elsif ProjectsController::DATE_PRESETS.key?(preset)
+      r = ProjectsController::DATE_PRESETS[preset].call
+      [r.begin, r.end]
+    else
+      # Mặc định 30 ngày gần đây nếu không có filter
+      r = ProjectsController::DATE_PRESETS['last_30_days'].call
+      [r.begin, r.end]
+    end
   end
 
   def handle_missing_issue_id
@@ -273,9 +353,9 @@ class TasksController < ApplicationController
     notice += if total_test_cases.positive?
                 "Test cases: #{total_test_cases} (trong #{tasks_with_tc} task có test case)."
               elsif task_count.positive?
-                "Test cases: 0 — kiểm tra testcase_link và Import từ Sheet trong từng task để lấy test case."
+                'Test cases: 0 — kiểm tra testcase_link và Import từ Sheet trong từng task để lấy test case.'
               else
-                "Không có task nào được import."
+                'Không có task nào được import.'
               end
 
     respond_to do |format|
@@ -288,7 +368,9 @@ class TasksController < ApplicationController
           imported_tasks_count: task_count,
           total_test_cases: total_test_cases,
           tasks_with_test_cases: tasks_with_tc,
-          tasks: tasks.map { |t| { id: t.id, title: t.title, test_cases_count: t.test_cases.where(deleted_at: nil).count } }
+          tasks: tasks.map do |t|
+            { id: t.id, title: t.title, test_cases_count: t.test_cases.where(deleted_at: nil).count }
+          end
         }, status: :created
       end
     end

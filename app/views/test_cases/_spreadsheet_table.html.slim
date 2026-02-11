@@ -41,5 +41,5 @@ div data-controller="media-preview"
           - devices.each do |device|
             th.text-center style="min-width: 100px;" = format_device_name(device)
       tbody#test-cases-spreadsheet-list
-      - test_cases.each_with_index do |tc, index|
-        = render partial: 'test_cases/spreadsheet_row', locals: { test_case: tc, index: global_start_index + index + 1, devices: devices, row_info: row_metadata[index] }
+        - test_cases.each_with_index do |tc, index|
+          = render partial: 'test_cases/spreadsheet_row', locals: { test_case: tc, index: global_start_index + index + 1, devices: devices, row_info: row_metadata[index] }

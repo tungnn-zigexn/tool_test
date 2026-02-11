@@ -1,0 +1,76 @@
+= turbo_stream.replace "test_case_modal_content" do
+  = turbo_frame_tag "test_case_modal_content" do
+    .modal-header.bg-light
+      .d-flex.justify-content-between.align-items-center.w-100
+        div
+          span.badge.bg-primary.me-2 = "TC-#{@test_case.id.to_s.rjust(3, '0')}"
+          span.fw-bold = @test_case.title
+        .d-flex.gap-2
+          - if @prev_test_case
+            = link_to project_task_test_case_path(@project, @task, @prev_test_case), 
+                      data: { turbo_frame: "test_case_modal_content" }, 
+                      class: "btn btn-outline-secondary btn-sm" do
+              i.bi.bi-chevron-left
+              | Prev
+          - if @next_test_case
+            = link_to project_task_test_case_path(@project, @task, @next_test_case), 
+                      data: { turbo_frame: "test_case_modal_content" }, 
+                      class: "btn btn-outline-secondary btn-sm" do
+              | Next
+              i.bi.bi-chevron-right
+          button.btn-close type="button" data-bs-dismiss="modal" aria-label="Close"
+
+    .modal-body
+      .row.g-4
+        .col-md-8
+          h6.fw-bold.text-muted.text-uppercase Description
+          .p-3.bg-light.rounded
+            = @test_case.description.presence || "No description"
+          
+          .mt-4
+            h6.fw-bold.text-muted.text-uppercase Test Steps
+            .table-responsive
+              table.table.table-sm.table-bordered
+                thead.bg-light
+                  tr
+                    th.text-center style="width: 50px;" #
+                    th Task/Action
+                    th Expected Result
+                tbody
+                  - @test_case.test_steps.ordered.each do |step|
+                    tr
+                      td.text-center = step.step_number
+                      td = step.description
+                      td
+                        - step.expected_contents.each do |content|
+                          .mb-1 = content.content_value
+
+        .col-md-4
+          .card.bg-light.border-0
+            .card-body
+              h6.fw-bold.text-muted.text-uppercase Metadata
+              ul.list-unstyled.mb-0
+                li.mb-2
+                  span.text-muted.small Type:
+                  span.ms-2.badge.bg-info = @test_case.test_type_display
+                li.mb-2
+                  span.text-muted.small Target:
+                  span.ms-2.fw-semibold = @test_case.target_display
+                li.mb-2
+                  span.text-muted.small Created By:
+                  span.ms-2 = @test_case.created_by&.name || "N/A"
+
+    .modal-footer.bg-light.d-flex.justify-content-between
+      .d-flex.gap-2
+        = link_to edit_project_task_test_case_path(@project, @task, @test_case), 
+                  data: { turbo_frame: "test_case_modal_content" }, 
+                  class: "btn btn-primary" do
+          i.bi.bi-pencil.me-1
+          | Edit
+        = button_to soft_delete_project_task_test_case_path(@project, @task, @test_case), 
+                    method: :patch, 
+                    data: { turbo_confirm: "Bạn có chắc chắn muốn xóa test case này?" }, 
+                    class: "btn btn-outline-warning" do
+          i.bi.bi-archive.me-1
+          | Soft Delete
+      button.btn.btn-secondary type="button" data-bs-dismiss="modal" Close
