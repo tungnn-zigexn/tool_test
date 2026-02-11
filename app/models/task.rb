@@ -15,8 +15,13 @@ class Task < ApplicationRecord
   validates :estimated_time, :spent_time, numericality: { greater_than_or_equal_to: 0, allow_nil: true }
   validates :percent_done, numericality: { greater_than_or_equal_to: 0, less_than_or_equal_to: 100, allow_nil: true }
   validate :due_date_after_start_date
+  before_save :normalize_status
 
   private
+
+  def normalize_status
+    self.status = status.downcase if status.present?
+  end
 
   def due_date_after_start_date
     return if due_date.blank? || start_date.blank?
@@ -52,22 +57,49 @@ class Task < ApplicationRecord
   end
 
   def unique_devices
+    # 1. Check current task's device_config
+    if device_config.present?
+      return device_config.split(',').map(&:strip).reject(&:blank?)
+    end
+
+    # 2. Check parent task's device_config if it's a subtask
+    if parent_id.present? && parent&.device_config.present?
+      return parent.device_config.split(',').map(&:strip).reject(&:blank?)
+    end
+
+    # 3. Fallback to existing logic (from test results)
     devices = TestResult.active.joins(:test_case)
                         .where(test_cases: { task_id: id })
                         .pluck(:device).uniq.compact
 
-    # Sort devices, but put "prod" or "production" at the end (case-insensitive)
-    devices.sort do |a, b|
-      a_is_prod = a.to_s.downcase.match?(/^prod(uction)?$/)
-      b_is_prod = b.to_s.downcase.match?(/^prod(uction)?$/)
+    if devices.any?
+      # Sort devices, but put "prod" or "production" at the end (case-insensitive)
+      return devices.sort do |a, b|
+        a_is_prod = a.to_s.downcase.match?(/^prod(uction)?$/)
+        b_is_prod = b.to_s.downcase.match?(/^prod(uction)?$/)
 
-      if a_is_prod && !b_is_prod
-        1
-      elsif !a_is_prod && b_is_prod
-        -1
-      else
-        a.to_s.downcase <=> b.to_s.downcase
+        if a_is_prod && !b_is_prod
+          1
+        elsif !a_is_prod && b_is_prod
+          -1
+        else
+          a.to_s.downcase <=> b.to_s.downcase
+        end
       end
     end
+
+    # 4. Ultimate fallback: empty
+    []
+  end
+
+  def effective_device_config
+    return device_config if device_config.present?
+    return parent.device_config if parent_id.present? && parent&.device_config.present?
+    nil
+  end
+
+  def total_test_cases_count
+    # Sum direct test cases and all subtasks' test cases
+    test_cases.active.count + subtasks.sum { |s| s.test_cases.active.count }
   end
 end

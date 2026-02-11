@@ -23,8 +23,19 @@ class TestCasesController < ApplicationController
 
   # GET /projects/:project_id/tasks/:task_id/test_cases/:id
   def show
+    # Calculate next/prev IDs and current index for modal navigation/display
+    active_test_cases = @task.test_cases.active.ordered
+    current_index = active_test_cases.index(@test_case)
+    @test_case_index = (current_index || 0) + 1
+
+    if current_index
+      @prev_test_case = active_test_cases[current_index - 1] if current_index.positive?
+      @next_test_case = active_test_cases[current_index + 1] if current_index < active_test_cases.size - 1
+    end
+
     respond_to do |format|
       format.html
+      format.turbo_stream
       format.json do
         render json: @test_case.as_json(
           include: {
@@ -46,7 +57,12 @@ class TestCasesController < ApplicationController
   end
 
   # GET /projects/:project_id/tasks/:task_id/test_cases/:id/edit
-  def edit; end
+  def edit
+    respond_to do |format|
+      format.html
+      format.turbo_stream
+    end
+  end
 
   # POST /projects/:project_id/tasks/:task_id/test_cases
   def create
@@ -81,11 +97,13 @@ class TestCasesController < ApplicationController
           redirect_to [@task.project, @task, @test_case],
                       notice: 'Test case updated successfully.'
         end
+        format.turbo_stream
         format.json { render json: @test_case }
       end
     else
       respond_to do |format|
         format.html { render :edit, status: :unprocessable_entity }
+        format.turbo_stream { render :edit, status: :unprocessable_entity }
         format.json do
           render json: { errors: @test_case.errors.full_messages },
                  status: :unprocessable_entity
@@ -102,6 +120,7 @@ class TestCasesController < ApplicationController
         redirect_to project_task_path(@task.project, @task),
                     notice: 'Test case deleted successfully.'
       end
+      format.turbo_stream
       format.json { head :no_content }
     end
   end
@@ -114,6 +133,7 @@ class TestCasesController < ApplicationController
         redirect_to project_task_path(@task.project, @task),
                     notice: 'Test case soft deleted successfully.'
       end
+      format.turbo_stream
       format.json { head :no_content }
     end
   end

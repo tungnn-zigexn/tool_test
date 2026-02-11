@@ -1,0 +1,15 @@
+/ Update the modal back to details view
+= turbo_stream.replace "test_case_modal_content" do
+  = turbo_frame_tag "test_case_modal_content" do
+    / We reuse the show logic here by rendering test_cases/show content
+    / But since we need @prev/@next we might just redirect to show.turbo_stream
+    / Or for simplicity, we just close the modal and update the row
+    .modal-body.text-center.py-5
+      .spinner-border.text-primary role="status"
+        span.visually-hidden Loading...
+      .mt-2 Updating...
+      script
+        | window.location.reload(); // Simple approach for now to ensure all grouping/indexing is correct
+
+/ We could also use turbo_stream.replace "test-case-row-#{test_case.id}" but pagination/grouping makes it complex.
+/ Given the user's concern about function editing not breaking, a reload is safest for grouping logic.

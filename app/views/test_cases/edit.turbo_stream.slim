@@ -1,0 +1,28 @@
+= turbo_stream.replace "test_case_modal_content" do
+  = turbo_frame_tag "test_case_modal_content" do
+    .modal-header.bg-primary.text-white
+      h5.modal-title Edit Test Case
+      button.btn-close.btn-close-white type="button" data-bs-dismiss="modal" aria-label="Close"
+    
+    = form_with model: [@project, @task, @test_case], class: "mb-0" do |f|
+      .modal-body
+        .row.g-3
+          .col-12
+            = f.label :title, "Function (Tên chức năng)", class: "form-label fw-bold"
+            = f.text_field :title, class: "form-control", required: true
+          
+          .col-md-6
+            = f.label :test_type, "Loại Test", class: "form-label fw-bold"
+            = f.select :test_type, [['Feature', 'feature'], ['UI', 'ui'], ['Data', 'data']], {}, class: "form-select"
+          
+          .col-md-6
+            = f.label :target, "Target Device", class: "form-label fw-bold"
+            = f.select :target, [['PC + SP + APP', 'pc_sp_app'], ['PC + SP', 'pc_sp'], ['PC', 'pc'], ['SP', 'sp'], ['APP', 'app']], {}, class: "form-select"
+          
+          .col-12
+            = f.label :description, "Mô tả", class: "form-label fw-bold"
+            = f.text_area :description, class: "form-control", rows: 4
+
+      .modal-footer
+        button.btn.btn-secondary type="button" data-bs-dismiss="modal" Cancel
+        = f.submit "Save Changes", class: "btn btn-primary"
