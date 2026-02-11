@@ -9,9 +9,9 @@
 
   .d-flex.flex-column.flex-md-row.justify-content-between.align-items-start.align-items-md-center.gap-3.mb-4
     .d-flex.align-items-center.flex-grow-1.min-width-0
-      h2.mb-0.me-3.text-truncate title="Bug ##{@bug.id}: #{@bug.title}"
+      h2.mb-0.me-3.text-truncate title="Bug ##{@bug.id}"
         i.bi.bi-bug.text-danger.me-2
-        | Bug ##{@bug.id}: #{@bug.title}
+        | Bug ##{@bug.id}
       .d-flex.gap-2
         span.badge class="bg-#{@bug.status_color}" = @bug.status.titleize
         span.badge class="bg-#{@bug.priority_color}" = @bug.priority.titleize
@@ -20,7 +20,7 @@
     = link_to edit_project_task_bug_path(@project, @task, @bug), class: 'btn btn-outline-primary' do
       i.bi.bi-pencil.me-1
       | Chỉnh sửa
-    = link_to project_task_bug_path(@project, @task, @bug), method: :delete, data: { confirm: 'Bạn có chắc chắn muốn xóa bug này không?' }, class: 'btn btn-outline-danger' do
+    = link_to project_task_bug_path(@project, @task, @bug), data: { turbo_method: :delete, turbo_confirm: 'Bạn có chắc chắn muốn xóa bug này không?' }, class: 'btn btn-outline-danger' do
       i.bi.bi-trash.me-1
       | Xóa
 
@@ -41,18 +41,11 @@
         .card-header.bg-white
           h5.mb-0 Ảnh / Video minh họa
         .card-body
-          = link_to @bug.image_video_url, target: '_blank', class: 'btn btn-sm btn-outline-info mb-3' do
-            i.bi.bi-box-arrow-up-right.me-1
-            | Mở liên kết gốc
-          .media-preview.border.rounded.p-2.bg-light
-            - if @bug.image_video_url.match?(/\.(jpg|jpeg|png|gif|webp)$/i)
-              img.img-fluid.rounded src=@bug.image_video_url alt="Bug Image"
-            - elsif @bug.image_video_url.include?('gyazo.com')
-              img.img-fluid.rounded src="#{@bug.image_video_url}/max_size.png" alt="Gyazo Image"
-            - else
-              .p-4.text-center
-                i.bi.bi-file-earmark-play.display-4.text-secondary
-                p.mt-2 Bản xem trước không khả dụng cho link này.
+          .mb-2
+            span.small.text-muted.me-2 Link gốc:
+            = link_to @bug.image_video_url, @bug.image_video_url, target: '_blank', class: 'small text-decoration-none'
+          .media-preview.mt-3
+            = render_media(@bug.image_video_url)
 
     - if @bug.notes.present?
       .card.shadow-sm.mb-4
