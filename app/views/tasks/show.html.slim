@@ -241,7 +241,19 @@
             label.form-label.fw-bold Google Sheet URL hoặc Spreadsheet ID *
             = text_field_tag :spreadsheet_id, @task.testcase_link, class: 'form-control', placeholder: 'https://docs.google.com/spreadsheets/d/xxx/edit hoặc spreadsheet_id', required: true
             .form-text Nhập URL hoặc ID của Google Sheet chứa test cases
-          .alert.alert-info.d-flex.align-items-start
+          
+          - if @task.test_cases.active.exists? || @task.subtasks.exists?
+            .alert.alert-warning.mt-3
+              .d-flex.align-items-center.mb-2
+                i.bi.bi-exclamation-triangle-fill.me-2.fs-4
+                strong Cảnh báo thay thế dữ liệu
+              p.small.mb-2 Bạn đang thực hiện đồng bộ lại dữ liệu. Nếu chọn "Thay thế", toàn bộ các Test Case hiện tại của task này (và subtasks) sẽ bị xóa để nạp lại từ Sheet.
+              .form-check
+                = check_box_tag :wipe_existing, '1', false, class: 'form-check-input', id: 'checkWipeExisting'
+                label.form-check-label.fw-bold.text-danger for="checkWipeExisting"
+                  | Xóa dữ liệu cũ trước khi import (Thay thế)
+
+          .alert.alert-info.d-flex.align-items-start.mt-3
             i.bi.bi-info-circle.me-2.mt-1
             div
               strong Lưu ý:

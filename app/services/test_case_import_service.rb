@@ -1,9 +1,10 @@
 class TestCaseImportService
   attr_reader :errors, :imported_count, :skipped_count
 
-  def initialize(task, spreadsheet_id)
+  def initialize(task, spreadsheet_id, wipe_existing: false)
     @task = task
     @spreadsheet_id = spreadsheet_id
+    @wipe_existing = wipe_existing
     @google_service = GoogleSheetService.new
     @errors = []
     @imported_count = 0
@@ -19,6 +20,16 @@ class TestCaseImportService
       all_sheet_data = fetch_sheet_data
       return false unless all_sheet_data
 
+      # Detect single sheet mode (excluding system sheets)
+      valid_sheet_names = all_sheet_data.keys.reject do |n|
+        n.downcase.match?(/summary|template|settings|master|instruction/i)
+      end
+      @is_single_sheet = valid_sheet_names.length <= 1
+
+      ensure_subtasks_exist(all_sheet_data.keys)
+
+      wipe_existing_test_cases if @wipe_existing && @errors.empty?
+
       process_all_sheets(all_sheet_data)
       update_task_counts
 
@@ -31,6 +42,23 @@ class TestCaseImportService
   end
 
   private
+
+  def wipe_existing_test_cases
+    Rails.logger.info "Wiping existing test cases and subtasks for task #{@task.id}"
+
+    # Delete test cases of the main task
+    @task.test_cases.destroy_all
+
+    # Delete all subtasks (this will cascade to their test cases and other dependent records)
+    @task.subtasks.destroy_all
+
+    # Reset counts
+    @task.update(number_of_test_cases: 0)
+
+    # Reset tracking hashes
+    @imported_count = 0
+    @task_counts = Hash.new(0)
+  end
 
   def process_sheet(sheet_name, sheet_data)
     @last_function_name = nil
@@ -92,6 +120,17 @@ class TestCaseImportService
       next if @task.parent_id.present? && !name_match?(@task.title, sheet_name)
 
       process_sheet(sheet_name, sheet_data)
+    end
+  end
+
+  def ensure_subtasks_exist(sheet_names)
+    return if @task.parent_id.present? || @is_single_sheet
+
+    sheet_names.each do |name|
+      next if name.downcase.match?(/summary|template|settings|master|instruction/i)
+      next if name_match?(@task.title, name)
+
+      find_target_task(name)
     end
   end
 
@@ -251,6 +290,8 @@ class TestCaseImportService
     test_case.assign_attributes(test_case_import_attributes(case_data, sheet_name, row_number))
 
     if test_case.save
+      test_case.test_steps.destroy_all
+      test_case.test_results.destroy_all
       create_test_step(test_case, case_data[:action], case_data[:expected_result])
       create_device_test_results(test_case, device_results)
       @imported_count += 1
@@ -261,7 +302,7 @@ class TestCaseImportService
   end
 
   def find_target_task(sheet_name)
-    return @task if sheet_name.blank?
+    return @task if sheet_name.blank? || @is_single_sheet || name_match?(@task.title, sheet_name)
 
     # Try to find a subtask that matches the sheet name (fuzzy match)
     # We prioritize subtasks of the current task.
@@ -269,18 +310,35 @@ class TestCaseImportService
       name_match?(s.title, sheet_name)
     end
 
-    matching_subtask || @task
+    if matching_subtask
+      matching_subtask
+    else
+      # Create a new subtask if not found
+      new_subtask = @task.subtasks.find_or_initialize_by(title: ensure_utf8(sheet_name))
+      if new_subtask.new_record?
+        new_subtask.assign_attributes(subtask_attributes(sheet_name))
+        new_subtask.save!
+        Rails.logger.info "Created new subtask '#{sheet_name}' from sheet"
+      end
+      new_subtask
+    end
+  end
+
+  def subtask_attributes(sheet_name)
+    {
+      project_id: @task.project_id,
+      description: "Subtask automatic created from sheet: #{ensure_utf8(sheet_name)}",
+      status: @task.status,
+      start_date: @task.start_date,
+      due_date: @task.due_date,
+      created_by_name: @task.created_by_name
+    }
   end
 
   def name_match?(task_title, sheet_name)
     return false if task_title.blank? || sheet_name.blank?
 
-    t_title = ensure_utf8(task_title).downcase
-    s_name = ensure_utf8(sheet_name).downcase
-
-    t_title == s_name ||
-      t_title.match?(/\b#{Regexp.escape(s_name)}\b/) ||
-      s_name.match?(/\b#{Regexp.escape(t_title)}\b/)
+    ensure_utf8(task_title).downcase.strip == ensure_utf8(sheet_name).downcase.strip
   end
 
   def extract_case_data(row, mapping)
@@ -345,7 +403,6 @@ class TestCaseImportService
     return if device_results.blank?
 
     device_results.each do |result|
-      test_case.test_results.where(device: result[:device]).destroy_all
       test_case.test_results.create!(
         device: ensure_utf8(result[:device]), status: result[:status],
         run_id: nil, executed_at: Time.current

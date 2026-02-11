@@ -63,8 +63,14 @@ class TasksController < ApplicationController
     @task.created_by_name = current_user.name || current_user.email
 
     if @task.save
+      tc_count, bug_count = perform_manual_imports
+
+      notice = 'Create task successfully.'
+      notice += " Imported #{tc_count} test cases." if tc_count.to_i.positive?
+      notice += " Imported #{bug_count} bugs." if bug_count.to_i.positive?
+
       respond_to do |format|
-        format.html { redirect_to project_task_path(@project, @task), notice: 'Create task successfully.' }
+        format.html { redirect_to project_task_path(@project, @task), notice: notice }
         format.json { render json: @task, status: :created }
       end
     else
@@ -307,6 +313,32 @@ class TasksController < ApplicationController
   def set_task
     @task = Task.find(params[:id])
     @project = @task.project
+  end
+
+  def perform_manual_imports
+    tc_count = 0
+    bug_count = 0
+
+    if @task.testcase_link.present?
+      spreadsheet_id = extract_spreadsheet_id_from_url(@task.testcase_link)
+      import_service = TestCaseImportService.new(@task, spreadsheet_id)
+      tc_count = import_service.imported_count if import_service.import
+    end
+
+    if @task.bug_link.present?
+      spreadsheet_id = extract_spreadsheet_id_from_url(@task.bug_link)
+      import_service = BugImportService.new(@task, spreadsheet_id)
+      bug_count = import_service.imported_count if import_service.import
+    end
+
+    [tc_count, bug_count]
+  end
+
+  def extract_spreadsheet_id_from_url(url)
+    return url if url.blank?
+
+    match = url.match(%r{/spreadsheets/d/([a-zA-Z0-9_-]+)})
+    match ? match[1] : url
   end
 
   def task_params
