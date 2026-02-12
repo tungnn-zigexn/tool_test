@@ -34,7 +34,10 @@ class TasksController < ApplicationController
     # Pagination for test cases
     @test_cases_page = (params[:tc_page] || 1).to_i
     @test_cases_per_page = 10
-    @all_test_cases = @task.test_cases.active.includes(:test_steps, :test_results).ordered
+    
+    # Sorting logic
+    @tc_sort = params[:tc_sort] == 'desc' ? 'desc' : 'asc'
+    @all_test_cases = @task.test_cases.active.includes(:test_steps, :test_results).order(id: @tc_sort.to_sym)
     @total_test_cases = @all_test_cases.size
     @total_tc_pages = (@total_test_cases.to_f / @test_cases_per_page).ceil
 
@@ -45,6 +48,7 @@ class TasksController < ApplicationController
 
     # Fetch archived (soft-deleted) test cases for the restoration modal
     @archived_test_cases = @task.test_cases.deleted.ordered
+    @existing_titles = @task.test_cases.active.pluck(:title).uniq.compact.sort
 
     respond_to do |format|
       format.html
@@ -112,8 +116,17 @@ class TasksController < ApplicationController
   def soft_delete
     @task.soft_delete!
     respond_to do |format|
-      format.html { redirect_to tasks_path, notice: 'Soft delete task successfully.' }
+      format.html { redirect_to project_path(@task.project), notice: 'Soft delete task successfully.' }
       format.json { head :no_content }
+    end
+  end
+
+  # PATCH /tasks/:id/restore
+  def restore
+    @task.restore!
+    respond_to do |format|
+      format.html { redirect_to project_path(@task.project), notice: 'Restore task successfully.' }
+      format.json { render json: @task }
     end
   end
 

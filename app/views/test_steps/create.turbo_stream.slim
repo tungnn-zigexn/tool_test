@@ -1,0 +1,11 @@
+= turbo_stream.append "test-steps-carousel-container" do
+  = render 'test_steps/step_card', step: @test_step, test_case: @test_case
+
+= turbo_stream.update "test-steps-count-header" do
+  i.bi.bi-list-ol.me-2
+  | Test Steps (#{@test_case.test_steps.count})
+
+/ Dispatch custom event to trigger jumpToLast in Stimulus
+= turbo_stream.append "test-steps-carousel-container" do
+  script
+    | document.dispatchEvent(new CustomEvent("test-step:added"));

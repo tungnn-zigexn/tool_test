@@ -52,6 +52,7 @@ Rails.application.routes.draw do
     resources :tasks do
       member do
         patch :soft_delete
+        patch :restore
         post :create_subtask
         post :promote_to_subtask
         post :promote_all_to_subtask
@@ -72,7 +73,7 @@ Rails.application.routes.draw do
         collection do
           post :import_from_sheet
         end
-        resources :test_steps, only: [:edit, :update, :destroy]
+        resources :test_steps, only: [:create, :edit, :update, :destroy]
         resources :test_results, only: [ :new, :create, :edit, :update, :destroy ] do
           member do
             patch :soft_delete
@@ -82,6 +83,7 @@ Rails.application.routes.draw do
       resources :bugs do
         member do
           patch :soft_delete
+          patch :restore
         end
         collection do
           post :import_from_sheet
@@ -126,9 +128,11 @@ Rails.application.routes.draw do
   end
 
   # Test steps and contents
-  resources :test_steps do
-    resources :test_step_contents
+  resources :test_steps, shallow: true do
+    resources :test_step_contents, only: [:update]
   end
+
+  resources :test_step_contents, only: [:update]
 
   # Histories (read-only)
   resources :test_case_histories, only: [ :index, :show ]

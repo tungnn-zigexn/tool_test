@@ -1,5 +1,32 @@
 = turbo_frame_tag "test_case_modal_content" do
-  .container-fluid.px-4.py-4
+  .container-fluid.px-4.py-4 data-controller="spreadsheet-toolbar"
+    / Toolbar (spreadsheet style)
+    .spreadsheet-toolbar.sticky-top.bg-white.border.rounded.p-1.mb-4.d-flex.align-items-center.gap-1.shadow-sm data-action="mousedown->spreadsheet-toolbar#preventFocusLoss" style="z-index: 1020; top: 0; user-select: none;"
+      button.btn.btn-sm.btn-light type="button" tabindex="-1" title="Bold" data-action="mousedown->spreadsheet-toolbar#format" data-command="bold"
+        i.bi.bi-type-bold
+      button.btn.btn-sm.btn-light type="button" tabindex="-1" title="Italic" data-action="mousedown->spreadsheet-toolbar#format" data-command="italic"
+        i.bi.bi-type-italic
+      button.btn.btn-sm.btn-light type="button" tabindex="-1" title="Underline" data-action="mousedown->spreadsheet-toolbar#format" data-command="underline"
+        i.bi.bi-type-underline
+      .vr.mx-1
+      span.small.text-muted.me-1 Text:
+      button.btn.btn-sm.btn-light.p-1 type="button" tabindex="-1" title="Black" data-action="mousedown->spreadsheet-toolbar#format" data-command="foreColor" data-value="#000000" style="width: 24px; height: 24px;"
+        i.bi.bi-circle-fill style="color: #000000;"
+      button.btn.btn-sm.btn-light.p-1 type="button" tabindex="-1" title="Red" data-action="mousedown->spreadsheet-toolbar#format" data-command="foreColor" data-value="#ff0000" style="width: 24px; height: 24px;"
+        i.bi.bi-circle-fill style="color: #ff0000;"
+      button.btn.btn-sm.btn-light.p-1 type="button" tabindex="-1" title="Blue" data-action="mousedown->spreadsheet-toolbar#format" data-command="foreColor" data-value="#0000ff" style="width: 24px; height: 24px;"
+        i.bi.bi-circle-fill style="color: #0000ff;"
+      .vr.mx-1
+      span.small.text-muted.me-1 Fill:
+      button.btn.btn-sm.btn-light.p-1 type="button" tabindex="-1" title="None" data-action="mousedown->spreadsheet-toolbar#format" data-command="hiliteColor" data-value="#ffffff" style="width: 24px; height: 24px;"
+        i.bi.bi-x-circle
+      button.btn.btn-sm.btn-light.p-1 type="button" tabindex="-1" title="Yellow" data-action="mousedown->spreadsheet-toolbar#format" data-command="hiliteColor" data-value="#ffff00" style="width: 24px; height: 24px;"
+        i.bi.bi-square-fill style="color: #ffff00;"
+      button.btn.btn-sm.btn-light.p-1 type="button" tabindex="-1" title="Green" data-action="mousedown->spreadsheet-toolbar#format" data-command="hiliteColor" data-value="#d4edda" style="width: 24px; height: 24px;"
+        i.bi.bi-square-fill style="color: #d4edda;"
+      .vr.mx-1
+      button.btn.btn-sm.btn-light type="button" tabindex="-1" title="Clear Formatting" data-action="mousedown->spreadsheet-toolbar#format" data-command="removeFormat"
+        i.bi.bi-eraser
     / Breadcrumb
     nav.mb-4 aria-label="breadcrumb"
       ol.breadcrumb
@@ -53,7 +80,7 @@
             = button_to soft_delete_project_task_test_case_path(@test_case.task.project, @test_case.task, @test_case), 
                         method: :patch, 
                         class: "btn btn-danger btn-sm fw-bold shadow-sm", 
-                        form: { data: { turbo_confirm: "Bạn có chắc chắn muốn xóa test case này?" } } do
+                        form: { data: { turbo_confirm: "Bạn có chắc chắn muốn xóa test case này?", turbo_frame: "_top" } } do
               i.bi.bi-trash.me-1
               | Xóa
 
@@ -70,69 +97,54 @@
             .h5.fw-bold.text-danger.mb-0= @test_case.test_results.where(status: 'fail').count
             div.text-muted style="font-size: 0.75rem;" fail
   
-    / Description
-    - if @test_case.description.present?
-      .card.border-0.shadow-sm.mb-4
-        .card-body
-          h5.fw-semibold.mb-2 Mô tả
-          p.text-muted.mb-0 style="white-space: pre-wrap;"
-            = @test_case.description
+    / Description & Notes
+    .row.mb-4
+      .col-md-6
+        .card.border-0.shadow-sm.h-100
+          .card-body
+            h5.fw-semibold.mb-2 Mô tả
+            - if @test_case.description.present?
+              p.text-muted.mb-0 style="white-space: pre-wrap;"
+                = @test_case.description
+            - else
+              p.text-muted.mb-0.fst-italic Không có mô tả
+      
+      .col-md-6
+        .card.border-0.shadow-sm.h-100 data-controller="editable-cell" data-test-case-id=@test_case.id data-project-id=@test_case.task.project_id data-task-id=@test_case.task.id
+          .card-body
+            h5.fw-semibold.mb-2 Ghi chú (Note)
+            .p-3.bg-light.rounded.border
+              .note-display.text-dark#test-case-detail-note data-editable-cell-target="display" data-action="click->editable-cell#edit" data-field="note"
+                == @test_case.note.presence || "Nhấn để thêm ghi chú..."
   
     / Test Steps
-    .card.border-0.shadow-sm
+    .card.border-0.shadow-sm data-controller="step-navigator"
       .card-header.bg-white.border-bottom.d-flex.justify-content-between.align-items-center
-        h5.mb-0.fw-bold
-          i.bi.bi-list-ol.me-2
-          | Test Steps (#{@test_case.test_steps.count})
-        = link_to edit_project_task_test_case_path(@test_case.task.project, @test_case.task, @test_case), 
-                  data: { turbo_frame: "test_case_modal_content" }, 
+        .d-flex.align-items-center.gap-3
+          h5.mb-0.fw-bold#test-steps-count-header
+            i.bi.bi-list-ol.me-2
+            | Test Steps (#{@test_case.test_steps.count})
+          
+          - if @test_case.test_steps.count > 1
+            .d-flex.align-items-center.gap-2.ms-4
+              button.btn.btn-outline-primary.btn-sm data-step-navigator-target="prevBtn" data-action="click->step-navigator#previous"
+                i.bi.bi-chevron-left.me-1
+                | Prev
+              span.fw-bold.mx-2.badge.bg-secondary data-step-navigator-target="indicator" style="font-size: 0.9rem;"
+                | Step 1 / #{@test_case.test_steps.count}
+              button.btn.btn-outline-primary.btn-sm data-step-navigator-target="nextBtn" data-action="click->step-navigator#next"
+                | Next
+                i.bi.bi-chevron-right.ms-1
+
+        = button_to project_task_test_case_test_steps_path(@test_case.task.project, @test_case.task, @test_case), 
                   class: "btn btn-sm btn-success" do
           i.bi.bi-plus-circle.me-1
           | Thêm Step
   
       .card-body
-        .vstack.gap-3
+        .vstack#test-steps-carousel-container
           - @test_case.test_steps.ordered.each do |step|
-            .card.border
-              .card-body
-                .d-flex.justify-content-between.align-items-start.mb-3
-                  .d-flex.align-items-start
-                    span.badge.bg-primary.rounded-circle.me-3.d-flex.align-items-center.justify-content-center.user-avatar-circle
-                      = step.step_number
-                    h6.fw-semibold.mb-0= step.description || "Step #{step.step_number}"
-  
-                  / Step Actions
-                  .d-flex.gap-2
-                    = link_to edit_project_task_test_case_test_step_path(@test_case.task.project, @test_case.task, @test_case, step), class: "btn btn-sm btn-outline-primary" do
-                      i.bi.bi-pencil
-                    = button_to project_task_test_case_test_step_path(@test_case.task.project, @test_case.task, @test_case, step), method: :delete, class: "btn btn-sm btn-outline-danger", form: { data: { turbo_confirm: "Xóa step này? Các step còn lại sẽ được đánh số lại." } } do
-                      i.bi.bi-trash
-  
-                .row.g-4
-                  / Actions
-                  .col-md-6
-                    h6.fw-semibold.text-muted.mb-2
-                      i.bi.bi-play-circle.me-2.text-primary
-                      | Actions
-                    - if step.action_contents.any?
-                      ul.list-unstyled.mb-0
-                        - step.action_contents.each do |content|
-                          li.small.text-muted.mb-1= content.content_value
-                    - else
-                      p.small.text-muted.fst-italic.mb-0 No actions defined
-  
-                  - if step.expected_contents.any?
-                    .vstack.gap-2
-                      - step.expected_contents.each do |content|
-                        - if content.content_type == 'text'
-                          p.small.text-muted.mb-0= content.content_value
-                        - elsif content.content_type == 'image' && content.content_value.present?
-                          div
-                            img.rounded.shadow-sm src=gyazo_to_image_url(content.content_value) alt="Evidence" style="max-width: 400px;"
-                            .small.text-muted.mt-1
-                              a href=content.content_value target="_blank" View full size
-                  - else
-                    p.small.text-muted.fst-italic.mb-0 No expected results defined
+            = render 'test_steps/step_card', step: step, test_case: @test_case
   
     / Activity History
     .card.border-0.shadow-sm.mt-4

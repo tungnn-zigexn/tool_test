@@ -1,21 +1,67 @@
-- devices = local_assigns[:devices] || ['pc', 'sp', 'app']
+- devices = local_assigns[:devices].presence || ['pc', 'sp', 'app']
 - global_start_index = local_assigns[:start_index] || 0
+- test_cases_array = test_cases.to_a
 - row_metadata = {}
 - current_title = nil
 - row_start_index = 0
-- test_cases.each_with_index do |tc, i|
-  - title = tc.title
+- total_tr_span = 0
+
+- test_cases_array.each_with_index do |tc, i|
+  - title = tc.title.to_s.strip
+  - steps_count = [tc.test_steps.count, 1].max
+  
   - if title != current_title
-    - if current_title
-      - row_metadata[row_start_index] = { rowspan: i - row_start_index }
-      - ((row_start_index + 1)...i).each { |k| row_metadata[k] = { hide: true } }
+    - if i > 0
+      - row_metadata[row_start_index] = { rowspan: total_tr_span }
     - current_title = title
     - row_start_index = i
-  - if i == test_cases.size - 1
-    - row_metadata[row_start_index] = { rowspan: i - row_start_index + 1 }
+    - total_tr_span = 0
+  
+  - total_tr_span += steps_count
+  
+  - if i == test_cases_array.size - 1
+    - row_metadata[row_start_index] = { rowspan: total_tr_span }
+    - ((row_start_index + 1)..i).each { |k| row_metadata[k] = { hide: true } }
+  - elsif test_cases_array[i+1]&.title.to_s.strip != current_title
     - ((row_start_index + 1)..i).each { |k| row_metadata[k] = { hide: true } }
 
-div data-controller="media-preview"
+div data-controller="media-preview spreadsheet-toolbar"
+  / Persistent Toolbar (Google Sheets style)
+  .spreadsheet-toolbar.sticky-top.bg-white.border.rounded.p-1.mb-2.d-flex.align-items-center.gap-1.shadow-sm data-action="mousedown->spreadsheet-toolbar#preventFocusLoss" style="z-index: 1020; top: 10px; user-select: none;"
+    button.btn.btn-sm.btn-light type="button" tabindex="-1" title="Bold" data-action="mousedown->spreadsheet-toolbar#format" data-command="bold"
+      i.bi.bi-type-bold
+    button.btn.btn-sm.btn-light type="button" tabindex="-1" title="Italic" data-action="mousedown->spreadsheet-toolbar#format" data-command="italic"
+      i.bi.bi-type-italic
+    button.btn.btn-sm.btn-light type="button" tabindex="-1" title="Underline" data-action="mousedown->spreadsheet-toolbar#format" data-command="underline"
+      i.bi.bi-type-underline
+    .vr.mx-1
+    span.small.text-muted.me-1 Text:
+    button.btn.btn-sm.btn-light.p-1 type="button" tabindex="-1" title="Black" data-action="mousedown->spreadsheet-toolbar#format" data-command="foreColor" data-value="#000000" style="width: 24px; height: 24px;"
+      i.bi.bi-circle-fill style="color: #000000;"
+    button.btn.btn-sm.btn-light.p-1 type="button" tabindex="-1" title="Red" data-action="mousedown->spreadsheet-toolbar#format" data-command="foreColor" data-value="#ff0000" style="width: 24px; height: 24px;"
+      i.bi.bi-circle-fill style="color: #ff0000;"
+    button.btn.btn-sm.btn-light.p-1 type="button" tabindex="-1" title="Blue" data-action="mousedown->spreadsheet-toolbar#format" data-command="foreColor" data-value="#0000ff" style="width: 24px; height: 24px;"
+      i.bi.bi-circle-fill style="color: #0000ff;"
+    .vr.mx-1
+    span.small.text-muted.me-1 Fill:
+    button.btn.btn-sm.btn-light.p-1 type="button" tabindex="-1" title="None" data-action="mousedown->spreadsheet-toolbar#format" data-command="hiliteColor" data-value="#ffffff" style="width: 24px; height: 24px;"
+      i.bi.bi-x-circle
+    button.btn.btn-sm.btn-light.p-1 type="button" tabindex="-1" title="Yellow" data-action="mousedown->spreadsheet-toolbar#format" data-command="hiliteColor" data-value="#ffff00" style="width: 24px; height: 24px;"
+      i.bi.bi-square-fill style="color: #ffff00;"
+    button.btn.btn-sm.btn-light.p-1 type="button" tabindex="-1" title="Green" data-action="mousedown->spreadsheet-toolbar#format" data-command="hiliteColor" data-value="#d4edda" style="width: 24px; height: 24px;"
+      i.bi.bi-square-fill style="color: #d4edda;"
+    .vr.mx-1
+    button.btn.btn-sm.btn-light type="button" tabindex="-1" title="Clear Formatting" data-action="mousedown->spreadsheet-toolbar#format" data-command="removeFormat"
+      i.bi.bi-eraser
+    .vr.mx-1
+    span.small.text-muted.me-1 Sort ID:
+    - current_sort = @tc_sort || 'asc'
+    - next_sort = current_sort == 'asc' ? 'desc' : 'asc'
+    = link_to project_task_path(@project, @task, tc_sort: 'asc'), class: "btn btn-sm #{current_sort == 'asc' ? 'btn-primary' : 'btn-light'}", title: "Sort ID Ascending" do
+      i.bi.bi-sort-numeric-down
+    = link_to project_task_path(@project, @task, tc_sort: 'desc'), class: "btn btn-sm #{current_sort == 'desc' ? 'btn-primary' : 'btn-light'}", title: "Sort ID Descending" do
+      i.bi.bi-sort-numeric-up-alt
+
   / Modal for Media Preview
   #mediaPreviewModal.modal.fade tabindex="-1" aria-labelledby="mediaPreviewModalLabel" aria-hidden="true"
     .modal-dialog.modal-dialog-centered.modal-xl
@@ -32,14 +78,15 @@ div data-controller="media-preview"
     table.spreadsheet-table.spreadsheet-list-table
       thead
         tr
-          th.text-center style="width: 60px;" ID
-          th style="width: 4%;" Test Type
-          th style="width: 120px;" Function
-          th style="width: 30%;" Test Steps (Actions)
-          th style="width: 30%;" Expected Results & Media
-          th style="width: 80px;" Target
+          th.text-center.id-column ID
+          th.test-type-column Test Type
+          th.function-column Function
+          th.steps-column Test Steps (Actions)
+          th.expected-column Expected Results & Media
+          th.target-column Target
           - devices.each do |device|
-            th.text-center style="min-width: 100px;" = format_device_name(device)
+            th.text-center.device-column = format_device_name(device)
+          th.note-column Note
       tbody#test-cases-spreadsheet-list
-        - test_cases.each_with_index do |tc, index|
+        - test_cases_array.each_with_index do |tc, index|
           = render partial: 'test_cases/spreadsheet_row', locals: { test_case: tc, index: global_start_index + index + 1, devices: devices, row_info: row_metadata[index] }

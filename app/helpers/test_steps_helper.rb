@@ -3,25 +3,32 @@ module TestStepsHelper
     return '' if content_value.blank?
 
     # Sanitize content first (allow basic formatting)
-    sanitized = sanitize(content_value, tags: %w(span b i u br div), attributes: %w(style class))
+    sanitized = sanitize(content_value, tags: %w(span b i u br div strong em font), attributes: %w(style class color size))
 
-    # Pattern to match URLs that are NOT inside an HTML tag (to avoid breaking existing links or attributes)
-    # This is a simple approximation. For robust HTML parsing, Nokogiri is better, but this should suffice for simple rich text.
-    url_pattern = %r{(?<!["'=])(https?://[^\s<]+)}
+    # Pattern to match URLs that are NOT inside an HTML tag attribute (like href="..." or src="...")
+    # This improved regex captures common URL characters and uses lookahead to exclude trailing punctuation and HTML tags
+    url_pattern = %r{(?<!["'=])(https?://[a-zA-Z0-9\-\._~:/?#\[\]@!$&'()*+,;=%]+)(?=[.,;:]?(\s|$|<))}
 
     sanitized.gsub(url_pattern) do |match|
       url = match
       processed_url = url
-      processed_url = gyazo_to_image_url(url) if url.include?('gyazo.com')
-      type = image_url?(processed_url) ? 'image' : video_url?(processed_url) ? 'video' : 'link'
+      is_gyazo = url.include?('gyazo.com')
+      processed_url = gyazo_to_image_url(url) if is_gyazo
+      
+      is_media = image_url?(processed_url) || video_url?(processed_url)
 
-      link_to url, '#', 
-              data: { 
-                action: "click->media-preview#open",
-                url: processed_url,
-                type: type
-              },
-              class: "text-decoration-none"
+      if is_gyazo || is_media
+        link_to url, '#', 
+                data: { 
+                  action: "click->media-preview#open",
+                  url: processed_url,
+                  type: image_url?(processed_url) ? 'image' : video_url?(processed_url) ? 'video' : 'link'
+                },
+                class: "text-decoration-none"
+      else
+        # Standard link: open in a new tab
+        link_to url, url, target: '_blank', class: "text-primary", style: "word-break: break-all;"
+      end
     end.html_safe
   end
 end

@@ -130,6 +130,9 @@ class ProjectsController < ApplicationController
     # Status options for filter dropdown - unique case-insensitively
     @status_options = @tasks.where.not(status: [nil, ""]).pluck(:status).map(&:downcase).uniq.sort
 
+    # Archived tasks for restoration modal
+    @archived_tasks = @project.archived_root_tasks.order(deleted_at: :desc)
+
     # Danh sách Redmine project (theo tên) cho dropdown Bulk Import - hiện sẵn để user chọn
     @redmine_projects = begin
       current_user&.admin? ? RedmineService.get_projects_list : []
