@@ -15,10 +15,10 @@
             ul.dropdown-menu.dropdown-menu-end.shadow-sm
               li = link_to edit_project_path(project), class: "dropdown-item" do
                 i.bi.bi-pencil.me-2.text-warning
-                | Chỉnh sửa
-              li = button_to soft_delete_project_path(project), method: :patch, data: { turbo_confirm: "Bạn có chắc muốn xóa project này?" }, class: "dropdown-item text-danger" do
+                | Edit
+              li = button_to soft_delete_project_path(project), method: :patch, data: { turbo_confirm: "Are you sure you want to delete this project?" }, class: "dropdown-item text-danger" do
                 i.bi.bi-trash.me-2
-                | Xóa Project
+                | Delete Project
 
       h4.card-title.text-white.fw-bold.mb-0 = project.name
       p.text-white.text-opacity-75.small.mb-0

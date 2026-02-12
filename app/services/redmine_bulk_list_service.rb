@@ -37,7 +37,7 @@ class RedmineBulkListService
     end
   rescue StandardError => e
     error_msg = ensure_utf8(e.message)
-    @errors << "Lỗi khi tải danh sách: #{error_msg}"
+    @errors << "Error loading list: #{error_msg}"
     Rails.logger.error "RedmineBulkListService Error: #{error_msg}\n#{e.backtrace.join("\n")}"
     []
   end

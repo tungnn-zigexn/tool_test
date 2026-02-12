@@ -67,7 +67,7 @@ class TestCaseImportService
     Rails.logger.info "Processing sheet: #{ensure_utf8(sheet_name)} with #{sheet_data.length} rows"
     header_index = find_header_row_index(sheet_data)
     if header_index.nil?
-      Rails.logger.warn "Không tìm thấy header row trong sheet: #{sheet_name}"
+      Rails.logger.warn "Header row not found in sheet: #{sheet_name}"
       return
     end
 
@@ -89,9 +89,9 @@ class TestCaseImportService
       process_test_case_row(row, column_mapping, sheet_name, actual_row_number)
     rescue StandardError => e
       error_msg = ensure_utf8(e.message)
-      @errors << "Lỗi dòng #{actual_row_number} trong sheet '#{ensure_utf8(sheet_name)}': #{error_msg}"
+      @errors << "Error at row #{actual_row_number} in sheet '#{ensure_utf8(sheet_name)}': #{error_msg}"
       @skipped_count += 1
-      Rails.logger.warn "Bỏ qua dòng #{actual_row_number}: #{error_msg}"
+      Rails.logger.warn "Skipping row #{actual_row_number}: #{error_msg}"
     end
   end
 
@@ -143,7 +143,7 @@ class TestCaseImportService
 
   def add_import_error(exception)
     error_msg = ensure_utf8(exception.message)
-    @errors << "Lỗi khi import: #{error_msg}"
+    @errors << "Import error: #{error_msg}"
     Rails.logger.error "TestCaseImportService Error: #{error_msg}\n#{exception.backtrace.join("\n")}"
   end
 
@@ -356,7 +356,7 @@ class TestCaseImportService
   end
 
   def skip_row(row_number)
-    Rails.logger.warn "Bỏ qua dòng #{row_number}: Không có tiêu đề test case"
+    Rails.logger.warn "Skipping row #{row_number}: No test case title"
     @skipped_count += 1
   end
 
@@ -372,7 +372,7 @@ class TestCaseImportService
   end
 
   def handle_test_case_save_error(test_case, row_number)
-    @errors << "Không thể lưu test case dòng #{row_number}: #{ensure_utf8(test_case.errors.full_messages.join(', '))}"
+    @errors << "Cannot save test case at row #{row_number}: #{ensure_utf8(test_case.errors.full_messages.join(', '))}"
     @skipped_count += 1
   end
 

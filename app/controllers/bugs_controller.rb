@@ -33,7 +33,7 @@ class BugsController < ApplicationController
   def create
     @bug = @task.bugs.build(bug_params)
     if @bug.save
-      redirect_to project_task_bugs_path(@project, @task), notice: 'Bug đã được tạo thành công.'
+      redirect_to project_task_bugs_path(@project, @task), notice: 'Bug has been created successfully.'
     else
       render :new, status: :unprocessable_entity
     end
@@ -43,7 +43,7 @@ class BugsController < ApplicationController
 
   def update
     if @bug.update(bug_params)
-      redirect_to project_task_bug_path(@project, @task, @bug), notice: 'Bug đã được cập nhật thành công.'
+      redirect_to project_task_bug_path(@project, @task, @bug), notice: 'Bug has been updated successfully.'
     else
       render :edit, status: :unprocessable_entity
     end
@@ -51,7 +51,7 @@ class BugsController < ApplicationController
 
   def destroy
     @bug.soft_delete!
-    redirect_to project_task_bugs_path(@project, @task), notice: 'Bug đã được xóa thành công.'
+    redirect_to project_task_bugs_path(@project, @task), notice: 'Bug has been deleted successfully.'
   end
 
   def restore
@@ -61,7 +61,7 @@ class BugsController < ApplicationController
 
   def import_from_sheet
     if @task.bug_link.blank?
-      redirect_to project_task_bugs_path(@project, @task), alert: 'Task không có link bug để import.'
+      redirect_to project_task_bugs_path(@project, @task), alert: 'Task has no bug link to import from.'
       return
     end
 
@@ -70,10 +70,10 @@ class BugsController < ApplicationController
     import_service = BugImportService.new(@task, spreadsheet_id, wipe_existing: wipe_existing)
 
     if import_service.import
-      notice = "Import thành công: #{import_service.imported_count} mới, #{import_service.updated_count} cập nhật."
+      notice = "Import successful: #{import_service.imported_count} new, #{import_service.updated_count} updated."
       redirect_to project_task_bugs_path(@project, @task), notice: notice
     else
-      alert = "Import thất bại: #{import_service.errors.join(', ')}"
+      alert = "Import failed: #{import_service.errors.join(', ')}"
       redirect_to project_task_bugs_path(@project, @task), alert: alert
     end
   end

@@ -62,7 +62,7 @@ class BugImportService
 
   def add_import_error(exception)
     error_msg = ensure_utf8(exception.message)
-    @errors << "Lỗi khi import bug: #{error_msg}"
+    @errors << "Error importing bug: #{error_msg}"
     Rails.logger.error "BugImportService Error: #{error_msg}\n#{exception.backtrace.join("\n")}"
   end
 
@@ -81,8 +81,8 @@ class BugImportService
       process_bug_row(row, column_mapping)
     rescue StandardError => e
       error_msg = ensure_utf8(e.message)
-      @errors << "Lỗi dòng #{actual_row_number} trong sheet '#{ensure_utf8(sheet_name)}': #{error_msg}"
-      Rails.logger.warn "Bỏ qua dòng #{actual_row_number}: #{error_msg}"
+      @errors << "Error at row #{actual_row_number} in sheet '#{ensure_utf8(sheet_name)}': #{error_msg}"
+      Rails.logger.warn "Skipping row #{actual_row_number}: #{error_msg}"
     end
   end
 
@@ -201,9 +201,9 @@ class BugImportService
     return 'new' if stat.blank?
 
     case stat.downcase
-    when /done/, /đã.*xong/, /ok/ then 'done'
-    when /fixing/, /đang.*sửa/ then 'fixing'
-    when /testing/, /đang.*test/ then 'testing'
+    when /done/, /completed/, /ok/ then 'done'
+    when /fixing/, /in progress/ then 'fixing'
+    when /testing/ then 'testing'
     when /pending/, /chờ/ then 'pending'
     else 'new'
     end

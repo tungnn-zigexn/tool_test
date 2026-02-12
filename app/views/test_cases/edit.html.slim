@@ -13,11 +13,11 @@
               = @task.title
             li.breadcrumb-item
               = @test_case.title
-            li.breadcrumb-item.active aria-current="page" Chỉnh sửa
+            li.breadcrumb-item.active aria-current="page" Edit
 
         h1.display-6.fw-bold.text-dark
           i.bi.bi-pencil.me-2
-          | Chỉnh sửa Test Case
+          | Edit Test Case
 
     / Form
     .row
@@ -30,7 +30,7 @@
                 .card-header.bg-light
                   h5.mb-0.fw-bold
                     i.bi.bi-info-circle.me-2
-                    | Thông tin cơ bản
+                    | Basic Information
                 .card-body
                   .row
                     .col-md-6
@@ -46,18 +46,18 @@
 
                       / Test Type
                       .mb-3
-                        = f.label :test_type, "Loại Test", class: 'form-label fw-semibold'
+                        = f.label :test_type, "Test Type", class: 'form-label fw-semibold'
                         = f.select :test_type, options_for_select([['Feature', 'feature'], ['UI', 'ui'], ['Data', 'data']], @test_case.test_type), {}, class: 'form-select'
 
                     .col-md-6
                       / Target
                       .mb-3
-                        = f.label :target, "Đối tượng test", class: 'form-label fw-semibold'
+                        = f.label :target, "Test Target", class: 'form-label fw-semibold'
                         = f.select :target, options_for_select([['PC + SP + APP', 'pc_sp_app'], ['PC + SP', 'pc_sp'], ['PC', 'pc'], ['SP', 'sp'], ['APP', 'app']], @test_case.target), {}, class: 'form-select'
 
                       / Description
                       .mb-3
-                        = f.label :description, "Mô tả", class: 'form-label fw-semibold'
+                        = f.label :description, "Description", class: 'form-label fw-semibold'
                         = f.text_area :description, class: 'form-control', rows: 3
 
                   .row
@@ -78,7 +78,7 @@
                     | Test Steps
                   button.btn.btn-sm.btn-success type="button" data-action="click->dynamic-form#addStep"
                     i.bi.bi-plus-circle.me-1
-                    | Thêm Step
+                    | Add Step
 
                 .card-body#test-steps-container data-dynamic-form-target="container"
                    = f.fields_for :test_steps, @test_case.test_steps.ordered do |sf|
@@ -88,11 +88,11 @@
                         .d-flex.gap-2
                           .form-check.form-switch.mb-0
                             = sf.check_box :_destroy, class: "form-check-input"
-                            = sf.label :_destroy, "Xóa", class: "form-check-label small text-danger"
+                            = sf.label :_destroy, "Delete", class: "form-check-label small text-danger"
                       .card-body
                         = sf.hidden_field :step_number, class: "step-number-input"
                         .mb-3
-                          = sf.label :description, "Mô tả Step", class: "form-label fw-semibold"
+                          = sf.label :description, "Step Description", class: "form-label fw-semibold"
                           = sf.text_field :description, class: "form-control"
                         .row
                           .col-md-6
@@ -115,5 +115,5 @@
 
               / Buttons
               .d-flex.gap-2
-                = f.submit "Lưu thay đổi", class: 'btn btn-primary btn-lg px-5'
-                = link_to "Hủy", project_task_test_case_path(@task.project, @task, @test_case), class: 'btn btn-outline-secondary btn-lg'
+                = f.submit "Save Changes", class: 'btn btn-primary btn-lg px-5'
+                = link_to "Cancel", project_task_test_case_path(@task.project, @task, @test_case), class: 'btn btn-outline-secondary btn-lg'

@@ -211,9 +211,9 @@ class TasksController < ApplicationController
   # POST /tasks/:id/update_device_config
   def update_device_config
     if @task.update(device_config: params[:device_config])
-      redirect_to project_task_path(@project, @task), notice: 'Cấu hình Device đã được cập nhật thành công.'
+      redirect_to project_task_path(@project, @task), notice: 'Device configuration has been updated successfully.'
     else
-      redirect_to project_task_path(@project, @task), alert: 'Có lỗi xảy ra khi cập nhật cấu hình Device.'
+      redirect_to project_task_path(@project, @task), alert: 'An error occurred while updating device configuration.'
     end
   end
 
@@ -251,7 +251,7 @@ class TasksController < ApplicationController
     redmine_project_input = params[:redmine_project_id].to_s.strip.presence
     redmine_project_id = RedmineService.resolve_project_id(redmine_project_input) if redmine_project_input
     if redmine_project_input.present? && redmine_project_id.blank?
-      render json: { issues: [], total_count: 0, errors: ['Không tìm thấy project Redmine với ID hoặc identifier đã nhập.'] }, status: :unprocessable_entity
+      render json: { issues: [], total_count: 0, errors: ['Redmine project not found with the provided ID or identifier.'] }, status: :unprocessable_entity
       return
     end
     start_date, end_date = bulk_list_date_range
@@ -288,7 +288,7 @@ class TasksController < ApplicationController
 
     if issue_ids.blank?
       respond_to do |format|
-        format.html { redirect_to @project, alert: 'Vui lòng chọn ít nhất một task để import.' }
+        format.html { redirect_to @project, alert: 'Please select at least one task to import.' }
         format.json { render json: { error: 'issue_ids is required' }, status: :unprocessable_entity }
       end
       return

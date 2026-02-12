@@ -29,7 +29,7 @@ export default class extends Controller {
       this.submitButtonTarget.disabled = true
       this.submitButtonTarget.innerHTML = `
         <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-        Đang import...
+        Importing...
       `
     }
 
@@ -91,7 +91,7 @@ export default class extends Controller {
     // Update time remaining if element exists
     if (timeRemainingElement && timeRemaining !== null) {
       const seconds = Math.ceil(timeRemaining)
-      timeRemainingElement.textContent = `Còn khoảng ${seconds} giây...`
+      timeRemainingElement.textContent = `Approximately ${seconds} seconds remaining...`
     }
   }
 

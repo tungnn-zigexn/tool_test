@@ -41,11 +41,11 @@ class RedmineBulkImportService
       import_single_issue(issue_data)
     end
 
-    Rails.logger.info "Bulk import by IDs hoàn tất: #{@imported_tasks.length} tasks imported"
+    Rails.logger.info "Bulk import by IDs completed: #{@imported_tasks.length} tasks imported"
     true
   rescue StandardError => e
     error_msg = ensure_utf8(e.message)
-    @errors << "Lỗi khi bulk import: #{error_msg}"
+    @errors << "Bulk import error: #{error_msg}"
     Rails.logger.error "RedmineBulkImportService Error: #{error_msg}\n#{e.backtrace.join("\n")}"
     false
   end
@@ -60,7 +60,7 @@ class RedmineBulkImportService
     yield @found_count if block_given?
 
     if testing_issues.empty?
-      @errors << 'Không tìm thấy issue nào có subject bắt đầu với "4. Testing"'
+      @errors << 'No issues found with subject starting with "4. Testing"'
       Rails.logger.info 'No "4. Testing" issues found in response'
       return true
     end
@@ -71,11 +71,11 @@ class RedmineBulkImportService
       import_single_issue(issue_data)
     end
 
-    Rails.logger.info "Bulk import hoàn tất: #{@imported_tasks.length} tasks imported"
+    Rails.logger.info "Bulk import completed: #{@imported_tasks.length} tasks imported"
     true
   rescue StandardError => e
     error_msg = ensure_utf8(e.message)
-    @errors << "Lỗi khi bulk import: #{error_msg}"
+    @errors << "Bulk import error: #{error_msg}"
     Rails.logger.error "RedmineBulkImportService Error: #{error_msg}\n#{e.backtrace.join("\n")}"
     false
   end
