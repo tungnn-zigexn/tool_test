@@ -31,8 +31,8 @@ RUN npm ci --production=false
 # Copy application code
 COPY . .
 
-# Precompile assets
-RUN bundle exec rake assets:precompile
+# Precompile assets (dummy secret needed at build time only)
+RUN SECRET_KEY_BASE=dummy_for_assets_precompile bundle exec rake assets:precompile
 
 # Create storage directories
 RUN mkdir -p storage tmp/pids tmp/sockets
