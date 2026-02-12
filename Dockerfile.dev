@@ -1,47 +1,19 @@
-# Dockerfile for Development
 FROM ruby:3.4.6-slim
 
-# Install dependencies
 RUN apt-get update -qq && \
     apt-get install -y --no-install-recommends \
-    build-essential libyaml-dev pkg-config\
-    libsqlite3-dev \
-    nodejs \
-    npm \
-    curl \
-    git \
-    vim \
+      build-essential \
+      libyaml-dev \
+      pkg-config \
+      libsqlite3-dev \
+      curl \
+      nodejs \
+      npm \
     && rm -rf /var/lib/apt/lists/*
 
-# Set working directory
 WORKDIR /rails
 
-# Set development environment
-ENV RAILS_ENV="development" \
-    BUNDLE_PATH="/usr/local/bundle"
+ENV RAILS_ENV=development \
+    BUNDLE_PATH=/usr/local/bundle
 
-# Install application gems
-COPY Gemfile Gemfile.lock ./
-RUN bundle install
-
-# Install node packages
-COPY package.json package-lock.json ./
-RUN npm install
-
-# Copy application code
-COPY . .
-
-# Create necessary directories
-RUN mkdir -p storage tmp/pids tmp/sockets log
-
-# Expose port
-EXPOSE 4000
-
-# Make entrypoint executable and set entrypoint
-RUN chmod +x bin/docker-entrypoint
-ENTRYPOINT ["bin/docker-entrypoint"]
-
-# Start the server
 CMD ["bin/dev"]
-
-
