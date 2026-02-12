@@ -37,7 +37,10 @@
                       / Title
                       .mb-3
                         = f.label :title, "Function *", class: 'form-label fw-semibold'
-                        = f.text_field :title, class: 'form-control', required: true
+                        = f.text_field :title, class: 'form-control', required: true, list: "existing-functions"
+                        datalist#existing-functions
+                          - @existing_titles.each do |title|
+                            option value=title
                         - if @test_case.errors[:title].any?
                           .invalid-feedback.d-block = @test_case.errors[:title].join(', ')
 

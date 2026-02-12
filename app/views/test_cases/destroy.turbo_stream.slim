@@ -39,9 +39,9 @@
 
 = turbo_stream.prepend "flash-messages" do
   .alert.alert-success.alert-dismissible.fade.show role="alert" data-controller="flash"
-    | Test case soft deleted successfully.
+    | Test case deleted successfully.
     button.btn-close type="button" data-bs-dismiss="alert" aria-label="Close"
 
-/ Close the modal
+/ Close the modal if open
 script
   | document.querySelector('#testCaseDetailsModal [data-bs-dismiss="modal"]')?.click();

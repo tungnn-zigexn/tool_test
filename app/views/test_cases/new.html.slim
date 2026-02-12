@@ -32,10 +32,13 @@
                 .card-body
                   .row
                     .col-md-6
-                      / Title
+                      / Title (Function)
                       .mb-3
-                        = f.label :title, "Function", class: 'form-label fw-semibold'
-                        = f.text_field :title, class: 'form-control', placeholder: 'Ví dụ: Test login with valid credentials', required: true
+                        = f.label :title, "Function (Tên chức năng) *", class: 'form-label fw-semibold'
+                        = f.text_field :title, class: 'form-control', placeholder: 'Ví dụ: Test login with valid credentials', required: true, list: "existing-functions"
+                        datalist#existing-functions
+                          - @existing_titles.each do |title|
+                            option value=title
                         - if @test_case.errors[:title].any?
                           .invalid-feedback.d-block = @test_case.errors[:title].join(', ')
 

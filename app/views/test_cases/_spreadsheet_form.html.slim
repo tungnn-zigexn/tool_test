@@ -1,4 +1,6 @@
 = form_with model: [project, task, test_case], id: "inline-test-case-form", data: { spreadsheet_form_target: "formSection", action: "turbo:submit-end->spreadsheet-form#resetForm" }, class: "d-none spreadsheet-container mb-4" do |f|
+  = hidden_field_tag :tc_sort, params[:tc_sort]
+  = hidden_field_tag :tc_page, params[:tc_page]
   .card.border.shadow-sm.rounded-3.overflow-hidden
     
     / --- HEADER: Title & Actions ---
@@ -24,8 +26,11 @@
           / Function / Title (Prominent)
           .col-12
             .form-floating
-              = f.text_field :title, class: "form-control form-control-lg fw-bold border-0 border-bottom rounded-0 bg-transparent shadow-none ps-0", placeholder: "Nhập tên chức năng...", style: "min-height: 50px;", required: true
-              label.ps-0.text-muted Function (Tên chức năng)
+              = f.text_field :title, class: "form-control form-control-lg fw-bold border-0 border-bottom rounded-0 bg-transparent shadow-none ps-0", placeholder: "Nhập tên chức năng...", style: "min-height: 50px;", required: true, list: "inline-existing-functions"
+              label.ps-0.text-muted Function (Tên chức năng) *
+              datalist#inline-existing-functions
+                - @existing_titles.each do |title|
+                  option value=title
 
           / Meta Data (Type & Target)
           .col-md-6
@@ -41,6 +46,13 @@
               | Target Device
             .input-group
               = f.select :target, options_for_select([['PC + SP + APP', 'pc_sp_app'], ['PC + SP', 'pc_sp'], ['PC', 'pc'], ['SP', 'sp'], ['APP', 'app']], 'pc_sp_app'), {}, class: "form-select border-0 shadow-sm bg-white"
+
+          / Note Field
+          .col-12
+            label.form-label.small.fw-bold.text-muted.text-uppercase
+              i.bi.bi-sticky.me-1
+              | Ghi chú (Note)
+            = f.text_area :note, class: "form-control border-0 shadow-sm bg-white", rows: 2, placeholder: "Nhập ghi chú (nhiều dòng nếu cần)..."
 
       / --- SECTION 2: Steps Editor ---
       .border-top

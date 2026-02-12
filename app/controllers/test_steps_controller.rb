@@ -1,26 +1,40 @@
 class TestStepsController < ApplicationController
   before_action :set_test_case
-  before_action :set_test_step
+  before_action :set_test_step, except: [:create]
 
-  # GET /projects/:project_id/tasks/:task_id/test_cases/:test_case_id/test_steps/:id/edit
-  def edit; end
 
-  # PATCH/PUT /projects/:project_id/tasks/:task_id/test_cases/:test_case_id/test_steps/:id
-  def update
-    if @test_step.update(test_step_params)
-      redirect_to project_task_test_case_path(@project, @task, @test_case),
-                  notice: 'Test step updated successfully.'
+  # POST /projects/:project_id/tasks/:task_id/test_cases/:test_case_id/test_steps
+  def create
+    @test_step = @test_case.test_steps.build(
+      step_number: @test_case.test_steps.count + 1
+    )
+
+    # Initialize default contents with placeholder text to pass presence validation
+    @test_step.test_step_contents.build(content_category: 'action', content_type: 'text', content_value: 'Nhấn để nhập thao tác...', display_order: 1)
+    @test_step.test_step_contents.build(content_category: 'expectation', content_type: 'text', content_value: 'Nhấn để nhập kết quả...', display_order: 1)
+
+    if @test_step.save
+      respond_to do |format|
+        format.turbo_stream
+        format.html { redirect_to project_task_test_case_path(@project, @task, @test_case) }
+      end
     else
-      render :edit, status: :unprocessable_entity
+      Rails.logger.error "Failed to create TestStep: #{@test_step.errors.full_messages.join(', ')}"
+      redirect_to project_task_test_case_path(@project, @task, @test_case), 
+                  alert: "Failed to create test step: #{@test_step.errors.full_messages.join(', ')}"
     end
   end
+
 
   # DELETE /projects/:project_id/tasks/:task_id/test_cases/:test_case_id/test_steps/:id
   def destroy
     @test_step.destroy
     # NOTE: Auto-renumbering is handled by after_destroy callback in TestStep model
-    redirect_to project_task_test_case_path(@project, @task, @test_case),
-                notice: 'Test step deleted and remaining steps renumbered.'
+    respond_to do |format|
+      format.turbo_stream
+      format.html { redirect_to project_task_test_case_path(@project, @task, @test_case), 
+                                notice: 'Test step deleted and remaining steps renumbered.' }
+    end
   end
 
   private

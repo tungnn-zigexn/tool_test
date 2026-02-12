@@ -30,6 +30,10 @@
         a.btn.btn-outline-secondary.text-nowrap href=@task.bug_link target="_blank"
           i.bi.bi-google.me-1
           | Open Sheet
+      - if @archived_bugs.any?
+        button.btn.btn-outline-secondary.text-nowrap.d-inline-flex.align-items-center data-bs-toggle="modal" data-bs-target="#archivedBugsModal"
+          i.bi.bi-archive.me-2
+          | Archived Bugs (#{@archived_bugs.count})
 
   / Bugs Table
   .card.border-0.shadow-sm
@@ -175,3 +179,38 @@
         .modal-footer.bg-light
           button.btn.btn-secondary type="button" data-bs-dismiss="modal" data-import-progress-target="cancelButton" Hủy
           = f.submit 'Bắt đầu đồng bộ', class: 'btn btn-primary', data: { import_progress_target: "submitButton" }
+
+/ Archived Bugs Modal
+.modal.fade#archivedBugsModal tabindex="-1" aria-hidden="true"
+  .modal-dialog.modal-lg.modal-dialog-centered
+    .modal-content
+      .modal-header.bg-secondary.text-white
+        h5.modal-title
+          i.bi.bi-archive.me-2
+          | Archived Bugs
+        button.btn-close.btn-close-white type="button" data-bs-dismiss="modal" aria-label="Close"
+      .modal-body.p-0
+        .table-responsive
+          table.table.table-hover.align-middle.mb-0
+            thead.bg-light
+              tr
+                th.ps-3 ID
+                th Title
+                th Deleted At
+                th.text-end.pe-3 Actions
+            tbody
+              - if @archived_bugs.any?
+                - @archived_bugs.each do |bug|
+                  tr
+                    td.ps-3.fw-bold = "BUG-#{bug.id}"
+                    td = bug.title
+                    td.small.text-muted = bug.deleted_at&.strftime("%Y-%m-%d %H:%M")
+                    td.text-end.pe-3
+                      = button_to restore_project_task_bug_path(@project, @task, bug), method: :patch, class: "btn btn-sm btn-outline-success" do
+                        i.bi.bi-arrow-counterclockwise.me-1
+                        | Restore
+              - else
+                tr
+                  td.text-center.py-4 colspan="4" No archived bugs.
+      .modal-footer
+        button.btn.btn-secondary type="button" data-bs-dismiss="modal" Đóng

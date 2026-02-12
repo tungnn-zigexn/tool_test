@@ -1,4 +1,5 @@
 .container-fluid.px-4.py-4 data-controller="spreadsheet-form test-case-modal"
+  = turbo_stream_from @task
   #flash-messages
   / Breadcrumb
   nav.mb-4 aria-label="breadcrumb"
@@ -181,76 +182,77 @@
   = render partial: 'test_cases/spreadsheet_form', locals: { project: @task.project, task: @task, test_case: @test_case }
 
   / Test Cases Section (Spreadsheet View)
-  - if @all_test_cases.any?
-    .card.border-0.shadow-sm.mb-4#test-cases
-      .card-header.bg-white.py-3
-        .d-flex.justify-content-between.align-items-center
-          h5.mb-0.fw-bold.text-primary
-            i.bi.bi-grid-3x3-gap.me-2
-            | Test Cases 
-            span.badge.bg-primary.bg-opacity-10.text-primary.ms-2= @total_test_cases
-          - if @total_tc_pages > 1
-            .text-muted.small
-              | Trang #{@test_cases_page}/#{@total_tc_pages}
-          
-          - if @archived_test_cases.any?
-            button.btn.btn-outline-secondary.btn-sm.ms-auto data-bs-toggle="modal" data-bs-target="#archivedTestCasesModal"
-              i.bi.bi-archive.me-1
-              | Archived TCs (#{@archived_test_cases.count})
+  #test-cases-spreadsheet-container
+    - if @all_test_cases.any?
+      .card.border-0.shadow-sm.mb-4#test-cases
+        .card-header.bg-white.py-3
+          .d-flex.justify-content-between.align-items-center
+            h5.mb-0.fw-bold.text-primary
+              i.bi.bi-grid-3x3-gap.me-2
+              | Test Cases 
+              span.badge.bg-primary.bg-opacity-10.text-primary.ms-2= @total_test_cases
+            - if @total_tc_pages > 1
+              .text-muted.small
+                | Trang #{@test_cases_page}/#{@total_tc_pages}
+            
+            - if @archived_test_cases.any?
+              button.btn.btn-outline-secondary.btn-sm.ms-auto data-bs-toggle="modal" data-bs-target="#archivedTestCasesModal"
+                i.bi.bi-archive.me-1
+                | Archived TCs (#{@archived_test_cases.count})
 
-      .card-body.p-0
-        - devices = @task.unique_devices
-        - tc_start_index = (@test_cases_page - 1) * @test_cases_per_page
-        = render 'test_cases/spreadsheet_table', test_cases: @paginated_test_cases, devices: devices, start_index: tc_start_index
-      
-      / Pagination for Test Cases
-      - if @total_tc_pages > 1
-        .card-footer.bg-white.border-top-0
-          .pagination-wrapper.d-flex.justify-content-center.py-2
-            nav
-              ul.pagination.pagination-sm.mb-0
-                / Previous
-                li.page-item class=("disabled" if @test_cases_page <= 1)
-                  - if @test_cases_page > 1
-                    a.page-link href="?tc_page=#{@test_cases_page - 1}#test-cases" aria-label="Previous"
-                      span aria-hidden="true" &laquo;
-                  - else
-                    span.page-link
-                      span aria-hidden="true" &laquo;
+        .card-body.p-0
+          - devices = @task.unique_devices
+          - tc_start_index = (@test_cases_page - 1) * @test_cases_per_page
+          = render 'test_cases/spreadsheet_table', test_cases: @paginated_test_cases, devices: devices, start_index: tc_start_index
+        
+        / Pagination for Test Cases
+        - if @total_tc_pages > 1
+          .card-footer.bg-white.border-top-0
+            .pagination-wrapper.d-flex.justify-content-center.py-2
+              nav
+                ul.pagination.pagination-sm.mb-0
+                  / Previous
+                  li.page-item class=("disabled" if @test_cases_page <= 1)
+                    - if @test_cases_page > 1
+                      a.page-link href="?tc_page=#{@test_cases_page - 1}#test-cases" aria-label="Previous"
+                        span aria-hidden="true" &laquo;
+                    - else
+                      span.page-link
+                        span aria-hidden="true" &laquo;
 
-                / Page numbers
-                - (1..@total_tc_pages).each do |p|
-                  - if @total_tc_pages <= 7 || (p <= 2) || (p >= @total_tc_pages - 1) || ((p - @test_cases_page).abs <= 1)
-                    li.page-item class=("active" if p == @test_cases_page)
-                      a.page-link href="?tc_page=#{p}#test-cases"= p
-                  - elsif (p == 3 && @test_cases_page > 4) || (p == @total_tc_pages - 2 && @test_cases_page < @total_tc_pages - 3)
-                    li.page-item.disabled
-                      span.page-link ...
+                  / Page numbers
+                  - (1..@total_tc_pages).each do |p|
+                    - if @total_tc_pages <= 7 || (p <= 2) || (p >= @total_tc_pages - 1) || ((p - @test_cases_page).abs <= 1)
+                      li.page-item class=("active" if p == @test_cases_page)
+                        a.page-link href="?tc_page=#{p}#test-cases"= p
+                    - elsif (p == 3 && @test_cases_page > 4) || (p == @total_tc_pages - 2 && @test_cases_page < @total_tc_pages - 3)
+                      li.page-item.disabled
+                        span.page-link ...
 
-                / Next
-                li.page-item class=("disabled" if @test_cases_page >= @total_tc_pages)
-                  - if @test_cases_page < @total_tc_pages
-                    a.page-link href="?tc_page=#{@test_cases_page + 1}#test-cases" aria-label="Next"
-                      span aria-hidden="true" &raquo;
-                  - else
-                    span.page-link
-                      span aria-hidden="true" &raquo;
-  - else
-    .card.border-0.shadow-sm
-      .card-body.text-center.py-5
-        .display-4.text-muted.mb-3 📋
-        h5.text-muted No Test Cases
-        p.text-muted.mb-3 This task doesn't have any test cases yet.
-        .d-flex.gap-2.justify-content-center
-          button.btn.btn-primary data-action="click->spreadsheet-form#toggleForm"
-            i.bi.bi-plus-circle.me-2
-            | Tạo Test Case (Sheet)
-          button.btn.btn-success data-bs-toggle="modal" data-bs-target="#importTestCasesModal"
-            i.bi.bi-cloud-download.me-2
-            | Import từ Google Sheet
-          button.btn.btn-info.text-white data-bs-toggle="modal" data-bs-target="#autoGenerateTCModal"
-            i.bi.bi-magic.me-2
-            | Tạo TC Auto
+                  / Next
+                  li.page-item class=("disabled" if @test_cases_page >= @total_tc_pages)
+                    - if @test_cases_page < @total_tc_pages
+                      a.page-link href="?tc_page=#{@test_cases_page + 1}#test-cases" aria-label="Next"
+                        span aria-hidden="true" &raquo;
+                    - else
+                      span.page-link
+                        span aria-hidden="true" &raquo;
+    - else
+      .card.border-0.shadow-sm
+        .card-body.text-center.py-5
+          .display-4.text-muted.mb-3 📋
+          h5.text-muted No Test Cases
+          p.text-muted.mb-3 This task doesn't have any test cases yet.
+          .d-flex.gap-2.justify-content-center
+            button.btn.btn-primary data-action="click->spreadsheet-form#toggleForm"
+              i.bi.bi-plus-circle.me-2
+              | Tạo Test Case (Sheet)
+            button.btn.btn-success data-bs-toggle="modal" data-bs-target="#importTestCasesModal"
+              i.bi.bi-cloud-download.me-2
+              | Import từ Google Sheet
+            button.btn.btn-info.text-white data-bs-toggle="modal" data-bs-target="#autoGenerateTCModal"
+              i.bi.bi-magic.me-2
+              | Tạo TC Auto
 
   / Activity History Section
   = render 'shared/activity_timeline', logs: ActivityLog.where(trackable_type: 'Task', trackable_id: @task.id).limit(10)

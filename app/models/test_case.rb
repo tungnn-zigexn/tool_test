@@ -17,6 +17,8 @@ class TestCase < ApplicationRecord
   validates :title, presence: true
   validates :task_id, presence: true
 
+  before_validation :strip_title
+
   scope :by_type, ->(type) { where(test_type: type) }
   scope :by_target, ->(target) { where(target: target) }
   scope :ordered, -> { order(id: :asc) }
@@ -69,10 +71,48 @@ class TestCase < ApplicationRecord
     match&.status || 'not_run'
   end
 
+  def latest_status_info_for(device_or_category)
+    status = latest_status_for(device_or_category)
+    bg_class = case status
+               when 'pass' then 'bg-success bg-opacity-10'
+               when 'fail' then 'bg-danger bg-opacity-10'
+               when 'blocked' then 'bg-warning bg-opacity-10'
+               else ''
+               end
+    { status: status, bg_class: bg_class }
+  end
+
   after_save :update_task_counter
   after_destroy :update_task_counter
+  after_update :sync_grouped_titles, if: :saved_change_to_title?
 
   private
+
+  def sync_grouped_titles
+    old_title, new_title = saved_changes[:title]
+    return if old_title.blank? || new_title.blank?
+
+    # Find siblings with the exact same old title in the same task
+    siblings = task.test_cases.active.where(title: old_title).where.not(id: id)
+    sibling_ids = siblings.pluck(:id)
+    
+    return if sibling_ids.empty?
+
+    # Update all siblings at once (avoids callback recursion)
+    task.test_cases.where(id: sibling_ids).update_all(title: new_title, updated_at: Time.current)
+
+    # Broadcast updates to the UI for each sibling
+    sibling_ids.each do |s_id|
+      # Broadcast to the task's stream, targeting each specific title cell
+      broadcast_update_to task, 
+                          target: "test-case-#{s_id}-title", 
+                          html: new_title
+    end
+  end
+
+  def strip_title
+    self.title = title.strip if title.present?
+  end
 
   def update_task_counter
     # Update current task

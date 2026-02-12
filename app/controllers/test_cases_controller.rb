@@ -49,15 +49,16 @@ class TestCasesController < ApplicationController
     end
   end
 
-  # GET /projects/:project_id/tasks/:task_id/test_cases/new
   def new
     @test_case = @task.test_cases.build
+    set_existing_titles
     # Build default step
     @test_case.test_steps.build(step_number: 1)
   end
 
   # GET /projects/:project_id/tasks/:task_id/test_cases/:id/edit
   def edit
+    set_existing_titles
     respond_to do |format|
       format.html
       format.turbo_stream
@@ -70,6 +71,8 @@ class TestCasesController < ApplicationController
     @test_case.created_by = current_user
 
     if @test_case.save
+      set_existing_titles
+      set_spreadsheet_data
       respond_to do |format|
         format.html do
           redirect_to project_task_path(@task.project, @task),
@@ -79,8 +82,10 @@ class TestCasesController < ApplicationController
         format.json { render json: @test_case, status: :created }
       end
     else
+      set_existing_titles
       respond_to do |format|
         format.html { render :new, status: :unprocessable_entity }
+        format.turbo_stream { render :new, status: :unprocessable_entity }
         format.json do
           render json: { errors: @test_case.errors.full_messages },
                  status: :unprocessable_entity
@@ -92,6 +97,8 @@ class TestCasesController < ApplicationController
   # PATCH/PUT /projects/:project_id/tasks/:task_id/test_cases/:id
   def update
     if @test_case.update(test_case_params)
+      set_existing_titles
+      set_spreadsheet_data
       respond_to do |format|
         format.html do
           redirect_to [@task.project, @task, @test_case],
@@ -101,6 +108,7 @@ class TestCasesController < ApplicationController
         format.json { render json: @test_case }
       end
     else
+      set_existing_titles
       respond_to do |format|
         format.html { render :edit, status: :unprocessable_entity }
         format.turbo_stream { render :edit, status: :unprocessable_entity }
@@ -115,6 +123,7 @@ class TestCasesController < ApplicationController
   # DELETE /projects/:project_id/tasks/:task_id/test_cases/:id
   def destroy
     @test_case.destroy
+    set_spreadsheet_data
     respond_to do |format|
       format.html do
         redirect_to project_task_path(@task.project, @task),
@@ -128,6 +137,7 @@ class TestCasesController < ApplicationController
   # PATCH /projects/:project_id/tasks/:task_id/test_cases/:id/soft_delete
   def soft_delete
     @test_case.soft_delete!
+    set_spreadsheet_data
     respond_to do |format|
       format.html do
         redirect_to project_task_path(@task.project, @task),
@@ -170,6 +180,27 @@ class TestCasesController < ApplicationController
   end
 
   private
+
+  def set_spreadsheet_data
+    @test_cases_per_page = 10
+    @test_cases_page = params[:tc_page].to_i
+    @test_cases_page = 1 if @test_cases_page < 1
+    @tc_sort = params[:tc_sort] == 'desc' ? 'desc' : 'asc'
+    
+    @all_test_cases = @task.test_cases.active.includes(:test_steps, :test_results).order(id: @tc_sort.to_sym)
+    @total_test_cases = @all_test_cases.size
+    @total_tc_pages = (@total_test_cases.to_f / @test_cases_per_page).ceil
+
+    # Ensure current page doesn't exceed total pages if there are test cases
+    if @total_tc_pages > 0 && @test_cases_page > @total_tc_pages
+      @test_cases_page = @total_tc_pages
+    end
+
+    tc_start = (@test_cases_page - 1) * @test_cases_per_page
+    @paginated_test_cases = @all_test_cases.limit(@test_cases_per_page).offset(tc_start).to_a
+    @devices = @task.unique_devices.presence || ['pc', 'sp', 'app']
+    @tc_start_index = tc_start
+  end
 
   def extract_spreadsheet_id(input)
     return input if input.blank?
@@ -229,9 +260,13 @@ class TestCasesController < ApplicationController
     @project = @task&.project if @project.nil?
   end
 
+  def set_existing_titles
+    @existing_titles = @task&.test_cases&.active&.pluck(:title)&.uniq&.compact&.sort || []
+  end
+
   def test_case_params
     params.require(:test_case).permit(
-      :title, :description, :expected_result, :test_type, :function, :target,
+      :title, :description, :expected_result, :test_type, :function, :target, :note,
       :acceptance_criteria_url, :user_story_url,
       test_steps_attributes: test_steps_params
     )

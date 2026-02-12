@@ -19,6 +19,9 @@ class BugsController < ApplicationController
     # Paginated data
     offset = (@page - 1) * @per_page
     @bugs = @all_bugs.offset(offset).limit(@per_page)
+
+    # Archived (soft-deleted) bugs for restoration modal
+    @archived_bugs = @task.bugs.deleted.order(deleted_at: :desc)
   end
 
   def show; end
@@ -51,6 +54,11 @@ class BugsController < ApplicationController
     redirect_to project_task_bugs_path(@project, @task), notice: 'Bug đã được xóa thành công.'
   end
 
+  def restore
+    @bug.restore!
+    redirect_to project_task_bugs_path(@project, @task), notice: 'Bug đã được khôi phục thành công.'
+  end
+
   def import_from_sheet
     if @task.bug_link.blank?
       redirect_to project_task_bugs_path(@project, @task), alert: 'Task không có link bug để import.'
@@ -81,7 +89,7 @@ class BugsController < ApplicationController
   end
 
   def set_bug
-    @bug = @task.bugs.active.find(params[:id])
+    @bug = @task.bugs.find(params[:id])
   end
 
   def bug_params

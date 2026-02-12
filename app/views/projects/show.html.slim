@@ -21,6 +21,10 @@
             button.btn.btn-info.text-nowrap.d-inline-flex.align-items-center data-bs-toggle="modal" data-bs-target="#importRedmineUrlModal"
               i.bi.bi-collection.me-2
               | Bulk Import (4. Testing)
+          - if @archived_tasks.any?
+            button.btn.btn-outline-secondary.text-nowrap.d-inline-flex.align-items-center data-bs-toggle="modal" data-bs-target="#archivedTasksModal"
+              i.bi.bi-archive.me-2
+              | Archived Tasks (#{@archived_tasks.count})
 
       - if @project.description.present?
         .border-top.pt-3.pb-3.mt-3.text-muted style="white-space: pre-wrap; max-width: 1000px; font-size: 0.95rem; line-height: 1.6;"
@@ -287,6 +291,41 @@
                   | Import đã chọn
         .modal-footer.d-none
           / Footer hidden - actions are inside modal-body for tab 2
+
+  / Archived Tasks Modal
+  .modal.fade#archivedTasksModal tabindex="-1" aria-hidden="true"
+    .modal-dialog.modal-lg.modal-dialog-centered
+      .modal-content
+        .modal-header.bg-secondary.text-white
+          h5.modal-title
+            i.bi.bi-archive.me-2
+            | Archived Tasks
+          button.btn-close.btn-close-white type="button" data-bs-dismiss="modal" aria-label="Close"
+        .modal-body.p-0
+          .table-responsive
+            table.table.table-hover.align-middle.mb-0
+              thead.bg-light
+                tr
+                  th.ps-3 ID (Redmine)
+                  th Title
+                  th Deleted At
+                  th.text-end.pe-3 Actions
+              tbody
+                - if @archived_tasks.any?
+                  - @archived_tasks.each do |task|
+                    tr
+                      td.ps-3.fw-bold = "##{task.redmine_id}"
+                      td = task.title
+                      td.small.text-muted = task.deleted_at&.strftime("%Y-%m-%d %H:%M")
+                      td.text-end.pe-3
+                        = button_to restore_project_task_path(@project, task), method: :patch, class: "btn btn-sm btn-outline-success" do
+                          i.bi.bi-arrow-counterclockwise.me-1
+                          | Restore
+                - else
+                  tr
+                    td.text-center.py-4 colspan="4" No archived tasks.
+        .modal-footer
+          button.btn.btn-secondary type="button" data-bs-dismiss="modal" Đóng
 
 
 

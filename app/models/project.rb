@@ -40,4 +40,8 @@ class Project < ApplicationRecord
     # A task is a root if it has no parent or its parent doesn't exist in the same project
     tasks.active.where('parent_id IS NULL OR parent_id NOT IN (SELECT id FROM tasks WHERE project_id = ?)', id)
   end
+
+  def archived_root_tasks
+    tasks.deleted.where('parent_id IS NULL OR parent_id NOT IN (SELECT id FROM tasks WHERE project_id = ?)', id)
+  end
 end

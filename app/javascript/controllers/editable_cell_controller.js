@@ -14,7 +14,7 @@ export default class extends Controller {
     
     const input = document.createElement("div")
     input.contentEditable = true
-    input.className = "form-control p-1 bg-white border-primary"
+    input.className = "form-control p-1 bg-white border-primary fs-spreadsheet"
     input.style.minWidth = "100px"
     input.style.minHeight = "40px"
     input.innerHTML = originalContent
@@ -38,7 +38,28 @@ export default class extends Controller {
       this.finishEdit(input, target)
     }
 
-    input.addEventListener("blur", save)
+    input.addEventListener("focus", () => {
+      document.dispatchEvent(new CustomEvent("spreadsheet-cell:focus", { detail: { element: input } }))
+    })
+
+    input.addEventListener("blur", () => {
+      document.dispatchEvent(new CustomEvent("spreadsheet-cell:blur", { detail: { element: input } }))
+      save()
+    })
+
+    input.addEventListener("paste", (e) => {
+      // Basic auto-link on paste
+      setTimeout(() => {
+        const text = input.innerHTML
+        const urlPattern = /(?<!["'=])(https?:\/\/[^\s<]+)/g
+        if (urlPattern.test(text)) {
+          // We can't easily auto-link without breaking HTML during editing
+          // but we can at least ensure we don't break things.
+          // For now, linkification will happen on the server when rendering.
+        }
+      }, 0)
+    })
+
     input.addEventListener("keydown", (e) => {
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault()
@@ -48,6 +69,9 @@ export default class extends Controller {
         this.finishEdit(input, target)
       }
     })
+
+    // Manually trigger focus dispatch since it might already be focused
+    document.dispatchEvent(new CustomEvent("spreadsheet-cell:focus", { detail: { element: input } }))
   }
 
   finishEdit(input, display) {
@@ -62,10 +86,9 @@ export default class extends Controller {
     let params = { test_case: {} }
 
     if (contentId) {
-      // Logic for editing test step content could be here, or a separate endpoint
-      // For now, let's assume we update via test_case nested attributes or direct content update
-      url = `/projects/${projectId}/tasks/${taskId}/test_cases/${testCaseId}/test_steps/0` // Placeholder
-      // This part needs careful controller routing. Let's stick to title for now.
+      // Direct update to test step content via shallow route
+      url = `/test_step_contents/${contentId}`
+      params = { test_step_content: { [field]: value } }
     } else {
       params.test_case[field] = value
     }
@@ -82,8 +105,25 @@ export default class extends Controller {
     .then(response => response.json())
     .then(data => {
       if (data.id) {
-        display.innerHTML = value
+        // Only update innerHTML if we are NOT currently formatting or actively selected
+        // This prevents the linkified version from destroying active selection/formatting
+        const toolbar = document.querySelector('.spreadsheet-toolbar')
+        const isToolbarActive = toolbar && toolbar.contains(document.activeElement)
+        const isSelfActive = document.activeElement === display
+        
+        if (!isSelfActive && !isToolbarActive && !display.dataset.formatting) {
+          display.innerHTML = data.formatted_value || value
+        }
+        
+        // Optional: show a small success indicator
+        display.classList.add("text-success")
+        setTimeout(() => display.classList.remove("text-success"), 1000)
       }
+    })
+    .catch(error => {
+      console.error("Error saving change:", error)
+      display.classList.add("text-danger")
+      setTimeout(() => display.classList.remove("text-danger"), 2000)
     })
   }
 }
