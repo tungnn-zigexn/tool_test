@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: bin/rails server -b 0.0.0.0 -p 4000
+    volumes:
+      - .:/rails
+      - ./config/google_credentials.json:/rails/config/google_credentials.json:ro
+      - ./storage:/rails/storage
+      - bundle_cache:/usr/local/bundle
+    ports:
+      - "4000:4000"
+    environment:
+      - RAILS_ENV=production
+      - RAILS_MAX_THREADS=5
+      - RAILS_SERVE_STATIC_FILES=true
+      - RAILS_LOG_TO_STDOUT=true
+      - SECRET_KEY_BASE=${SECRET_KEY_BASE}
+      - REDMINE_API_KEY=${REDMINE_API_KEY}
+      - REDMINE_USERNAME=${REDMINE_USERNAME}
+      - REDMINE_PASSWORD=${REDMINE_PASSWORD}
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+
+volumes:
+  bundle_cache:
+
