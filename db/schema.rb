@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_12_071314) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_13_010000) do
   create_table "activity_logs", force: :cascade do |t|
     t.integer "user_id", null: false
     t.string "trackable_type", null: false
@@ -298,9 +298,11 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_12_071314) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.text "note"
+    t.integer "position"
     t.index ["created_by_id"], name: "index_test_cases_on_created_by_id"
     t.index ["deleted_at"], name: "index_test_cases_on_deleted_at"
     t.index ["target"], name: "index_test_cases_on_target"
+    t.index ["task_id", "position"], name: "index_test_cases_on_task_id_and_position"
     t.index ["task_id"], name: "index_test_cases_on_task_id"
     t.index ["test_type"], name: "index_test_cases_on_test_type"
   end

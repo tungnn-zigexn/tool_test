@@ -24,7 +24,19 @@ class TasksController < ApplicationController
     # Filters
     @tasks = @tasks.where(status: params[:status]) if params[:status].present?
 
-    # ... rest of index ...
+    # Search by title, description, or Redmine ID
+    if params[:q].present?
+      q = "%#{params[:q]}%"
+      @tasks = @tasks.where("tasks.title LIKE :q OR tasks.description LIKE :q OR CAST(tasks.redmine_id AS TEXT) LIKE :q", q: q)
+    end
+
+    # Pagination (10 per page)
+    @per_page = 10
+    @total_tasks = @tasks.count
+    @current_page = (params[:page].presence || 1).to_i
+    @total_pages = [(@total_tasks.to_f / @per_page).ceil, 1].max
+    @current_page = [[@current_page, 1].max, @total_pages].min
+    @tasks = @tasks.order(updated_at: :desc).offset((@current_page - 1) * @per_page).limit(@per_page)
   end
 
   # GET /tasks/:id or /projects/:project_id/tasks/:id
@@ -37,7 +49,7 @@ class TasksController < ApplicationController
     
     # Sorting logic
     @tc_sort = params[:tc_sort] == 'desc' ? 'desc' : 'asc'
-    @all_test_cases = @task.test_cases.active.includes(:test_steps, :test_results).order(id: @tc_sort.to_sym)
+    @all_test_cases = @task.test_cases.active.includes(:test_steps, :test_results).order(Arel.sql("COALESCE(position, id) #{@tc_sort}"))
     @total_test_cases = @all_test_cases.size
     @total_tc_pages = (@total_test_cases.to_f / @test_cases_per_page).ceil
 

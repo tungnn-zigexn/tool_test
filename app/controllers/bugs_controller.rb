@@ -1,7 +1,7 @@
 class BugsController < ApplicationController
   before_action :set_project
   before_action :set_task
-  before_action :set_bug, only: %i[show edit update destroy]
+  before_action :set_bug, only: %i[show edit update destroy restore]
 
   def index
     # Sorting and Pagination
@@ -56,7 +56,7 @@ class BugsController < ApplicationController
 
   def restore
     @bug.restore!
-    redirect_to project_task_bugs_path(@project, @task), notice: 'Bug đã được khôi phục thành công.'
+    redirect_to project_task_bugs_path(@project, @task), notice: 'Bug has been restored successfully.'
   end
 
   def import_from_sheet
@@ -89,7 +89,7 @@ class BugsController < ApplicationController
   end
 
   def set_bug
-    @bug = @task.bugs.find(params[:id])
+    @bug = Bug.unscoped.find_by!(id: params[:id], task_id: @task.id)
   end
 
   def bug_params

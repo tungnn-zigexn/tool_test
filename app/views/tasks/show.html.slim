@@ -73,9 +73,6 @@
                 i.bi.bi-trash.me-2
                 | Delete Permanently
 
-        span.badge.rounded-pill.fs-7.py-2.px-3 class=((@task.status == 'Closed' || @task.status == 'resolved') ? 'bg-success' : 'bg-warning text-dark')
-          = @task.status
-
       / Layer 3: Meta Info
       .d-flex.align-items-center.gap-3.text-white-50.flex-wrap.small
         span
@@ -83,6 +80,23 @@
           | Redmine ##{@task.redmine_id}
         span •
         span Created by: #{@task.created_by_name || 'N/A'}
+        span •
+        - status_colors = { 'new' => 'bg-info', 'pending' => 'bg-warning text-dark', 'in progress' => 'bg-primary', 'resolved' => 'bg-success', 'waiting release' => 'bg-purple', 'closed' => 'bg-secondary' }
+        - status_text_colors = { 'new' => 'text-info', 'pending' => 'text-warning', 'in progress' => 'text-primary', 'resolved' => 'text-success', 'waiting release' => 'text-purple', 'closed' => 'text-secondary' }
+        - current_status_color = status_colors[@task.status&.downcase] || 'bg-light text-dark'
+        .dropdown.d-inline-block data-controller="task-status"
+          button.badge.rounded-pill.border-0.py-2.px-3.dropdown-toggle type="button" data-bs-toggle="dropdown" aria-expanded="false" style="cursor: pointer; font-size: 0.85rem;" class=current_status_color
+            = @task.status || 'N/A'
+          ul.dropdown-menu.dropdown-menu-start.shadow
+            - ['New', 'Pending', 'In Progress', 'Resolved', 'Waiting Release', 'Closed'].each do |s|
+              li
+                - item_color = status_text_colors[s.downcase] || 'text-dark'
+                button.dropdown-item.d-flex.align-items-center type="button" class=item_color data-action="click->task-status#change" data-task-status-value=s data-task-status-url-value=project_task_path(@project, @task)
+                  - if @task.status&.downcase == s.downcase
+                    i.bi.bi-check-circle-fill.me-2
+                  - else
+                    i.bi.bi-circle.me-2
+                  = s
 
     / Task Stats
     .card-body.bg-light.border-bottom
@@ -425,7 +439,7 @@
               .col-md-6
                 .mb-3
                   = f.label :status, "Status", class: 'form-label fw-bold'
-                  = f.select :status, ['New', 'In Progress', 'Resolved', 'Feedback', 'Closed'], { selected: 'New' }, { class: 'form-select' }
+                  = f.select :status, ['New', 'Pending', 'In Progress', 'Resolved', 'Waiting Release', 'Closed'], { selected: 'New' }, { class: 'form-select' }
           .modal-footer
             button.btn.btn-secondary type="button" data-bs-dismiss="modal" Cancel
             = f.submit "Create Subtask", class: 'btn btn-purple text-white'

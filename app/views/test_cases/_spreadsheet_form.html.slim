@@ -1,6 +1,7 @@
 = form_with model: [project, task, test_case], id: "inline-test-case-form", data: { spreadsheet_form_target: "formSection", action: "turbo:submit-end->spreadsheet-form#resetForm" }, class: "d-none spreadsheet-container mb-4" do |f|
   = hidden_field_tag :tc_sort, params[:tc_sort]
   = hidden_field_tag :tc_page, params[:tc_page]
+  = hidden_field_tag :insert_after, nil, id: 'insert-after-field'
   .card.border.shadow-sm.rounded-3.overflow-hidden
     
     / --- HEADER: Title & Actions ---

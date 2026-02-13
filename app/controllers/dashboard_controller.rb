@@ -3,7 +3,7 @@ class DashboardController < ApplicationController
     if current_user.admin?
       redirect_to admin_dashboard_path
     else
-      redirect_to user_dashboard_path
+      redirect_to projects_path
     end
   end
 

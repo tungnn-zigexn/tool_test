@@ -70,6 +70,16 @@ class TestCasesController < ApplicationController
     @test_case = @task.test_cases.build(test_case_params)
     @test_case.created_by = current_user
 
+    # Handle insert position
+    if params[:insert_after].present?
+      after_tc = @task.test_cases.find_by(id: params[:insert_after])
+      if after_tc&.position
+        new_position = after_tc.position + 1
+        TestCase.insert_at_position!(@task, new_position)
+        @test_case.position = new_position
+      end
+    end
+
     if @test_case.save
       set_existing_titles
       set_spreadsheet_data
@@ -187,7 +197,7 @@ class TestCasesController < ApplicationController
     @test_cases_page = 1 if @test_cases_page < 1
     @tc_sort = params[:tc_sort] == 'desc' ? 'desc' : 'asc'
     
-    @all_test_cases = @task.test_cases.active.includes(:test_steps, :test_results).order(id: @tc_sort.to_sym)
+    @all_test_cases = @task.test_cases.active.includes(:test_steps, :test_results).order(Arel.sql("COALESCE(position, id) #{@tc_sort}"))
     @total_test_cases = @all_test_cases.size
     @total_tc_pages = (@total_test_cases.to_f / @test_cases_per_page).ceil
 

@@ -10,9 +10,35 @@ export default class extends Controller {
   toggleForm(event) {
     if (event) event.preventDefault()
     this.formSectionTarget.classList.toggle("d-none")
+    // Clear insert_after when toggling normally (add to end)
+    const insertField = document.getElementById('insert-after-field')
+    if (insertField && !this._insertMode) insertField.value = ''
+    this._insertMode = false
     if (!this.formSectionTarget.classList.contains("d-none") && this.stepCount === 0) {
       this.addStep()
     }
+  }
+
+  insertAfter(event) {
+    event.preventDefault()
+    const tcId = event.currentTarget.dataset.testCaseId
+    const insertField = document.getElementById('insert-after-field')
+    if (insertField) insertField.value = tcId
+    
+    this._insertMode = true
+    // Show form if hidden
+    if (this.formSectionTarget.classList.contains("d-none")) {
+      this.toggleForm()
+    }
+    // Update form header to indicate insert mode
+    const header = this.formSectionTarget.querySelector('h6')
+    if (header) header.textContent = `Chèn Test Case sau TC #${tcId}`
+    
+    // Scroll to form
+    this.formSectionTarget.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    // Focus title
+    const titleInput = this.formSectionTarget.querySelector('[name*="[title]"]')
+    if (titleInput) setTimeout(() => titleInput.focus(), 300)
   }
 
   addStep(event) {
@@ -111,6 +137,14 @@ export default class extends Controller {
     this.basicGridTarget.querySelectorAll("input, select").forEach(el => el.value = "")
     this.formSectionTarget.querySelector('[name*="[function]"]').value = functionVal
     this.formSectionTarget.querySelector('[name*="[test_type]"]').value = testTypeVal
+    
+    // Clear insert_after field
+    const insertField = document.getElementById('insert-after-field')
+    if (insertField) insertField.value = ''
+    
+    // Reset header text
+    const header = this.formSectionTarget.querySelector('h6')
+    if (header) header.textContent = 'Tạo Test Case Mới'
     
     // Focus title for next entry if form is toggled again
     this.formSectionTarget.querySelector('[name*="[title]"]').focus()

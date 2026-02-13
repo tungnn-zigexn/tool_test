@@ -21,7 +21,14 @@ class TestCase < ApplicationRecord
 
   scope :by_type, ->(type) { where(test_type: type) }
   scope :by_target, ->(target) { where(target: target) }
-  scope :ordered, -> { order(id: :asc) }
+  scope :ordered, -> { order(Arel.sql("COALESCE(position, id) ASC, id ASC")) }
+
+  before_create :assign_default_position
+
+  # Chèn TC tại vị trí cụ thể, dịch các TC sau xuống
+  def self.insert_at_position!(task, target_position)
+    task.test_cases.active.where("position >= ?", target_position).update_all("position = position + 1")
+  end
 
   def step_count
     test_steps.count
@@ -112,6 +119,12 @@ class TestCase < ApplicationRecord
 
   def strip_title
     self.title = title.strip if title.present?
+  end
+
+  def assign_default_position
+    return if position.present?
+    max_pos = task.test_cases.maximum(:position) || 0
+    self.position = max_pos + 1
   end
 
   def update_task_counter

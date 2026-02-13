@@ -12,6 +12,8 @@
                             action: "click->test-case-modal#open" }, 
                     class: "text-primary text-decoration-none" do
             = "TC-#{index.to_s.rjust(3, '0')}"
+          button.btn.btn-link.btn-sm.text-success.p-0.d-block.mx-auto.mt-1 type="button" data-action="click->spreadsheet-form#insertAfter" data-test-case-id=test_case.id title="Chèn TC mới bên dưới"
+            i.bi.bi-plus-circle-fill
         
         td.text-center.align-middle rowspan=rowcount
           div.p-2
@@ -19,10 +21,10 @@
 
         - row_info = local_assigns[:row_info] || {}
         - unless row_info[:hide]
-          td.align-middle.text-break style="max-width: 120px;" rowspan=row_info[:rowspan]
+          td.align-middle.text-break style="max-width: 250px; overflow: hidden;" rowspan=row_info[:rowspan]
             div.p-2
-              .fw-bold.mb-1 id="test-case-#{test_case.id}-title" data-editable-cell-target="display" data-action="click->editable-cell#edit" data-field="title"
-                = test_case.title
+              .fw-bold.mb-1 id="test-case-#{test_case.id}-title" data-editable-cell-target="display" data-action="click->editable-cell#edit" data-field="title" title=test_case.title
+                = test_case.title.to_s.truncate(200)
 
       / Actions column for this step
       td.p-2.align-top.border-start
@@ -45,8 +47,11 @@
           td.text-center.align-middle.device-status-cell class=status_info[:bg_class] rowspan=rowcount
             = render 'test_cases/device_status_dropdown', test_case: test_case, device: device, status: status_info[:status]
         td.align-middle.p-2.note-cell rowspan=rowcount
-          .note-display id="test-case-#{test_case.id}-note" data-editable-cell-target="display" data-action="click->editable-cell#edit" data-field="note"
-            == test_case.note.presence || "-"
+          .note-display.rich-content id="test-case-#{test_case.id}-note" data-editable-cell-target="display" data-action="click->editable-cell#edit" data-field="note"
+            - if test_case.note.present?
+              == format_content_with_media_links(test_case.note)
+            - else
+              | -
 
 - else
   tr.test-case-row id="test-case-row-#{test_case.id}" data-controller="editable-cell" data-test-case-id=test_case.id data-project-id=test_case.task.project_id data-task-id=test_case.task.id
@@ -56,6 +61,8 @@
                         action: "click->test-case-modal#open" }, 
                 class: "text-primary text-decoration-none" do
         = "TC-#{index.to_s.rjust(3, '0')}"
+      button.btn.btn-link.btn-sm.text-success.p-0.d-block.mx-auto.mt-1 type="button" data-action="click->spreadsheet-form#insertAfter" data-test-case-id=test_case.id title="Chèn TC mới bên dưới"
+        i.bi.bi-plus-circle-fill
     
     td.text-center.align-middle
       div.p-2
@@ -63,10 +70,10 @@
 
     - row_info = local_assigns[:row_info] || {}
     - unless row_info[:hide]
-      td.align-middle.text-break style="max-width: 120px;" rowspan=row_info[:rowspan]
+      td.align-middle.text-break style="max-width: 250px; overflow: hidden;" rowspan=row_info[:rowspan]
         div.p-2
-          .fw-bold.mb-1 id="test-case-#{test_case.id}-title" data-editable-cell-target="display" data-action="click->editable-cell#edit" data-field="title"
-            = test_case.title
+          .fw-bold.mb-1 id="test-case-#{test_case.id}-title" data-editable-cell-target="display" data-action="click->editable-cell#edit" data-field="title" title=test_case.title
+            = test_case.title.to_s.truncate(200)
           
     td.p-2.text-muted.small.fst-italic No steps defined
     td.p-2.text-muted.small.fst-italic No results defined
@@ -79,5 +86,8 @@
       td.text-center.align-middle.device-status-cell class=status_info[:bg_class]
         = render 'test_cases/device_status_dropdown', test_case: test_case, device: device, status: status_info[:status]
     td.align-middle.p-2.note-cell
-      .note-display id="test-case-#{test_case.id}-note" data-editable-cell-target="display" data-action="click->editable-cell#edit" data-field="note"
-        == test_case.note.presence || "-"
+      .note-display.rich-content id="test-case-#{test_case.id}-note" data-editable-cell-target="display" data-action="click->editable-cell#edit" data-field="note"
+        - if test_case.note.present?
+          == format_content_with_media_links(test_case.note)
+        - else
+          | -

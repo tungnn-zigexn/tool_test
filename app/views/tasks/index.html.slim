@@ -14,33 +14,32 @@
     .col-md-3
       .card.shadow-sm.h-100.border-0.text-center
         .card-body
-          .h2.fw-bold.text-primary= @tasks.count
+          .h2.fw-bold.text-primary= @total_tasks
           .text-muted.small Total Tasks
     .col-md-3
       .card.shadow-sm.h-100.border-0.text-center
         .card-body
-          .h2.fw-bold.text-success= @tasks.sum(:number_of_test_cases)
+          .h2.fw-bold.text-success= Task.active.root_tasks.sum(:number_of_test_cases)
           .text-muted.small Test Cases
     .col-md-3
       .card.shadow-sm.h-100.border-0.text-center
         .card-body
-          .h2.fw-bold.text-info= @tasks.where.not(parent_id: nil).count
+          .h2.fw-bold.text-info= Task.active.where.not(parent_id: nil).count
           .text-muted.small Subtasks
     .col-md-3
       .card.shadow-sm.h-100.border-0.text-center
         .card-body
-          .h2.fw-bold.text-warning= @tasks.where(status: ['Closed', 'resolved']).count
+          .h2.fw-bold.text-warning= Task.active.where(status: ['closed']).count
           .text-muted.small Completed
 
   / Search & Filters
   .row.mb-4
     .col-12
       .card.shadow-sm.border-0
-        .card-body.py-3 data-controller="task-search"
+        .card-body.py-3
           = form_with url: tasks_path,
                       method: :get,
                       local: true,
-                      html: { data: { "task-search-target": "form" } },
                       class: "d-flex flex-wrap gap-3 align-items-center" do
             .flex-grow-1
               .input-group
@@ -50,21 +49,54 @@
                                  params[:q],
                                  class: "form-control border-start-0",
                                  placeholder: "Search tasks by title, description, or Redmine ID...",
-                                 autocomplete: "off",
-                                 data: { controller: "", "task-search-target": "input", action: "keydown->task-search#keydown" }
+                                 autocomplete: "off"
             .d-flex.align-items-center.gap-2
               = select_tag :status,
-                            options_for_select([['Tất cả', ''], ['New', 'new'], ['In Progress', 'in_progress'], ['Resolved', 'resolved'], ['Closed', 'closed']], params[:status]),
+                            options_for_select([['All', ''], ['New', 'new'], ['Pending', 'pending'], ['In Progress', 'in progress'], ['Resolved', 'resolved'], ['Waiting Release', 'waiting release'], ['Closed', 'closed']], params[:status]),
                             class: "form-select"
 
-            = submit_tag "Search", class: "btn btn-primary px-4 d-none d-md-inline-block"
+            = submit_tag "Search", class: "btn btn-primary px-4"
             - if params[:q].present? || params[:status].present?
               = link_to "Clear", tasks_path, class: "btn btn-outline-secondary"
 
   / Tasks List
   .d-flex.flex-column.gap-4
-    - @tasks.includes(:project, :test_cases, :subtasks).each do |task|
+    - @tasks.each do |task|
       = render 'tasks/task_card', task: task, show_project: true
+
+  / Pagination
+  - if @total_pages > 1
+    .d-flex.justify-content-between.align-items-center.mt-4
+      .text-muted.small
+        | Showing #{(@current_page - 1) * @per_page + 1}-#{[@current_page * @per_page, @total_tasks].min} of #{@total_tasks} tasks
+      nav
+        ul.pagination.pagination-sm.mb-0
+          / Previous
+          li.page-item class=("disabled" if @current_page <= 1)
+            - if @current_page > 1
+              = link_to url_for(request.query_parameters.merge(page: @current_page - 1)), class: "page-link", aria: { label: "Previous" } do
+                span aria-hidden="true" &laquo;
+            - else
+              span.page-link
+                span aria-hidden="true" &laquo;
+
+          / Page numbers
+          - (1..@total_pages).each do |p|
+            - if @total_pages <= 7 || (p <= 2) || (p >= @total_pages - 1) || ((p - @current_page).abs <= 1)
+              li.page-item class=("active" if p == @current_page)
+                = link_to p, url_for(request.query_parameters.merge(page: p)), class: "page-link"
+            - elsif (p == 3 && @current_page > 4) || (p == @total_pages - 2 && @current_page < @total_pages - 3)
+              li.page-item.disabled
+                span.page-link ...
+
+          / Next
+          li.page-item class=("disabled" if @current_page >= @total_pages)
+            - if @current_page < @total_pages
+              = link_to url_for(request.query_parameters.merge(page: @current_page + 1)), class: "page-link", aria: { label: "Next" } do
+                span aria-hidden="true" &raquo;
+            - else
+              span.page-link
+                span aria-hidden="true" &raquo;
 
   / Empty State
   - if @tasks.empty?
@@ -72,5 +104,4 @@
       .h1.mb-3 📋
       h3.h4.text-secondary No Tasks Found
       p.text-muted Import data from Redmine to see tasks
-
 

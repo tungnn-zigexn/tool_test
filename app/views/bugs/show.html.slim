@@ -37,15 +37,17 @@
             i.text-muted Không có nội dung chi tiết.
 
     - if @bug.image_video_url.present?
+      - normalized_url = @bug.image_video_url.strip
+      - normalized_url = "https://#{normalized_url}" unless normalized_url.match?(%r{\Ahttps?://}i)
       .card.shadow-sm.mb-4
         .card-header.bg-white
           h5.mb-0 Ảnh / Video minh họa
         .card-body
           .mb-2
             span.small.text-muted.me-2 Link gốc:
-            = link_to @bug.image_video_url, @bug.image_video_url, target: '_blank', class: 'small text-decoration-none'
+            = link_to normalized_url, normalized_url, target: '_blank', class: 'small text-decoration-none'
           .media-preview.mt-3
-            = render_media(@bug.image_video_url)
+            = render_media(normalized_url)
 
     - if @bug.notes.present?
       .card.shadow-sm.mb-4

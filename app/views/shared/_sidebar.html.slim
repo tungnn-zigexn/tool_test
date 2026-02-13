@@ -50,23 +50,11 @@
       .small.text-uppercase.fw-bold.text-muted.mb-3 Workspace
 
       li.nav-item.mb-2
-        = link_to user_dashboard_path, class: "nav-link d-flex align-items-center rounded-3 p-3 #{controller_name == 'dashboard' && action_name == 'user' ? 'active shadow-sm' : 'text-secondary hover-bg-light'}" do
-          i.bi.bi-house-heart-fill.me-3
-          span My Home
-
-      li.nav-item.mb-2
         = link_to projects_path, class: "nav-link d-flex align-items-center rounded-3 p-3 #{controller_name == 'projects' ? 'active shadow-sm' : 'text-secondary hover-bg-light'}" do
           i.bi.bi-folder2-open.me-3
-          span My Projects
+          span Projects
 
       li.nav-item.mb-2
         = link_to tasks_path, class: "nav-link d-flex align-items-center rounded-3 p-3 #{controller_name == 'tasks' ? 'active shadow-sm' : 'text-secondary hover-bg-light'}" do
           i.bi.bi-list-ul.me-3
-          span My Tasks
-
-      li.nav-item.mb-2
-        = link_to test_cases_path, class: "nav-link d-flex align-items-center rounded-3 p-3 #{controller_name == 'test_cases' ? 'active shadow-sm' : 'text-secondary hover-bg-light'}" do
-          i.bi.bi-shield-check.me-3
-          span Test Cases
-
-
+          span Tasks

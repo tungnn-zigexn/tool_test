@@ -74,7 +74,7 @@
                       i.bi.bi-arrow-right-circle.text-primary.mt-1
                       div
                         strong.text-secondary= "#{field.humanize}:"
-                        .d-flex.align-items-center.gap-2.mt-1
+                        .d-flex.align-items-center.gap-2.mt-1.flex-wrap style="max-width: 100%; overflow: hidden;"
                           - if values.is_a?(Array) && values.size == 2
                             - val0, val1 = values
                             / Smart resolution for common ID fields
@@ -84,11 +84,16 @@
                               - if val1.to_s.match?(/^\d+$/)
                                 - val1 = User.find_by(id: val1)&.name || val1
                             
-                            span.badge.bg-danger.bg-opacity-10.text-danger.text-decoration-line-through= val0.to_s.presence || '(trống)'
+                            - display_val0 = val0.to_s.presence || '(trống)'
+                            - display_val1 = val1.to_s.presence || '(trống)'
+                            span.badge.bg-danger.bg-opacity-10.text-danger.text-decoration-line-through.text-truncate title=display_val0 style="max-width: 350px;"
+                              = display_val0.truncate(80)
                             i.bi.bi-arrow-right.text-muted
-                            span.badge.bg-success.bg-opacity-10.text-success= val1.to_s.presence || '(trống)'
+                            span.badge.bg-success.bg-opacity-10.text-success.text-truncate title=display_val1 style="max-width: 350px;"
+                              = display_val1.truncate(80)
                           - else
-                            span.badge.bg-info.bg-opacity-10.text-info= values.to_s
+                            span.badge.bg-info.bg-opacity-10.text-info.text-truncate title=values.to_s style="max-width: 350px;"
+                              = values.to_s.truncate(80)
 
     / Pagination
     - if total_pages > 1
