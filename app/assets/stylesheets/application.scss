@@ -4,7 +4,52 @@
  @import "ui_components";
  @import "sidebar";
 
- /* Custom styles */
+ /* Notification dropdown in header */
+.notification-dropdown.dropdown-menu {
+  overflow: hidden;
+  .notification-dropdown-list {
+    -webkit-overflow-scrolling: touch;
+  }
+  /* Mỗi thông báo một ô riêng, có viền ngăn cách */
+  .notification-dropdown-item {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  }
+  .notification-dropdown-item:last-child {
+    border-bottom: none;
+  }
+  .notification-dropdown-body {
+    background: #fff;
+  }
+  .notification-item {
+    white-space: normal;
+    .text-break { word-break: break-word; }
+  }
+  /* Unread: giống trang notification — nền tím nhạt, viền trái */
+  .notification-item-unread {
+    background-color: rgba(102, 126, 234, 0.12) !important;
+    border-left: 3px solid #667eea;
+  }
+  /* Đã đọc: giống trang notification — nền xám, chữ mờ */
+  .notification-item-read {
+    background-color: #f8f9fa !important;
+    border-left: 3px solid transparent;
+  }
+  .notification-item-read .small.fw-semibold { font-weight: normal !important; color: #6c757d; }
+  .notification-item-read .small.text-muted { opacity: 0.9; }
+  /* Avoid stray badge at bottom */
+  > li:last-child .badge { display: none; }
+}
+
+/* Notifications index: read vs unread — override list-group-item */
+.list-group-item.notification-unread {
+  background-color: #fff !important;
+  border-left: 3px solid #667eea;
+}
+.list-group-item.notification-read {
+  background-color: #f8f9fa !important;
+  border-left: 3px solid #dee2e6;
+}
+.notification-read .fw-normal { color: #6c757d; }
  .status-badge {
    font-size: 0.8em;
  }

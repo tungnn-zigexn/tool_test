@@ -3,7 +3,7 @@
 class DailyImportRun < ApplicationRecord
   belongs_to :project
 
-  STATUSES = %w[pending running success failed].freeze
+  STATUSES = %w[pending running success failed skipped].freeze
 
   validates :status, inclusion: { in: STATUSES }
 

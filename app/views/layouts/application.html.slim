@@ -7,6 +7,8 @@ html
     meta name="mobile-web-app-capable" content="yes"
     = csrf_meta_tags
     = csp_meta_tag
+    - if user_signed_in? && ENV["ACTION_CABLE_URL"].present?
+      meta name="action-cable-url" content=ENV["ACTION_CABLE_URL"]
     = yield :head
     / Enable PWA manifest if configured
     / = tag.link rel: "manifest", href: pwa_manifest_path(format: :json)
@@ -28,7 +30,7 @@ html
       |     toggle.setAttribute('aria-expanded', 'false');
       |   });
       | });
-  body data-controller="layout"
+  body data-controller="layout notification-link"
     / Toast Container (fixed position)
     .toast-container.position-fixed.top-0.end-0.p-3 style="z-index: 9999;"
       - if notice.present?
