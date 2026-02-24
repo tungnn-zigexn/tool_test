@@ -19,11 +19,11 @@ production:
   daily_import_task:
     class: DailyImportJob
     queue: default
-    schedule: every day at 8am
+    schedule: every hour
 
 development:
   daily_import_task:
     class: DailyImportJob
     queue: default
-    # Giờ VN (khi Rails time_zone = Asia/Ho_Chi_Minh)
-    schedule: every day at 8:00am
+    # Chạy mỗi 1 giờ (giờ VN khi Rails time_zone = Asia/Ho_Chi_Minh)
+    schedule: every minute

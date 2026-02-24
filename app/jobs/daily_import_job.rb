@@ -12,7 +12,7 @@ class DailyImportJob < ApplicationJob
       return
     end
 
-    yesterday = Date.yesterday
+    today = Date.current
     base = RedmineService::BASE_URL.sub(/\/*\z/, "")
 
     projects_to_import.find_each do |project|
@@ -22,12 +22,12 @@ class DailyImportJob < ApplicationJob
         path_and_query = RedmineService.build_issues_url(
           RedmineService::BASE_URL,
           project_id: project.redmine_project_id,
-          created_on_from: yesterday,
-          created_on_to: yesterday
+          created_on_from: today,
+          created_on_to: today
         )
         full_issues_url = "#{base}#{path_and_query}"
 
-        lines << "[#{Time.current.strftime('%H:%M:%S')}] Import Redmine #{project.redmine_project_id} -> #{project.name} for #{yesterday}"
+        lines << "[#{Time.current.strftime('%H:%M:%S')}] Import Redmine #{project.redmine_project_id} -> #{project.name} for #{today}"
         Rails.logger.info "DailyImportJob: #{lines.last}"
 
         importer = RedmineBulkImportService.new(project.id, issues_url: full_issues_url)
@@ -37,16 +37,29 @@ class DailyImportJob < ApplicationJob
         end
 
         if success
-          lines << "[#{Time.current.strftime('%H:%M:%S')}] #{project.name} — Imported: #{importer.imported_tasks.count}, Skipped: #{importer.skipped_count}"
-          Rails.logger.info "DailyImportJob: #{lines.last}"
-          run.update!(
-            status: "success",
-            finished_at: Time.current,
-            imported_count: importer.imported_tasks.count,
-            skipped_count: importer.skipped_count,
-            log_output: lines.join("\n")
-          )
-          notify_cronjob(project, run, success: true, imported: importer.imported_tasks.count, skipped: importer.skipped_count)
+          if importer.imported_tasks.count == 0
+            lines << "[#{Time.current.strftime('%H:%M:%S')}] #{project.name} — Không có task mới (tìm thấy: #{importer.found_count}, đã có: #{importer.skipped_count})"
+            Rails.logger.info "DailyImportJob: #{lines.last}"
+            run.update!(
+              status: "skipped",
+              finished_at: Time.current,
+              imported_count: 0,
+              skipped_count: importer.skipped_count,
+              log_output: lines.join("\n")
+            )
+            notify_cronjob_no_new_tasks(project, run, found: importer.found_count, already_imported: importer.skipped_count)
+          else
+            lines << "[#{Time.current.strftime('%H:%M:%S')}] #{project.name} — Imported: #{importer.imported_tasks.count}, Skipped: #{importer.skipped_count}"
+            Rails.logger.info "DailyImportJob: #{lines.last}"
+            run.update!(
+              status: "success",
+              finished_at: Time.current,
+              imported_count: importer.imported_tasks.count,
+              skipped_count: importer.skipped_count,
+              log_output: lines.join("\n")
+            )
+            notify_cronjob(project, run, success: true, imported: importer.imported_tasks.count, skipped: importer.skipped_count)
+          end
         else
           err = importer.errors.join(", ")
           lines << "[#{Time.current.strftime('%H:%M:%S')}] FAILED — #{err}"
@@ -82,6 +95,17 @@ class DailyImportJob < ApplicationJob
       "Imported #{imported}, skipped #{skipped} tasks."
     else
       "Failed: #{error.to_s.truncate(120)}"
+    end
+    link = "/projects/#{project.id}/daily_import_runs/#{run.id}"
+    Notification.create!(category: "cronjob", title: title, message: message, link: link)
+  end
+
+  def notify_cronjob_no_new_tasks(project, run, found:, already_imported:)
+    title = "Daily Import: #{project.name}"
+    message = if found == 0
+      "Cronjob kiểm tra không thấy task mới từ Redmine — không chạy import."
+    else
+      "Cronjob kiểm tra: #{found} task trên Redmine đã được import trước đó — không có task mới."
     end
     link = "/projects/#{project.id}/daily_import_runs/#{run.id}"
     Notification.create!(category: "cronjob", title: title, message: message, link: link)

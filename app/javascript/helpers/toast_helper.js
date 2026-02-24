@@ -3,8 +3,9 @@
  * @param {string} message - The message to display
  * @param {string} type - The type of toast (success, error, warning, info)
  * @param {number} delay - Auto-hide delay in milliseconds (default: 5000)
+ * @param {object} options - Optional: { link: url } to make toast clickable and redirect
  */
-export function showToast(message, type = 'info', delay = 5000) {
+export function showToast(message, type = 'info', delay = 5000, options = {}) {
   // Check if Bootstrap is loaded
   if (typeof bootstrap === 'undefined' || !bootstrap.Toast) {
     console.error('Bootstrap Toast is not available')
@@ -52,16 +53,28 @@ export function showToast(message, type = 'info', delay = 5000) {
   toastEl.setAttribute('role', 'alert')
   toastEl.setAttribute('aria-live', 'assertive')
   toastEl.setAttribute('aria-atomic', 'true')
-  
+
+  if (options.link) {
+    toastEl.style.cursor = 'pointer'
+  }
+
   toastEl.innerHTML = `
     <div class="d-flex">
-      <div class="toast-body d-flex align-items-center">
+      <div class="toast-body d-flex align-items-center flex-grow-1">
         <i class="bi ${config.icon} fs-5 me-2"></i>
         <span>${message}</span>
       </div>
       <button type="button" class="btn-close me-2 m-auto ${config.closeClass}" data-bs-dismiss="toast" aria-label="Close"></button>
     </div>
   `
+
+  if (options.link) {
+    toastEl.addEventListener('click', function (e) {
+      if (!e.target.closest('.btn-close')) {
+        window.location.href = options.link
+      }
+    })
+  }
 
   // Add to container
   container.appendChild(toastEl)
