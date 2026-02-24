@@ -70,4 +70,34 @@ export default class extends Controller {
       }, 50)
     }
   }
+
+  formatLink(event) {
+    event.preventDefault()
+    if (!this.activeCell) return
+
+    // Ensure we have a selection to link
+    if (!this.savedSelection || this.savedSelection.collapsed) {
+      alert("Please select some text first to apply a link.")
+      return
+    }
+
+    const url = window.prompt("Enter the URL:")
+    if (!url) return // User cancelled or entered empty
+
+    this.activeCell.dataset.formatting = "true"
+    this.restoreSelection()
+
+    if (this.activeCell.contentEditable === "true") {
+      // Create the link
+      document.execCommand("createLink", false, url)
+      
+      // Trigger input event to ensure changes are synced if applicable
+      this.activeCell.dispatchEvent(new Event('input', { bubbles: true }))
+      
+      setTimeout(() => {
+        this.saveSelection()
+        if (this.activeCell) delete this.activeCell.dataset.formatting
+      }, 50)
+    }
+  }
 }

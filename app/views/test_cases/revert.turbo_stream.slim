@@ -1,0 +1,11 @@
+= render template: "test_cases/soft_delete"
+
+= turbo_stream.append "body" do
+  script
+    | (function() {
+    |   var modalEl = document.getElementById('testCaseHistoryModal');
+    |   if (modalEl && window.bootstrap) {
+    |     var modal = bootstrap.Modal.getInstance(modalEl);
+    |     if (modal) { modal.hide(); }
+    |   }
+    | })();

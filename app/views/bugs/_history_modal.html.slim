@@ -1,0 +1,66 @@
+.modal-header.bg-info.text-white
+  h5.modal-title
+    i.bi.bi-clock-history.me-2
+    | Bug History
+  button.btn-close.btn-close-white type="button" data-bs-dismiss="modal" aria-label="Close"
+
+.modal-body.p-0
+  - if @history_logs.any?
+    - log = @history_logs.first
+    .activity-history.p-4
+      .d-flex.justify-content-between.align-items-start.mb-3
+        .d-flex.align-items-center
+          .user-avatar-circle.bg-primary.text-white.rounded-circle.d-flex.align-items-center.justify-content-center.me-3 style="width: 40px; height: 40px; font-size: 1.2rem;"
+            = log.user&.name&.first&.upcase || 'U'
+          div
+            .fw-bold.fs-5 = log.user&.name || 'System'
+            .text-muted = "#{time_ago_in_words(log.created_at)} ago"
+        span.badge class="#{log.action_type == 'create' ? 'bg-success' : 'bg-info'} fs-6 py-2 px-3"
+          = log.action_type.upcase
+
+      .changes-container.mt-4
+        - if log.metadata.present?
+          - log.metadata.each do |field, values|
+            - next if field == 'updated_at'
+            - old_val, _new_val = values.is_a?(Array) ? values : [nil, values]
+
+            .change-item.mb-4.rounded.border.border-primary.shadow-sm.overflow-hidden
+              .bg-light.px-3.py-2.border-bottom.d-flex.justify-content-between.align-items-center
+                span.fw-bold.text-primary.fs-5 = field.titleize
+
+              .p-3.bg-white
+                .mb-2.fw-bold.text-muted Previous value:
+                .p-3.bg-light.rounded.border.overflow-auto style="max-height: 250px; font-size: 14px;"
+                  - if old_val.present?
+                    == format_content_with_media_links(old_val.to_s)
+                  - else
+                    span.text-muted.fst-italic [No content]
+        - else
+          .p-3.bg-light.rounded.text-muted.text-center No detailed data available
+          
+      - if @total_pages.to_i > 1
+        .d-flex.justify-content-between.align-items-center.mt-4.pt-3.border-top
+          - if @page.to_i < @total_pages.to_i
+            a.btn.btn-outline-primary href="#" onclick="event.preventDefault(); var c = document.getElementById('bugHistoryModalContent'); c.innerHTML='<div class=\'modal-body p-5 text-center\'><div class=\'spinner-border text-primary\' role=\'status\'></div></div>'; fetch('#{history_project_task_bug_path(@project, @task, @bug, page: @page.to_i + 1)}').then(function(r){return r.text()}).then(function(html){c.innerHTML=html});"
+              i.bi.bi-chevron-left.me-2
+              | Older
+          - else
+            div style="width: 100px;"
+            
+          span.text-muted Save #{@page} / #{@total_pages}
+          
+          - if @page.to_i > 1
+            a.btn.btn-outline-primary href="#" onclick="event.preventDefault(); var c = document.getElementById('bugHistoryModalContent'); c.innerHTML='<div class=\'modal-body p-5 text-center\'><div class=\'spinner-border text-primary\' role=\'status\'></div></div>'; fetch('#{history_project_task_bug_path(@project, @task, @bug, page: @page.to_i - 1)}').then(function(r){return r.text()}).then(function(html){c.innerHTML=html});"
+              | Newer
+              i.bi.bi-chevron-right.ms-2
+          - else
+            div style="width: 100px;"
+
+  - else
+    .p-5.text-center.text-muted
+      i.bi.bi-info-circle.display-2.d-block.mb-3.text-secondary
+      h4 No change history yet
+      p.mb-0 Your changes will be saved here.
+
+.modal-footer.bg-light
+  button.btn.btn-secondary type="button" data-bs-dismiss="modal" Close

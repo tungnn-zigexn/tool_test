@@ -4,7 +4,7 @@ class ProjectHistoriesController < ApplicationController
   before_action :set_project, if: -> { params[:project_id].present? }
 
   # GET /project_histories
-  # Hiển thị tất cả lịch sử của tất cả projects
+  # Display all histories of all projects
   def index
     @project_histories = ActivityLog
                          .includes(:trackable, :user)
@@ -19,7 +19,7 @@ class ProjectHistoriesController < ApplicationController
   end
 
   # GET /project_histories/:id
-  # Hiển thị chi tiết một lịch sử
+  # Display details of a single history
   def show
     @project_history = ActivityLog.find(params[:id])
     @project ||= @project_history.trackable

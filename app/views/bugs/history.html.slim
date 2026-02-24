@@ -1,0 +1,12 @@
+- if @error_message.present?
+  .modal-header.bg-danger.text-white
+    h5.modal-title Error Loading History
+    button.btn-close.btn-close-white type="button" data-bs-dismiss="modal" aria-label="Close"
+  .modal-body.p-4
+    .alert.alert-danger.mb-0
+      p.fw-bold Something went wrong while loading history:
+      pre.small.mb-0 = @error_message
+  .modal-footer
+    button.btn.btn-secondary type="button" data-bs-dismiss="modal" Close
+- else
+  = render partial: "bugs/history_modal"

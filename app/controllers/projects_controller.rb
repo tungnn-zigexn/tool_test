@@ -88,11 +88,11 @@ class ProjectsController < ApplicationController
     
     Rails.logger.info "[DATE FILTER DEBUG] Project: #{@project.id}, Preset: #{@selected_preset}, Range: #{@start_date} to #{@end_date}"
 
-    # 1. Toàn bộ tasks của project (áp dụng filter ngày) - Dùng cho thống kê
+    # 1. All tasks of the project (apply date filter) - For statistics
     @tasks = @project.tasks.active
     @tasks = @tasks.where(created_at: @start_date.beginning_of_day..@end_date.end_of_day) if @start_date && @end_date
 
-    # 2. Base query cho danh sách tasks chính (Root tasks + Filter ngày)
+    # 2. Base query for main tasks list (Root tasks + Date filter)
     base_tasks = @project.root_tasks.includes(:assignee, :test_cases, :subtasks)
     base_tasks = base_tasks.where(created_at: @start_date.beginning_of_day..@end_date.end_of_day) if @start_date && @end_date
 
@@ -133,7 +133,7 @@ class ProjectsController < ApplicationController
     # Archived tasks for restoration modal
     @archived_tasks = @project.archived_root_tasks.order(deleted_at: :desc)
 
-    # Danh sách Redmine project (theo tên) cho dropdown Bulk Import - hiện sẵn để user chọn
+    # List of Redmine projects (by name) for Bulk Import dropdown - pre-loaded for user selection
     @redmine_projects = begin
       current_user&.admin? ? RedmineService.get_projects_list : []
     rescue StandardError

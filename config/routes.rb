@@ -69,6 +69,8 @@ Rails.application.routes.draw do
         member do
           patch :soft_delete
           patch :restore
+          get :history
+          post :revert
         end
         collection do
           post :import_from_sheet
@@ -84,6 +86,7 @@ Rails.application.routes.draw do
         member do
           patch :soft_delete
           patch :restore
+          get :history
         end
         collection do
           post :import_from_sheet

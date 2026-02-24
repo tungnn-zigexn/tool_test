@@ -196,7 +196,7 @@
 
 /* Spreadsheet Table */
 .spreadsheet-table {
-  font-size: 1.4rem;
+  font-size: 1.1rem;
   table-layout: fixed;
   width: 100%;
   border-collapse: separate;
@@ -235,6 +235,23 @@
   .target-column { width: 150px; }
   .device-column { width: 140px; }
   .note-column { width: 250px; }
+  .actions-column { width: 100px; }
+}
+
+/* Bug Spreadsheet Column Widths */
+.bug-spreadsheet-table {
+  .bug-id-col { width: 80px; }
+  .bug-content-col { width: 300px; min-width: 250px; }
+  .bug-app-col { width: 100px; }
+  .bug-category-col { width: 120px; }
+  .bug-type-col { width: 100px; }
+  .bug-priority-col { width: 100px; }
+  .bug-dev-col { width: 120px; }
+  .bug-test-col { width: 120px; }
+  .bug-status-col { width: 100px; }
+  .bug-media-col { width: 200px; min-width: 150px; }
+  .bug-note-col { width: 195px; min-width: 150px; }
+  .bug-actions-col { width: 65px; }
 }
 
 /* Full-Width Device Status Cells */

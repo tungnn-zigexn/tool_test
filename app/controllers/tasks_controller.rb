@@ -27,7 +27,7 @@ class TasksController < ApplicationController
     # Search by title, description, or Redmine ID
     if params[:q].present?
       q = "%#{params[:q]}%"
-      @tasks = @tasks.where("tasks.title LIKE :q OR tasks.description LIKE :q OR CAST(tasks.redmine_id AS TEXT) LIKE :q", q: q)
+      @tasks = @tasks.where('tasks.title LIKE :q OR tasks.description LIKE :q OR CAST(tasks.redmine_id AS TEXT) LIKE :q', q: q)
     end
 
     # Pagination (10 per page)
@@ -46,10 +46,15 @@ class TasksController < ApplicationController
     # Pagination for test cases
     @test_cases_page = (params[:tc_page] || 1).to_i
     @test_cases_per_page = 10
-    
+
     # Sorting logic
     @tc_sort = params[:tc_sort] == 'desc' ? 'desc' : 'asc'
-    @all_test_cases = @task.test_cases.active.includes(:test_steps, :test_results).order(Arel.sql("COALESCE(position, id) #{@tc_sort}"))
+    @show_archived = params[:show_archived] == '1'
+
+    query = @task.test_cases.includes(:test_steps, :test_results)
+    query = @show_archived ? query.deleted : query.active
+
+    @all_test_cases = query.order(Arel.sql("COALESCE(position, id) #{@tc_sort}"))
     @total_test_cases = @all_test_cases.size
     @total_tc_pages = (@total_test_cases.to_f / @test_cases_per_page).ceil
 
@@ -58,8 +63,6 @@ class TasksController < ApplicationController
     tc_end = tc_start + @test_cases_per_page - 1
     @paginated_test_cases = @all_test_cases.to_a[tc_start..tc_end] || []
 
-    # Fetch archived (soft-deleted) test cases for the restoration modal
-    @archived_test_cases = @task.test_cases.deleted.ordered
     @existing_titles = @task.test_cases.active.pluck(:title).uniq.compact.sort
 
     respond_to do |format|
@@ -257,7 +260,7 @@ class TasksController < ApplicationController
   end
 
   # GET /projects/:project_id/tasks/list_redmine_issues
-  # List Redmine "4. Testing" issues with already_imported flag. Filter by Redmine project (ID hoặc identifier) and date range.
+  # List Redmine "4. Testing" issues with already_imported flag. Filter by Redmine project (ID or identifier) and date range.
   def list_redmine_issues
     issues_url = params[:issues_url].presence || "#{RedmineService::BASE_URL}/issues.json"
     redmine_project_input = params[:redmine_project_id].to_s.strip.presence
@@ -279,7 +282,7 @@ class TasksController < ApplicationController
   end
 
   # POST /projects/:project_id/tasks/import_from_redmine_url
-  # Bulk import từ Redmine issues URL - chỉ lấy các issue "4. Testing"
+  # Bulk import from Redmine issues URL - only fetch "4. Testing" issues
   def import_from_redmine_url
     issues_url = params[:issues_url].presence || "#{RedmineService::BASE_URL}/issues.json"
     issue_ids = params[:issue_ids].present? ? params[:issue_ids].reject(&:blank?) : nil
@@ -333,7 +336,7 @@ class TasksController < ApplicationController
       r = ProjectsController::DATE_PRESETS[preset].call
       [r.begin, r.end]
     else
-      # Mặc định 30 ngày gần đây nếu không có filter
+      # Default to last 30 days if no filter
       r = ProjectsController::DATE_PRESETS['last_30_days'].call
       [r.begin, r.end]
     end
@@ -379,17 +382,17 @@ class TasksController < ApplicationController
   def handle_bulk_import_success(service)
     tasks = service.imported_tasks
     task_count = tasks.length
-    # Tổng test cases thực tế (đã import từ Sheet) để biết import test case có thành công không
+    # Total actual test cases (imported from Sheet) to know if import was successful
     total_test_cases = tasks.sum { |t| t.test_cases.where(deleted_at: nil).count }
     tasks_with_tc = tasks.count { |t| t.test_cases.where(deleted_at: nil).exists? }
 
-    notice = "Bulk import hoàn tất: #{task_count} task(s) 4. Testing đã import. "
-    notice += if total_test_cases.positive?
-                "Test cases: #{total_test_cases} (trong #{tasks_with_tc} task có test case)."
+    notice = "Bulk import completed: #{task_count} task(s) 4. Testing imported. "
+    notice += if tasks_with_tc.positive?
+                "Test cases: #{total_test_cases} (in #{tasks_with_tc} task(s) with test cases)."
               elsif task_count.positive?
-                'Test cases: 0 — kiểm tra testcase_link và Import từ Sheet trong từng task để lấy test case.'
+                'Test cases: 0 — check testcase_link and Import from Sheet in each task to get test cases.'
               else
-                'Không có task nào được import.'
+                'No tasks were imported.'
               end
 
     respond_to do |format|

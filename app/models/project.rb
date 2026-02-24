@@ -27,7 +27,7 @@ class Project < ApplicationRecord
   # redmine_project_id (string, optional): Redmine project identifier for daily import.
   # When set and daily import is enabled, tasks are imported from this Redmine project into this local project.
 
-  # Đếm tasks (không tính subtask)
+  # Count tasks (excluding subtasks)
   def task_count
     root_tasks.count
   end

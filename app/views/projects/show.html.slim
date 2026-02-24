@@ -181,7 +181,7 @@
             button.btn.btn-secondary type="button" data-bs-dismiss="modal" data-import-progress-target="cancelButton" Cancel
             = f.submit "Import", class: 'btn btn-success', data: { import_progress_target: "submitButton" }
 
-  / Bulk Import Modal (4. Testing only) - Tabs: Tải danh sách (filter theo project + thời gian) | Danh sách task (đã/chưa import, chọn để import)
+  / Bulk Import Modal (4. Testing only) - Tabs: Load list (filter by project + date) | Task list (imported/not imported, select to import)
   .modal.fade#importRedmineUrlModal tabindex="-1" aria-hidden="true" data-controller="bulk-import import-progress" data-import-progress-estimated-time-value="120" data-bulk-import-list-url-value=list_redmine_issues_project_tasks_path(@project) data-bulk-import-import-url-value=import_selected_redmine_issues_project_tasks_path(@project)
     .modal-dialog.modal-lg
       .modal-content
@@ -325,7 +325,7 @@
                   tr
                     td.text-center.py-4 colspan="4" No archived tasks.
         .modal-footer
-          button.btn.btn-secondary type="button" data-bs-dismiss="modal" Đóng
+          button.btn.btn-secondary type="button" data-bs-dismiss="modal" Close
 
 
 

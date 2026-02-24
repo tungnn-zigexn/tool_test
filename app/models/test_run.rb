@@ -58,7 +58,7 @@ class TestRun < ApplicationRecord
     "#{pass_count} pass, #{fail_count} fail, #{not_run_count} not run"
   end
 
-  # Tính thời gian thực thi
+  # Calculate execution time
   def execution_duration
     return nil if started_at.nil? || completed_at.nil?
 
@@ -82,7 +82,7 @@ class TestRun < ApplicationRecord
     end
   end
 
-  # Tự động cập nhật trạng thái
+  # Automatically update status
   def start!
     update!(status: 'running', started_at: Time.current)
   end

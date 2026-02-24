@@ -10,8 +10,8 @@ class TestStepsController < ApplicationController
     )
 
     # Initialize default contents with placeholder text to pass presence validation
-    @test_step.test_step_contents.build(content_category: 'action', content_type: 'text', content_value: 'Nhấn để nhập thao tác...', display_order: 1)
-    @test_step.test_step_contents.build(content_category: 'expectation', content_type: 'text', content_value: 'Nhấn để nhập kết quả...', display_order: 1)
+    @test_step.test_step_contents.build(content_category: 'action', content_type: 'text', content_value: 'Click to enter action...', display_order: 1)
+    @test_step.test_step_contents.build(content_category: 'expectation', content_type: 'text', content_value: 'Click to enter expected result...', display_order: 1)
 
     if @test_step.save
       respond_to do |format|

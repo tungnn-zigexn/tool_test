@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_13_010000) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_23_144311) do
   create_table "activity_logs", force: :cascade do |t|
     t.integer "user_id", null: false
     t.string "trackable_type", null: false
@@ -71,6 +71,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_13_010000) do
     t.datetime "updated_at", null: false
     t.string "dev_name_raw"
     t.string "tester_name_raw"
+    t.string "bug_type"
     t.index ["application"], name: "index_bugs_on_application"
     t.index ["category"], name: "index_bugs_on_category"
     t.index ["deleted_at"], name: "index_bugs_on_deleted_at"

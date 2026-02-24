@@ -81,16 +81,20 @@ export default class extends Controller {
   }
 
   saveChange(field, contentId, value, display) {
-    const { projectId, taskId, testCaseId } = this.element.dataset
-    let url = `/projects/${projectId}/tasks/${taskId}/test_cases/${testCaseId}`
-    let params = { test_case: {} }
+    const model = this.element.dataset.model || 'test_case'
+    const isTestCase = model === 'test_case'
+    const { projectId, taskId, testCaseId, bugId } = this.element.dataset
+    const entityId = isTestCase ? testCaseId : bugId
+    const entityPath = isTestCase ? 'test_cases' : 'bugs'
+    let url = `/projects/${projectId}/tasks/${taskId}/${entityPath}/${entityId}`
+    let params = {}
 
-    if (contentId) {
+    if (contentId && isTestCase) {
       // Direct update to test step content via shallow route
       url = `/test_step_contents/${contentId}`
       params = { test_step_content: { [field]: value } }
     } else {
-      params.test_case[field] = value
+      params[model] = { [field]: value }
     }
 
     fetch(url, {

@@ -120,7 +120,7 @@ class RedmineImportService
   def extract_spreadsheet_id(url)
     return url if url.blank?
 
-    # Extract Google Spreadsheet ID từ URL
+    # Extract Google Spreadsheet ID from URL
     # Format: https://docs.google.com/spreadsheets/d/SPREADSHEET_ID/edit
     match = url.match(%r{/spreadsheets/d/([a-zA-Z0-9_-]+)})
     match ? match[1] : url
@@ -176,7 +176,7 @@ class RedmineImportService
 
     Rails.logger.info "Found testcase link: #{@task.testcase_link}, start import test cases..."
 
-    # Import test cases từ Google Sheet
+    # Import test cases from Google Sheet
     spreadsheet_id = extract_spreadsheet_id(@task.testcase_link)
     import_service = TestCaseImportService.new(@task, spreadsheet_id)
 

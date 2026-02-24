@@ -1,0 +1,94 @@
+- users = User.active.order(:name)
+
+tr.bug-row id="bug-row-#{bug.id}" class=(bug.deleted? ? 'table-secondary opacity-75' : '') data-controller="editable-cell" data-bug-id=bug.id data-project-id=bug.task.project_id data-task-id=bug.task.id data-model="bug"
+  / ID Column
+  td.text-center.fw-bold.bg-light.align-middle.bug-id-col
+    span.text-dark
+      = "BUG-#{index.to_s.rjust(3, '0')}"
+
+  / Content Column (editable, with history)
+  td.align-middle.text-break.position-relative.bug-content-col
+    a.cell-history-indicator href="#" title="View history" data-bs-toggle="modal" data-bs-target="#bugHistoryModal" onclick="event.preventDefault(); var c = document.getElementById('bugHistoryModalContent'); c.innerHTML='<div class=\'modal-body p-5 text-center\'><div class=\'spinner-border text-primary\' role=\'status\'></div><p class=\'mt-2\'>Loading...</p></div>'; fetch('#{history_project_task_bug_path(bug.task.project, bug.task, bug)}').then(function(r){return r.text()}).then(function(html){c.innerHTML=html}).catch(function(e){c.innerHTML='<div class=\'modal-body p-4\'><div class=\'alert alert-danger\'>Error: '+e.message+'</div></div>'});"
+      i.bi.bi-clock-history
+    div.p-2
+      .rich-content id="bug-#{bug.id}-content" data-editable-cell-target="display" data-action="click->editable-cell#edit" data-field="content" title=strip_tags(bug.content.to_s)
+        - if bug.content.present?
+          == format_content_with_media_links(bug.content)
+        - else
+          | -
+
+  / Application Column (dropdown - always show text)
+  td.text-center.align-middle.bug-app-col
+    = render 'bugs/metadata_dropdown', bug: bug, field: 'application'
+
+  / Category Column (dropdown - always show text)
+  td.text-center.align-middle.bug-category-col
+    = render 'bugs/metadata_dropdown', bug: bug, field: 'category'
+
+  / Bug Type Column (dropdown)
+  td.text-center.align-middle.bug-type-col
+    = render 'bugs/metadata_dropdown', bug: bug, field: 'bug_type'
+
+  / Priority Column (dropdown)
+  td.text-center.align-middle.bug-priority-col
+    = render 'bugs/metadata_dropdown', bug: bug, field: 'priority'
+
+  / Dev Column (user dropdown)
+  td.align-middle.bug-dev-col
+    .dropdown id="bug-#{bug.id}-dev-cell"
+      button.btn.btn-sm.text-start.w-100.fw-medium.px-2.py-1 type="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-popper-config='{"strategy":"fixed"}' style="border: none; background: transparent;"
+        = bug.dev_name
+      ul.dropdown-menu.shadow-sm style="max-height: 250px; overflow-y: auto;"
+        li
+          button.dropdown-item type="button" onclick="updateBugField(#{bug.id}, #{bug.task.project_id}, #{bug.task.id}, 'dev_id', '', this)" class=(bug.dev_id.nil? ? 'active' : '')
+            span.text-muted -- Unassigned --
+        - users.each do |user|
+          li
+            button.dropdown-item type="button" onclick="updateBugField(#{bug.id}, #{bug.task.project_id}, #{bug.task.id}, 'dev_id', '#{user.id}', this)" class=(bug.dev_id == user.id ? 'active' : '')
+              = user.name
+
+  / Tester Column (user dropdown)
+  td.align-middle.bug-test-col
+    .dropdown id="bug-#{bug.id}-tester-cell"
+      button.btn.btn-sm.text-start.w-100.fw-medium.px-2.py-1 type="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-popper-config='{"strategy":"fixed"}' style="border: none; background: transparent;"
+        = bug.tester_name
+      ul.dropdown-menu.shadow-sm style="max-height: 250px; overflow-y: auto;"
+        li
+          button.dropdown-item type="button" onclick="updateBugField(#{bug.id}, #{bug.task.project_id}, #{bug.task.id}, 'tester_id', '', this)" class=(bug.tester_id.nil? ? 'active' : '')
+            span.text-muted -- Unassigned --
+        - users.each do |user|
+          li
+            button.dropdown-item type="button" onclick="updateBugField(#{bug.id}, #{bug.task.project_id}, #{bug.task.id}, 'tester_id', '#{user.id}', this)" class=(bug.tester_id == user.id ? 'active' : '')
+              = user.name
+
+  / Status Column (dropdown)
+  td.text-center.align-middle.bug-status-col
+    = render 'bugs/metadata_dropdown', bug: bug, field: 'status'
+
+  / Image/Video Column (editable, with history)
+  td.align-middle.text-break.position-relative.bug-media-col
+    a.cell-history-indicator href="#" title="View history" data-bs-toggle="modal" data-bs-target="#bugHistoryModal" onclick="event.preventDefault(); var c = document.getElementById('bugHistoryModalContent'); c.innerHTML='<div class=\'modal-body p-5 text-center\'><div class=\'spinner-border text-primary\' role=\'status\'></div><p class=\'mt-2\'>Loading...</p></div>'; fetch('#{history_project_task_bug_path(bug.task.project, bug.task, bug)}').then(function(r){return r.text()}).then(function(html){c.innerHTML=html}).catch(function(e){c.innerHTML='<div class=\'modal-body p-4\'><div class=\'alert alert-danger\'>Error: '+e.message+'</div></div>'});"
+      i.bi.bi-clock-history
+    div.p-2
+      .rich-content id="bug-#{bug.id}-image_video_url" data-editable-cell-target="display" data-action="click->editable-cell#edit" data-field="image_video_url" title=strip_tags(bug.image_video_url.to_s)
+        - if bug.image_video_url.present?
+          == format_content_with_media_links(bug.image_video_url)
+        - else
+          | -
+
+  / Note Column (editable)
+  td.align-middle.p-2.bug-note-col
+    .note-display.rich-content id="bug-#{bug.id}-notes" data-editable-cell-target="display" data-action="click->editable-cell#edit" data-field="notes"
+      - if bug.notes.present?
+        == format_content_with_media_links(bug.notes)
+      - else
+        | -
+
+  / Actions Column
+  td.align-middle.text-center.p-1.bug-actions-col
+    - if bug.active?
+      = button_to soft_delete_project_task_bug_path(bug.task.project, bug.task, bug), method: :patch, class: "btn btn-link text-warning p-0", title: "Archive", form: { data: { turbo_confirm: "Are you sure you want to archive this bug?" } } do
+        i.bi.bi-archive
+    - else
+      = button_to restore_project_task_bug_path(bug.task.project, bug.task, bug), method: :patch, class: "btn btn-link text-success p-0", title: "Restore" do
+        i.bi.bi-arrow-counterclockwise

@@ -1,7 +1,7 @@
-/ Danh sách các field quan trọng để hiển thị
+/ List of important fields to display
 - important_fields = %w[title description status assignee_id priority start_date due_date percent_done estimated_time spent_time device tester_id result notes]
 
-/ Lọc chỉ lấy các log có thay đổi quan trọng
+/ Filter only logs with important changes
 - filtered_logs = logs.select do |log|
   - has_important_changes = false
   - if log.metadata.present?
@@ -27,9 +27,9 @@
   .d-flex.justify-content-between.align-items-center.mb-3.pb-3.border-bottom
     .d-flex.align-items-center
       i.bi.bi-clock-history.me-2.text-primary.fs-5
-      h5.mb-0.fw-bold Lịch sử thao tác
+      h5.mb-0.fw-bold Activity History
     - if total_logs > 0
-      span.badge.bg-primary.bg-opacity-10.text-primary.px-3.py-2= "#{total_logs} thay đổi"
+      span.badge.bg-primary.bg-opacity-10.text-primary.px-3.py-2= "#{total_logs} changes"
 
   - if paginated_logs.any?
     / History Items
@@ -63,7 +63,7 @@
                   - next unless important_fields.include?(field)
                   - next if %w[id created_at updated_at deleted_at task_id project_id test_case_id].include?(field)
                   
-                  / Bỏ qua các trường N/A -> N/A hoặc empty -> empty
+                  / Skip fields with N/A -> N/A or empty -> empty
                   - if values.is_a?(Array) && values.size == 2
                     - val0, val1 = values
                     - next if (val0.to_s.strip.empty? || val0.to_s.downcase == 'n/a') && (val1.to_s.strip.empty? || val1.to_s.downcase == 'n/a')
@@ -84,8 +84,8 @@
                               - if val1.to_s.match?(/^\d+$/)
                                 - val1 = User.find_by(id: val1)&.name || val1
                             
-                            - display_val0 = val0.to_s.presence || '(trống)'
-                            - display_val1 = val1.to_s.presence || '(trống)'
+                            - display_val0 = val0.to_s.presence || '(empty)'
+                            - display_val1 = val1.to_s.presence || '(empty)'
                             span.badge.bg-danger.bg-opacity-10.text-danger.text-decoration-line-through.text-truncate title=display_val0 style="max-width: 350px;"
                               = display_val0.truncate(80)
                             i.bi.bi-arrow-right.text-muted
@@ -130,4 +130,4 @@
   - else
     .text-center.py-5.bg-light.rounded
       i.bi.bi-journals.text-muted.display-6
-      p.text-muted.mt-3.mb-0 Chưa có lịch sử thao tác nào.
+      p.text-muted.mt-3.mb-0 No activity history yet.

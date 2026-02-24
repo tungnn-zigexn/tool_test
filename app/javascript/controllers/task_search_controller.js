@@ -8,7 +8,7 @@ export default class extends Controller {
   connect() {
     this.timeout = null
 
-    // Khi trang reload sau khi search, tự focus lại vào ô search
+    // When page reloads after search, auto-focus back to the search input
     if (this.hasInputTarget) {
       setTimeout(() => {
         this.inputTarget.focus()
