@@ -1,4 +1,4 @@
-.container-fluid.px-4.py-4 data-controller="spreadsheet-form test-case-modal"
+.container-fluid.px-4.py-4
   = turbo_stream_from @task
   #flash-messages
   / Breadcrumb
@@ -20,16 +20,12 @@
 
       / Layer 2: Actions & Status
       .d-flex.align-items-center.gap-2.flex-wrap.mb-3
-        button.btn.btn-light.btn-sm.text-nowrap.d-inline-flex.align-items-center.shadow-sm data-action="click->spreadsheet-form#toggleForm"
+        = button_to project_task_test_cases_path(@project, @task), params: { tc_page: @test_cases_page, show_archived: @show_archived ? 1 : 0, test_case: { title: '-', test_type: 'Feature', target: 'PC・SP・APP', note: '', test_step_attributes: { step_number: 1, test_step_contents_attributes: { "0" => {content_category: 'action', content_type: 'text', content_value: '-'}, "1" => {content_category: 'expectation', content_type: 'text', content_value: '-' } } } } }, class: "btn btn-light btn-sm text-nowrap d-inline-flex align-items-center shadow-sm", data: { turbo_stream: true } do
           i.bi.bi-grid-3x3-gap.me-1.text-primary
-          | Create Test Case (Sheet)
+          | Create Test Case
 
-        = link_to new_project_task_bug_path(@project, @task), class: "btn btn-light btn-sm text-nowrap d-inline-flex.align-items-center.shadow-sm" do
+        = link_to project_task_bugs_path(@project, @task), class: "btn btn-light btn-sm text-nowrap d-inline-flex align-items-center shadow-sm" do
           i.bi.bi-bug-fill.me-1.text-danger
-          | Create Bug
-
-        = link_to project_task_bugs_path(@project, @task), class: "btn btn-light btn-sm text-nowrap d-inline-flex align-items-center.shadow-sm" do
-          i.bi.bi-list-ul.me-1.text-danger
           | Bugs list
 
         button.btn.btn-light.btn-sm.text-nowrap.d-inline-flex.align-items-center.shadow-sm data-bs-toggle="modal" data-bs-target="#importTestCasesModal"
@@ -192,8 +188,7 @@
                     small.text-muted
                       | Status: #{subtask.status}
     
-  / Inline Test Case Form (Google Sheet Style)
-  = render partial: 'test_cases/spreadsheet_form', locals: { project: @task.project, task: @task, test_case: @test_case }
+  / Inline Test Case Form (Removed)
 
   / Test Cases Section (Spreadsheet View)
   #test-cases-spreadsheet-container
@@ -209,10 +204,17 @@
               .text-muted.small
                 | Page #{@test_cases_page}/#{@total_tc_pages}
             
-            - if @archived_test_cases.any?
-              button.btn.btn-outline-secondary.btn-sm.ms-auto data-bs-toggle="modal" data-bs-target="#archivedTestCasesModal"
-                i.bi.bi-archive.me-1
-                | Archived TCs (#{@archived_test_cases.count})
+            .d-flex.align-items-center.gap-2.ms-auto
+              - if @show_archived
+                = link_to project_task_path(@project, @task, show_archived: 0, tc_page: 1), class: "btn btn-primary btn-sm d-inline-flex align-items-center" do
+                  i.bi.bi-eye-fill.me-1
+                  | Viewing Archived (#{@total_test_cases})
+              - else
+                = link_to project_task_path(@project, @task, show_archived: 1, tc_page: 1), class: "btn btn-outline-secondary btn-sm d-inline-flex align-items-center" do
+                  i.bi.bi-archive.me-1
+                  | Show Archived
+                  - if @task.test_cases.deleted.any?
+                    span.badge.bg-secondary.ms-2 = @task.test_cases.deleted.count
 
         .card-body.p-0
           - devices = @task.unique_devices
@@ -228,7 +230,7 @@
                   / Previous
                   li.page-item class=("disabled" if @test_cases_page <= 1)
                     - if @test_cases_page > 1
-                      a.page-link href="?tc_page=#{@test_cases_page - 1}#test-cases" aria-label="Previous"
+                      a.page-link href="?tc_page=#{@test_cases_page - 1}&show_archived=#{@show_archived ? 1 : 0}#test-cases" aria-label="Previous"
                         span aria-hidden="true" &laquo;
                     - else
                       span.page-link
@@ -238,7 +240,7 @@
                   - (1..@total_tc_pages).each do |p|
                     - if @total_tc_pages <= 7 || (p <= 2) || (p >= @total_tc_pages - 1) || ((p - @test_cases_page).abs <= 1)
                       li.page-item class=("active" if p == @test_cases_page)
-                        a.page-link href="?tc_page=#{p}#test-cases"= p
+                        a.page-link href="?tc_page=#{p}&show_archived=#{@show_archived ? 1 : 0}#test-cases"= p
                     - elsif (p == 3 && @test_cases_page > 4) || (p == @total_tc_pages - 2 && @test_cases_page < @total_tc_pages - 3)
                       li.page-item.disabled
                         span.page-link ...
@@ -246,27 +248,12 @@
                   / Next
                   li.page-item class=("disabled" if @test_cases_page >= @total_tc_pages)
                     - if @test_cases_page < @total_tc_pages
-                      a.page-link href="?tc_page=#{@test_cases_page + 1}#test-cases" aria-label="Next"
+                      a.page-link href="?tc_page=#{@test_cases_page + 1}&show_archived=#{@show_archived ? 1 : 0}#test-cases" aria-label="Next"
                         span aria-hidden="true" &raquo;
                     - else
                       span.page-link
                         span aria-hidden="true" &raquo;
-    - else
-      .card.border-0.shadow-sm
-        .card-body.text-center.py-5
-          .display-4.text-muted.mb-3 📋
-          h5.text-muted No Test Cases
-          p.text-muted.mb-3 This task doesn't have any test cases yet.
-          .d-flex.gap-2.justify-content-center
-            button.btn.btn-primary data-action="click->spreadsheet-form#toggleForm"
-              i.bi.bi-plus-circle.me-2
-              | Create Test Case (Sheet)
-            button.btn.btn-success data-bs-toggle="modal" data-bs-target="#importTestCasesModal"
-              i.bi.bi-cloud-download.me-2
-              | Import from Google Sheet
-            button.btn.btn-info.text-white data-bs-toggle="modal" data-bs-target="#autoGenerateTCModal"
-              i.bi.bi-magic.me-2
-              | Auto Generate TC
+
 
   / Activity History Section
   = render 'shared/activity_timeline', logs: ActivityLog.where(trackable_type: 'Task', trackable_id: @task.id).limit(10)
@@ -370,49 +357,9 @@
           button.btn.btn-secondary type="button" data-bs-dismiss="modal" Cancel
           = button_to "Delete Permanently", project_task_path(@task.project, @task), method: :delete, class: "btn btn-danger"
   
-  / Archived Test Cases Modal
-  .modal.fade#archivedTestCasesModal tabindex="-1" aria-hidden="true"
-    .modal-dialog.modal-lg.modal-dialog-centered
-      .modal-content
-        .modal-header.bg-secondary.text-white
-          h5.modal-title
-            i.bi.bi-archive.me-2
-            | Archived Test Cases
-          button.btn-close.btn-close-white type="button" data-bs-dismiss="modal" aria-label="Close"
-        .modal-body.p-0
-          .table-responsive
-            table.table.table-hover.align-middle.mb-0
-              thead.bg-light
-                tr
-                  th.ps-3 ID
-                  th Title
-                  th Deleted At
-                  th.text-end.pe-3 Actions
-              tbody
-                - if @archived_test_cases.any?
-                  - @archived_test_cases.each do |tc|
-                    tr
-                      td.ps-3.fw-bold = "TC-#{tc.id.to_s.rjust(3, '0')}"
-                      td = tc.title
-                      td.small.text-muted = tc.deleted_at&.strftime("%Y-%m-%d %H:%M")
-                      td.text-end.pe-3
-                        = button_to restore_project_task_test_case_path(@project, @task, tc), method: :patch, class: "btn btn-sm btn-outline-success" do
-                          i.bi.bi-arrow-counterclockwise.me-1
-                          | Restore
-                - else
-                  tr
-                    td.text-center.py-4 colspan="4" No archived test cases.
-        .modal-footer
-          button.btn.btn-secondary type="button" data-bs-dismiss="modal" Close
   
-  / Test Case Detail/Edit/Navigation Modal
-  .modal.fade#testCaseDetailsModal tabindex="-1" aria-hidden="true" data-test-case-modal-target="modal"
-    .modal-dialog.modal-xl.modal-dialog-centered
-      .modal-content
-        = turbo_frame_tag "test_case_modal_content" do
-          .modal-body.text-center.py-5
-            .spinner-border.text-primary role="status"
-              span.visually-hidden Loading...
+
+
 
   / Create Subtask Modal
   .modal.fade#createSubtaskModal tabindex="-1" aria-hidden="true"
@@ -453,6 +400,14 @@
     | .btn-outline-purple:hover { background-color: #764ba2; color: white; }
     | .btn-xs { padding: 0.1rem 0.25rem; font-size: 0.75rem; border-radius: 0.2rem; }
 
+  / History Modal
+  .modal.fade#testCaseHistoryModal tabindex="-1" aria-hidden="true"
+    .modal-dialog.modal-lg.modal-dialog-centered
+      .modal-content#historyModalContent
+        .modal-body.p-5.text-center
+          .spinner-border.text-primary role="status"
+            span.visually-hidden Loading...
+          p.mt-2 Loading history...
 
   / Device Configuration Modal
   .modal.fade#deviceConfigModal tabindex="-1" aria-hidden="true"

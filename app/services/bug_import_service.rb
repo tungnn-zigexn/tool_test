@@ -102,6 +102,7 @@ class BugImportService
       when /^test$/, /^tester$/ then mapping[:test] = index
       when /^status$/, /^trạng thái$/ then mapping[:status] = index
       when /^image/, /^video/, /^gyazo/, /^link.*ảnh/ then mapping[:media] = index
+      when /^bug.?type$/, /^loại.?bug$/ then mapping[:bug_type] = index
       end
     end
     mapping
@@ -128,6 +129,7 @@ class BugImportService
       category: normalize_category(get_cell_value(row, mapping[:category])),
       priority: normalize_priority(get_cell_value(row, mapping[:priority])),
       status: normalize_status(get_cell_value(row, mapping[:status])),
+      bug_type: normalize_bug_type(get_cell_value(row, mapping[:bug_type])),
       image_video_url: get_cell_value(row, mapping[:media]),
       dev_id: find_user(dev_name)&.id,
       tester_id: find_user(test_name)&.id,
@@ -206,6 +208,17 @@ class BugImportService
     when /testing/ then 'testing'
     when /pending/, /chờ/ then 'pending'
     else 'new'
+    end
+  end
+
+  def normalize_bug_type(bt)
+    return 'new_bug' if bt.blank?
+
+    case bt.downcase
+    when /new/, /mới/ then 'new_bug'
+    when /old/, /cũ/ then 'old_bug'
+    when /improve/, /cải tiến/ then 'improve'
+    else 'new_bug'
     end
   end
 

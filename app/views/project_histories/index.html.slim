@@ -23,10 +23,10 @@
       h1.h3.fw-bold.mb-2
         i.bi.bi-clock-history.me-2
         - if @project
-          | Lịch sử thao tác: #{@project.name}
+          | Activity History: #{@project.name}
         - else
-          | Lịch sử thao tác tất cả Projects
-      p.mb-0.text-muted Theo dõi tất cả các thay đổi được thực hiện
+          | Activity History for All Projects
+      p.mb-0.text-muted Track all changes that have been made
 
   / Filter Section
   .card.border-0.shadow-sm.mb-4
@@ -68,7 +68,7 @@
                     - if history.trackable
                       = link_to history.trackable.name, history.trackable, class: "text-decoration-none fw-semibold"
                     - else
-                      span.text-muted.fst-italic (Project đã bị xóa)
+                      span.text-muted.fst-italic (Project has been deleted)
                   td.align-middle
                     .d-flex.align-items-center.justify-content-center
                       .bg-primary.text-white.rounded-circle.d-flex.align-items-center.justify-content-center.me-2.user-avatar-circle

@@ -1,6 +1,6 @@
 import { Controller } from "@hotwired/stimulus"
 
-// Bulk Import modal: load Redmine issues list with date filter, show table with đã/chưa import, import selected.
+// Bulk Import modal: load Redmine issues list with date filter, show table with imported/not imported status, import selected.
 export default class extends Controller {
   static targets = [
     "listTab",
@@ -123,7 +123,7 @@ export default class extends Controller {
     const preset = this.datePresetTarget?.value || ""
 
     if (!redmineProjectId) {
-      alert("Vui lòng chọn Redmine Project hoặc nhập ID/identifier.")
+      alert("Please select a Redmine Project or enter an ID/identifier.")
       return
     }
 
@@ -152,7 +152,7 @@ export default class extends Controller {
       this.renderTable()
       this.showTableTab()
     } catch (e) {
-      alert("Không thể tải danh sách: " + (e.message || "Lỗi mạng"))
+      alert("Cannot load list: " + (e.message || "Network error"))
     } finally {
       if (this.hasLoadingIndicatorTarget) this.loadingIndicatorTarget.classList.add("d-none")
     }
@@ -200,7 +200,7 @@ export default class extends Controller {
         <td>${formatDate(issue.created_on)}</td>
         <td>${escapeHtml(issue.assigned_to_name)}</td>
         <td>
-          ${issue.already_imported ? '<span class="badge bg-success">Đã import</span>' : '<span class="badge bg-warning text-dark">Chưa import</span>'}
+          ${issue.already_imported ? '<span class="badge bg-success">Imported</span>' : '<span class="badge bg-warning text-dark">Not imported</span>'}
         </td>
       </tr>
     `
@@ -232,7 +232,7 @@ export default class extends Controller {
     if (!form) return
     const checked = this.element.querySelectorAll(".bulk-import-checkbox:checked")
     if (checked.length === 0) {
-      alert("Vui lòng chọn ít nhất một task chưa import.")
+      alert("Please select at least one task that hasn't been imported.")
       return
     }
     form.querySelectorAll('input[name="issue_ids[]"]').forEach((el) => el.remove())
@@ -246,7 +246,7 @@ export default class extends Controller {
     if (this.hasProgressTarget) this.progressTarget.classList.remove("d-none")
     if (this.hasSubmitButtonTarget) {
       this.submitButtonTarget.disabled = true
-      this.submitButtonTarget.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang import...'
+      this.submitButtonTarget.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Importing...'
     }
     if (this.hasCancelButtonTarget) this.cancelButtonTarget.disabled = true
     form.requestSubmit()

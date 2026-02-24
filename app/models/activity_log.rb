@@ -11,11 +11,11 @@ class ActivityLog < ApplicationRecord
 
   def action_display
     case action_type
-    when 'create' then 'đã tạo'
-    when 'update' then 'đã cập nhật'
-    when 'delete' then 'đã xóa'
-    when 'restore' then 'đã khôi phục'
-    when 'import' then 'đã đồng bộ'
+    when 'create' then 'created'
+    when 'update' then 'updated'
+    when 'delete' then 'deleted'
+    when 'restore' then 'restored'
+    when 'import' then 'synced'
     else action_type
     end
   end

@@ -11,8 +11,9 @@ class ApplicationController < ActionController::Base
 
   def set_header_notifications
     return unless current_user
-    @header_notifications = Notification.unread_for(current_user).recent.limit(10)
+    @header_notifications = Notification.recent.limit(10)
     @header_notifications_unread_count = Notification.unread_for(current_user).count
+    @header_read_ids = NotificationRead.where(user: current_user).pluck(:notification_id).to_set
   end
 
   def set_current_user

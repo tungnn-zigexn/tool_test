@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class NotificationsController < ApplicationController
-  skip_before_action :set_header_notifications, only: [ :mark_read, :mark_all_read, :read_and_go ]
+  skip_before_action :set_header_notifications, only: [ :mark_read, :mark_all_read, :read_and_go, :unread_count ]
 
   def index
     authorize! :read, Notification
@@ -34,6 +34,13 @@ class NotificationsController < ApplicationController
       format.html { redirect_back fallback_location: root_path }
       format.json { render json: { success: true, unread_count: 0 } }
     end
+  end
+
+  # GET /notifications/unread_count — JSON only, for syncing badge after Turbo restore (e.g. Back button)
+  def unread_count
+    authorize! :read, Notification
+    count = Notification.unread_for(current_user).count
+    render json: { unread_count: count }
   end
 
   private

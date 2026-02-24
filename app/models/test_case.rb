@@ -5,14 +5,12 @@ class TestCase < ApplicationRecord
   belongs_to :task
   belongs_to :created_by, class_name: 'User', foreign_key: 'created_by_id', optional: true
 
-  has_many :test_steps, foreign_key: 'case_id', dependent: :delete_all, inverse_of: :test_case
+  has_one :test_step, foreign_key: 'case_id', dependent: :destroy, inverse_of: :test_case
+  has_many :test_steps, foreign_key: 'case_id', dependent: :delete_all, inverse_of: :test_case # Alias for backward compatibility if needed in old views
   has_many :test_results, foreign_key: 'case_id', dependent: :delete_all
 
-  # Nested attributes for creating test steps - reject blank steps
-  accepts_nested_attributes_for :test_steps, allow_destroy: true, reject_if: lambda { |attrs|
-    # Reject if step_number is blank or description is blank and no contents
-    attrs[:step_number].blank? && attrs[:description].blank?
-  }
+  # Nested attributes for creating single test step
+  accepts_nested_attributes_for :test_step, allow_destroy: true
 
   validates :title, presence: true
   validates :task_id, presence: true
@@ -25,7 +23,7 @@ class TestCase < ApplicationRecord
 
   before_create :assign_default_position
 
-  # Chèn TC tại vị trí cụ thể, dịch các TC sau xuống
+  # Insert TC at a specific position, shift subsequent TCs down
   def self.insert_at_position!(task, target_position)
     task.test_cases.active.where("position >= ?", target_position).update_all("position = position + 1")
   end
@@ -118,7 +116,9 @@ class TestCase < ApplicationRecord
   end
 
   def strip_title
-    self.title = title.strip if title.present?
+    if title.present?
+      self.title = CGI.unescapeHTML(title.to_s).strip
+    end
   end
 
   def assign_default_position

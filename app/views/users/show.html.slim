@@ -11,14 +11,14 @@
       .d-flex.justify-content-between.align-items-center
         h1.display-6.fw-bold.text-dark
           i.bi.bi-person-circle.me-2
-          | Chi tiết User
+          | User Details
         .btn-group
           = link_to edit_user_path(@user), class: "btn btn-warning" do
             i.bi.bi-pencil.me-2
-            | Chỉnh sửa
-          = link_to user_path(@user), data: { turbo_method: :delete, turbo_confirm: "Bạn có chắc muốn xóa user này?" }, class: "btn btn-danger" do
+            | Edit
+          = link_to user_path(@user), data: { turbo_method: :delete, turbo_confirm: "Are you sure you want to delete this user?" }, class: "btn btn-danger" do
             i.bi.bi-trash.me-2
-            | Xóa
+            | Delete
 
   / User Info
   .row.g-4
@@ -28,7 +28,7 @@
         .card-header.bg-gradient.text-white.border-0 style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"
           h5.mb-0.fw-bold
             i.bi.bi-info-circle.me-2
-            | Thông tin cơ bản
+            | Basic Information
         .card-body.p-4
           .row.g-3
             .col-md-6
@@ -38,7 +38,7 @@
 
             .col-md-6
               .border-bottom.pb-2.mb-2
-                small.text-muted Tên
+                small.text-muted Name
                 .fw-bold.fs-5 = @user.name || "-"
 
             .col-md-6
@@ -62,12 +62,12 @@
 
             .col-md-6
               .border-bottom.pb-2.mb-2
-                small.text-muted Ngày tạo
+                small.text-muted Created At
                 .fw-bold = @user.created_at.strftime("%d/%m/%Y %H:%M")
 
             .col-md-6
               .border-bottom.pb-2.mb-2
-                small.text-muted Cập nhật lần cuối
+                small.text-muted Last Updated
                 .fw-bold = @user.updated_at.strftime("%d/%m/%Y %H:%M")
 
     / Stats Card
@@ -76,20 +76,20 @@
         .card-header.bg-primary.text-white.border-0
           h5.mb-0.fw-bold
             i.bi.bi-bar-chart-fill.me-2
-            | Thống kê
+            | Statistics
         .card-body
           .mb-3.pb-3.border-bottom
             .d-flex.justify-content-between.align-items-center
               div
                 i.bi.bi-list-task.text-primary.me-2
-                span Tasks được giao
+                span Assigned Tasks
               .fs-4.fw-bold.text-primary = @user.assigned_tasks.active.count
 
           .mb-3.pb-3.border-bottom
             .d-flex.justify-content-between.align-items-center
               div
                 i.bi.bi-clipboard-check.text-success.me-2
-                span Test cases đã tạo
+                span Created Test Cases
               .fs-4.fw-bold.text-success = @user.created_test_cases.active.count
 
           .mb-0

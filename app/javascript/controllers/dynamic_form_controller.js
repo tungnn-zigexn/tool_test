@@ -21,26 +21,26 @@ export default class extends Controller {
         <div class="card-header bg-white d-flex justify-content-between align-items-center">
           <h6 class="mb-0 fw-bold step-title">Step ${displayStepNumber}</h6>
           <button type="button" class="btn btn-sm btn-outline-danger" data-action="click->dynamic-form#removeStep">
-            <i class="bi bi-trash"></i> Xóa
+            <i class="bi bi-trash"></i> Delete
           </button>
         </div>
         <div class="card-body">
           <input type="hidden" class="step-number-input" name="test_case[test_steps_attributes][${uniqueId}][step_number]" value="${displayStepNumber}" />
           <div class="mb-3">
-            <label class="form-label fw-semibold">Mô tả Step</label>
+            <label class="form-label fw-semibold">Step Description</label>
             <input type="text" name="test_case[test_steps_attributes][${uniqueId}][description]" class="form-control" placeholder="Step ${displayStepNumber} description" />
           </div>
           <div class="row">
             <div class="col-md-6">
-              <label class="form-label fw-semibold">Actions (thao tác)</label>
-              <textarea name="test_case[test_steps_attributes][${uniqueId}][test_step_contents_attributes][0][content_value]" class="form-control mb-2" rows="3" placeholder="1. Mở trang login\n2. Nhập email\n3. Nhập password"></textarea>
+              <label class="form-label fw-semibold">Actions</label>
+              <textarea name="test_case[test_steps_attributes][${uniqueId}][test_step_contents_attributes][0][content_value]" class="form-control mb-2" rows="3" placeholder="1. Open login page\n2. Enter email\n3. Enter password"></textarea>
               <input type="hidden" name="test_case[test_steps_attributes][${uniqueId}][test_step_contents_attributes][0][content_type]" value="text" />
               <input type="hidden" name="test_case[test_steps_attributes][${uniqueId}][test_step_contents_attributes][0][content_category]" value="action" />
               <input type="hidden" name="test_case[test_steps_attributes][${uniqueId}][test_step_contents_attributes][0][display_order]" value="0" />
             </div>
             <div class="col-md-6">
               <label class="form-label fw-semibold">Expected Results</label>
-              <textarea name="test_case[test_steps_attributes][${uniqueId}][test_step_contents_attributes][1][content_value]" class="form-control mb-2" rows="3" placeholder="Kết quả mong đợi"></textarea>
+              <textarea name="test_case[test_steps_attributes][${uniqueId}][test_step_contents_attributes][1][content_value]" class="form-control mb-2" rows="3" placeholder="Expected results"></textarea>
               <input type="hidden" name="test_case[test_steps_attributes][${uniqueId}][test_step_contents_attributes][1][content_type]" value="text" />
               <input type="hidden" name="test_case[test_steps_attributes][${uniqueId}][test_step_contents_attributes][1][content_category]" value="expectation" />
               <input type="hidden" name="test_case[test_steps_attributes][${uniqueId}][test_step_contents_attributes][1][display_order]" value="0" />

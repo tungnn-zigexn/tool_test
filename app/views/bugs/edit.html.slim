@@ -6,11 +6,11 @@
       li.breadcrumb-item.text-truncate style="max-width: 250px;" = link_to @task.title, project_task_path(@project, @task), title: @task.title
       li.breadcrumb-item = link_to 'Bugs', project_task_bugs_path(@project, @task)
       li.breadcrumb-item.text-truncate style="max-width: 200px;" = link_to "Bug ##{@bug.id}", project_task_bug_path(@project, @task, @bug), title: "Bug ##{@bug.id}: #{@bug.title}"
-      li.breadcrumb-item.active aria-current="page" Chỉnh sửa
+      li.breadcrumb-item.active aria-current="page" Edit
 
   .mb-4
-    h2.mb-0.text-truncate title="Chỉnh sửa Bug: #{@bug.title} (Task: #{@task.title})"
+    h2.mb-0.text-truncate title="Edit Bug: #{@bug.title} (Task: #{@task.title})"
       i.bi.bi-pencil-square.me-2.text-primary
-      | Chỉnh sửa Bug: #{@bug.title}
+      | Edit Bug: #{@bug.title}
 
   = render 'form', bug: @bug

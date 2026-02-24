@@ -33,7 +33,7 @@ class TestCaseImportService
       process_all_sheets(all_sheet_data)
       update_task_counts
 
-      Rails.logger.info "Import hoàn tất: #{@imported_count} test cases across #{@task_counts.keys.count} tasks"
+      Rails.logger.info "Import completed: #{@imported_count} test cases across #{@task_counts.keys.count} tasks"
       true
     rescue StandardError => e
       add_import_error(e)

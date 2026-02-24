@@ -1,4 +1,6 @@
 class TestStep < ApplicationRecord
+  include Loggable
+
   belongs_to :test_case, foreign_key: 'case_id', inverse_of: :test_steps
   has_many :test_step_contents, foreign_key: 'step_id', dependent: :destroy, inverse_of: :test_step
 
@@ -15,7 +17,7 @@ class TestStep < ApplicationRecord
   scope :ordered, -> { order(:step_number) }
   scope :active, -> { where(deleted_at: nil) }
 
-  # Thêm các scope để lấy contents theo category
+  # Add scopes to get contents by category
   def action_contents
     test_step_contents.where(content_category: 'action').order(:display_order)
   end
@@ -36,7 +38,7 @@ class TestStep < ApplicationRecord
     expected_contents.exists?
   end
 
-  # Tạo summary của step
+  # Create summary of step
   def action_summary
     actions = action_contents.pluck(:content_value).join(', ')
     actions.presence || 'No action defined'

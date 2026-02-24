@@ -1,4 +1,4 @@
-.container.py-4
+.container-fluid.px-4.py-4
   / Breadcrumbs
   nav aria-label="breadcrumb"
     ol.breadcrumb.mb-4
@@ -11,174 +11,198 @@
       li.breadcrumb-item.active aria-current="page" Bugs
 
   / Header
-  .d-flex.justify-content-between.align-items-center.mb-4
+  .d-flex.justify-content-between.align-items-center.mb-2
     .min-width-0
-      h1.h3.fw-bold.mb-1
+      h3.fw-bold.mb-1
         i.bi.bi-bug.text-danger.me-2
-        | Bugs list
+        | 🐛 Bugs list
+        span.badge.bg-danger.ms-2 = @total_bugs
       p.text-muted.mb-0.text-truncate style="max-width: 600px;" title=@task.title
         = "Associated with: #{@task.title}"
 
     .d-flex.gap-2.flex-shrink-0
-      = link_to new_project_task_bug_path(@project, @task), class: 'btn btn-primary text-nowrap' do
-        i.bi.bi-plus-lg.me-1
-        | Tạo Bug mới
       - if @task.bug_link.present?
-        button.btn.btn-outline-primary.text-nowrap data-bs-toggle="modal" data-bs-target="#importBugsModal"
+        button.btn.btn-outline-primary.btn-sm.text-nowrap data-bs-toggle="modal" data-bs-target="#importBugsModal"
           i.bi.bi-arrow-repeat.me-1
           | Sync from Sheet
-        a.btn.btn-outline-secondary.text-nowrap href=@task.bug_link target="_blank"
+        a.btn.btn-outline-secondary.btn-sm.text-nowrap href=@task.bug_link target="_blank"
           i.bi.bi-google.me-1
           | Open Sheet
       - if @archived_bugs.any?
-        button.btn.btn-outline-secondary.text-nowrap.d-inline-flex.align-items-center data-bs-toggle="modal" data-bs-target="#archivedBugsModal"
+        button.btn.btn-outline-secondary.btn-sm.text-nowrap.d-inline-flex.align-items-center data-bs-toggle="modal" data-bs-target="#archivedBugsModal"
           i.bi.bi-archive.me-2
-          | Archived Bugs (#{@archived_bugs.count})
+          | Archived (#{@archived_bugs.count})
 
-  / Bugs Table
-  .card.border-0.shadow-sm
-    .card-body.p-0
-      .table-responsive
-        table.table.table-hover.align-middle.mb-0
-          thead.bg-light
-            tr
-              th.ps-4.py-3 width="80" No
-              th.py-3 Content
-              th.py-3 width="120" App
-              th.py-3 width="150" Dev / Test
-              th.py-3 width="120" Status
-              th.py-3 width="150" Actions
-          tbody
-            - offset = (@page - 1) * @per_page
-            - @bugs.each_with_index do |bug, index|
-              tr
-                td.ps-4.fw-medium = "#{offset + index + 1}"
-                td
-                  = link_to project_task_bug_path(@project, @task, bug), class: 'text-decoration-none fw-semibold text-dark d-block mb-1 text-truncate', style: 'max-width: 450px;', title: bug.title do
-                    = bug.title
-                  - if bug.content.present? && bug.content != bug.title
-                    .small.text-muted.text-truncate style="max-width: 450px;" title=bug.content = bug.content.split("\n")[0..2].join(" ")
-                td
-                  span.badge.bg-secondary.bg-opacity-10.text-secondary = bug.application_display
-                td
-                  .small
-                    .mb-1
-                      span.text-muted Dev:
-                      span.fw-medium.ms-1 = bug.dev_name
-                    div
-                      span.text-muted Test:
-                      span.fw-medium.ms-1 = bug.tester_name
-                td
-                  span class="badge bg-#{bug.status_color} bg-opacity-10 text-#{bug.status_color}"
-                    = bug.status.titleize
-                td
-                  .d-flex.gap-2
-                    = link_to project_task_bug_path(@project, @task, bug), class: 'btn btn-sm btn-outline-info', title: 'Chi tiết' do
-                      i.bi.bi-eye
-                    = link_to edit_project_task_bug_path(@project, @task, bug), class: 'btn btn-sm btn-outline-primary', title: 'Sửa' do
-                      i.bi.bi-pencil
-                    = link_to project_task_bug_path(@project, @task, bug), data: { turbo_method: :delete, turbo_confirm: 'Bạn có chắc chắn muốn xóa bug này không?' }, class: 'btn btn-sm btn-outline-danger', title: 'Xóa' do
-                      i.bi.bi-trash
-      
-      / Pagination UI
-      - if @total_pages > 1
-        .card-footer.bg-white.border-top
-          .pagination-wrapper.d-flex.justify-content-center.py-2
-            nav
-              ul.pagination.pagination-sm.mb-0
-                / Previous
-                li.page-item class=("disabled" if @page <= 1)
-                  - if @page > 1
-                    a.page-link href="?page=#{@page - 1}" aria-label="Previous"
-                      span aria-hidden="true" &laquo;
-                  - else
-                    span.page-link
-                      span aria-hidden="true" &laquo;
+  / Spreadsheet View
+  div data-controller="media-preview spreadsheet-toolbar"
+    / Persistent Toolbar (Google Sheets style)
+    .spreadsheet-toolbar.sticky-top.bg-white.border.rounded.p-1.mb-2.d-flex.align-items-center.gap-1.shadow-sm data-action="mousedown->spreadsheet-toolbar#preventFocusLoss" style="z-index: 1020; top: 10px; user-select: none;"
+      button.btn.btn-sm.btn-light type="button" tabindex="-1" title="Bold" data-action="mousedown->spreadsheet-toolbar#format" data-command="bold"
+        i.bi.bi-type-bold
+      button.btn.btn-sm.btn-light type="button" tabindex="-1" title="Italic" data-action="mousedown->spreadsheet-toolbar#format" data-command="italic"
+        i.bi.bi-type-italic
+      button.btn.btn-sm.btn-light type="button" tabindex="-1" title="Underline" data-action="mousedown->spreadsheet-toolbar#format" data-command="underline"
+        i.bi.bi-type-underline
+      button.btn.btn-sm.btn-light type="button" tabindex="-1" title="Insert Link" data-action="mousedown->spreadsheet-toolbar#formatLink"
+        i.bi.bi-link-45deg
+      .vr.mx-1
+      span.small.text-muted.me-1 Text:
+      button.btn.btn-sm.btn-light.p-1 type="button" tabindex="-1" title="Black" data-action="mousedown->spreadsheet-toolbar#format" data-command="foreColor" data-value="#000000" style="width: 24px; height: 24px;"
+        i.bi.bi-circle-fill style="color: #000000;"
+      button.btn.btn-sm.btn-light.p-1 type="button" tabindex="-1" title="Red" data-action="mousedown->spreadsheet-toolbar#format" data-command="foreColor" data-value="#ff0000" style="width: 24px; height: 24px;"
+        i.bi.bi-circle-fill style="color: #ff0000;"
+      button.btn.btn-sm.btn-light.p-1 type="button" tabindex="-1" title="Blue" data-action="mousedown->spreadsheet-toolbar#format" data-command="foreColor" data-value="#0000ff" style="width: 24px; height: 24px;"
+        i.bi.bi-circle-fill style="color: #0000ff;"
+      .vr.mx-1
+      span.small.text-muted.me-1 Fill:
+      button.btn.btn-sm.btn-light.p-1 type="button" tabindex="-1" title="None" data-action="mousedown->spreadsheet-toolbar#format" data-command="hiliteColor" data-value="#ffffff" style="width: 24px; height: 24px;"
+        i.bi.bi-x-circle
+      button.btn.btn-sm.btn-light.p-1 type="button" tabindex="-1" title="Yellow" data-action="mousedown->spreadsheet-toolbar#format" data-command="hiliteColor" data-value="#ffff00" style="width: 24px; height: 24px;"
+        i.bi.bi-square-fill style="color: #ffff00;"
+      button.btn.btn-sm.btn-light.p-1 type="button" tabindex="-1" title="Green" data-action="mousedown->spreadsheet-toolbar#format" data-command="hiliteColor" data-value="#d4edda" style="width: 24px; height: 24px;"
+        i.bi.bi-square-fill style="color: #d4edda;"
+      .vr.mx-1
+      button.btn.btn-sm.btn-light type="button" tabindex="-1" title="Clear Formatting" data-action="mousedown->spreadsheet-toolbar#format" data-command="removeFormat"
+        i.bi.bi-eraser
 
-                / Page numbers
-                - (1..@total_pages).each do |p|
-                  - if @total_pages <= 7 || (p <= 2) || (p >= @total_pages - 1) || ((p - @page).abs <= 1)
-                    li.page-item class=("active" if p == @page)
-                      a.page-link href="?page=#{p}"= p
-                  - elsif (p == 3 && @page > 4) || (p == @total_pages - 2 && @page < @total_pages - 3)
-                    li.page-item.disabled
-                      span.page-link ...
+    / Modal for Media Preview
+    #mediaPreviewModal.modal.fade tabindex="-1" aria-labelledby="mediaPreviewModalLabel" aria-hidden="true"
+      .modal-dialog.modal-dialog-centered.modal-xl
+        .modal-content
+          .modal-header
+            h5#mediaPreviewModalLabel.modal-title Media Preview
+            button.btn-close type="button" data-bs-dismiss="modal" aria-label="Close"
+          .modal-body.text-center.p-0.bg-light
+            img.d-none data-media-preview-target="modalImage" style="max-width: 100%; max-height: 85vh; width: auto; object-fit: contain;"
+            video.img-fluid.d-none controls=true data-media-preview-target="modalVideo" style="max-height: 85vh;"
+              source data-media-preview-target="modalVideoSource"
+            div.d-none data-media-preview-target="modalLink"
 
-                / Next
-                li.page-item class=("disabled" if @page >= @total_pages)
-                  - if @page < @total_pages
-                    a.page-link href="?page=#{@page + 1}" aria-label="Next"
-                      span aria-hidden="true" &raquo;
-                  - else
-                    span.page-link
-                      span aria-hidden="true" &raquo;
+    / Bug History Modal
+    .modal.fade#bugHistoryModal tabindex="-1" aria-hidden="true"
+      .modal-dialog.modal-lg.modal-dialog-centered
+        .modal-content#bugHistoryModalContent
+          .modal-body.p-5.text-center
+            .spinner-border.text-primary role="status"
+              span.visually-hidden Loading...
+            p.mt-2 Loading history...
+
+    / Bugs Spreadsheet Table
+    .table-responsive.border.rounded
+      table.spreadsheet-table.spreadsheet-list-table.bug-spreadsheet-table
+        thead
+          tr
+            th.text-center.bug-id-col ID
+            th.bug-content-col Content
+            th.text-center.bug-app-col App
+            th.text-center.bug-category-col Category
+            th.text-center.bug-type-col Bug Type
+            th.text-center.bug-priority-col Priority
+            th.bug-dev-col Dev
+            th.bug-test-col Test
+            th.text-center.bug-status-col Status
+            th.bug-media-col Image/Video
+            th.bug-note-col Note
+            th.text-center.bug-actions-col Actions
+        tbody#bugs-spreadsheet-list
+          - offset = (@page - 1) * @per_page
+          - @bugs.each_with_index do |bug, index|
+            = render partial: 'bugs/spreadsheet_row', locals: { bug: bug, index: offset + index + 1 }
+
+    / Inline Create Button
+    .d-flex.justify-content-center.mt-3
+      = button_to project_task_bugs_path(@project, @task), params: { bug: { title: '-', content: '-', category: 'stg_vn', priority: 'normal', status: 'new', application: 'sp_pc', bug_type: 'new_bug' } }, class: "btn btn-outline-primary btn-sm px-4", method: :post, data: { turbo_stream: true } do
+        i.bi.bi-plus-lg.me-1
+        | Create New Bug
+
+    / Pagination
+    - if @total_pages > 1
+      .d-flex.justify-content-center.py-3
+        nav
+          ul.pagination.pagination-sm.mb-0
+            li.page-item class=("disabled" if @page <= 1)
+              - if @page > 1
+                a.page-link href="?page=#{@page - 1}" aria-label="Previous"
+                  span aria-hidden="true" &laquo;
+              - else
+                span.page-link
+                  span aria-hidden="true" &laquo;
+            - (1..@total_pages).each do |p|
+              - if @total_pages <= 7 || (p <= 2) || (p >= @total_pages - 1) || ((p - @page).abs <= 1)
+                li.page-item class=("active" if p == @page)
+                  a.page-link href="?page=#{p}"= p
+              - elsif (p == 3 && @page > 4) || (p == @total_pages - 2 && @page < @total_pages - 3)
+                li.page-item.disabled
+                  span.page-link ...
+            li.page-item class=("disabled" if @page >= @total_pages)
+              - if @page < @total_pages
+                a.page-link href="?page=#{@page + 1}" aria-label="Next"
+                  span aria-hidden="true" &raquo;
+              - else
+                span.page-link
+                  span aria-hidden="true" &raquo;
 
   / Empty State
   - if @bugs.empty?
     .text-center.py-5
       .h1.mb-3 🐛
       h4.text-secondary No Bugs Found
-      p.text-muted This task has no bugs recorded yet. Bạn có thể tạo thủ công hoặc import từ sheet.
-      .d-flex.gap-2.justify-content-center.mt-3
-        = link_to new_project_task_bug_path(@project, @task), class: 'btn btn-primary' do
-          i.bi.bi-plus-lg.me-1
-          | Tạo Bug mới
-        - if @task.bug_link.present?
-          button.btn.btn-outline-primary data-bs-toggle="modal" data-bs-target="#importBugsModal"
-            | Import từ Sheet
+      p.text-muted This task has no bugs recorded yet. You can create manually or import from sheet.
 
 / Import Bugs Modal
-.modal.fade#importBugsModal tabindex="-1" aria-hidden="true" data-controller="import-progress" data-import-progress-estimated-time-value="15"
-  .modal-dialog
-    .modal-content
-      .modal-header.bg-primary.text-white
-        h5.modal-title
-          i.bi.bi-arrow-repeat.me-2
-          | Đồng bộ Bug từ Google Sheet
-        button.btn-close.btn-close-white type="button" data-bs-dismiss="modal" aria-label="Close"
-      = form_with url: import_from_sheet_project_task_bugs_path(@project, @task), method: :post, local: true, data: { import_progress_target: "form", action: "submit->import-progress#showProgress" } do |f|
-        .modal-body
-          .mb-3
-            label.form-label.fw-bold Google Sheet URL (Lấy từ Task)
-            input.form-control type="text" value=@task.bug_link disabled=true
-            .form-text Link sheet này đã được cấu hình trong Task.
-          
-          - if @bugs.exists?
-            .alert.alert-warning.mt-3
-              .d-flex.align-items-center.mb-2
-                i.bi.bi-exclamation-triangle-fill.me-2.fs-4
-                strong Cảnh báo thay thế dữ liệu
-              p.small.mb-2 Bạn đang thực hiện đồng bộ lại dữ liệu. Nếu chọn "Thay thế", toàn bộ các Bug hiện tại của task này sẽ bị xóa để nạp lại từ Sheet.
-              .form-check
-                = check_box_tag :wipe_existing, '1', false, class: 'form-check-input', id: 'checkWipeExisting'
-                label.form-check-label.fw-bold.text-danger for="checkWipeExisting"
-                  | Xóa dữ liệu cũ trước khi nạp mới (Thay thế)
+- if @task.bug_link.present?
+  .modal.fade#importBugsModal tabindex="-1" aria-hidden="true" data-controller="import-progress" data-import-progress-estimated-time-value="15"
+    .modal-dialog
+      .modal-content
+        .modal-header.bg-primary.text-white
+          h5.modal-title
+            i.bi.bi-arrow-repeat.me-2
+            | Sync Bugs from Google Sheet
+          button.btn-close.btn-close-white type="button" data-bs-dismiss="modal" aria-label="Close"
+        = form_with url: import_from_sheet_project_task_bugs_path(@project, @task), method: :post, local: true, data: { import_progress_target: "form", action: "submit->import-progress#showProgress" } do |f|
+          .modal-body
+            .mb-3
+              label.form-label.fw-bold Google Sheet URL (From Task)
+              input.form-control type="text" value=@task.bug_link disabled=true
+              .form-text This sheet link has been configured in the Task.
+            
+            - if @bugs.exists?
+              .alert.alert-warning.mt-3
+                .d-flex.align-items-center.mb-2
+                  i.bi.bi-exclamation-triangle-fill.me-2.fs-4
+                  strong Data Replacement Warning
+                p.small.mb-2 You are performing a data re-sync. If you select "Replace", all current Bugs for this task will be deleted and reloaded from the Sheet.
+                .form-check
+                  = check_box_tag :wipe_existing, '1', false, class: 'form-check-input', id: 'checkWipeExisting'
+                  label.form-check-label.fw-bold.text-danger for="checkWipeExisting"
+                    | Delete old data before importing new (Replace)
 
-          .alert.alert-info.d-flex.align-items-start.mt-3
-            i.bi.bi-info-circle.me-2.mt-1
-            div
-              strong Lưu ý:
-              ul.mb-0.mt-1.small
-                li Hệ thống sẽ tìm các dòng có nội dung Bug để nạp vào.
-                li Nếu không chọn "Thay thế", hệ thống sẽ chỉ thêm Bug mới dựa trên tiêu đề.
-          
-          / Progress Bar
-          .d-none data-import-progress-target="progress"
-            .mt-3
-              .d-flex.justify-content-between.align-items-center.mb-1
-                strong.text-primary.small
-                  i.bi.bi-arrow-repeat.spin.me-1
-                  span.status-text Đang đồng bộ bug từ Google Sheet...
-                span.time-remaining.text-muted.small Còn khoảng 15 giây...
-              .progress style="height: 10px;"
-                .progress-bar.progress-bar-striped.progress-bar-animated.bg-primary role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" 0%
-              p.text-muted.mt-2.x-small.mb-0 
-                i.bi.bi-info-circle.me-1
-                | Đang kết nối với Google API và xử lý dữ liệu bug...
+            .alert.alert-info.d-flex.align-items-start.mt-3
+              i.bi.bi-info-circle.me-2.mt-1
+              div
+                strong Note:
+                ul.mb-0.mt-1.small
+                  li The system will find rows containing Bug content to import.
+                  li If "Replace" is not selected, the system will only add new Bugs based on their title.
+                  li The Bug Type column will be imported automatically (New Bug / Old Bug / Improve).
+            
+            / Progress Bar
+            .d-none data-import-progress-target="progress"
+              .mt-3
+                .d-flex.justify-content-between.align-items-center.mb-1
+                  strong.text-primary.small
+                    i.bi.bi-arrow-repeat.spin.me-1
+                    span.status-text Syncing bugs from Google Sheet...
+                  span.time-remaining.text-muted.small About 15 seconds remaining...
+                .progress style="height: 10px;"
+                  .progress-bar.progress-bar-striped.progress-bar-animated.bg-primary role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" 0%
+                p.text-muted.mt-2.x-small.mb-0 
+                  i.bi.bi-info-circle.me-1
+                  | Connecting to Google API and processing bug data...
 
-        .modal-footer.bg-light
-          button.btn.btn-secondary type="button" data-bs-dismiss="modal" data-import-progress-target="cancelButton" Hủy
-          = f.submit 'Bắt đầu đồng bộ', class: 'btn btn-primary', data: { import_progress_target: "submitButton" }
+          .modal-footer.bg-light
+            button.btn.btn-secondary type="button" data-bs-dismiss="modal" data-import-progress-target="cancelButton" Cancel
+            = f.submit 'Start Sync', class: 'btn btn-primary', data: { import_progress_target: "submitButton" }
 
 / Archived Bugs Modal
 .modal.fade#archivedBugsModal tabindex="-1" aria-hidden="true"
@@ -213,4 +237,29 @@
                 tr
                   td.text-center.py-4 colspan="4" No archived bugs.
       .modal-footer
-        button.btn.btn-secondary type="button" data-bs-dismiss="modal" Đóng
+        button.btn.btn-secondary type="button" data-bs-dismiss="modal" Close
+
+/ Global JS for bug metadata dropdowns and inline operations
+javascript:
+  function updateBugField(bugId, projectId, taskId, field, value, element) {
+    var url = '/projects/' + projectId + '/tasks/' + taskId + '/bugs/' + bugId;
+    var formData = new FormData();
+    formData.append('bug[' + field + ']', value);
+    
+    fetch(url, {
+      method: 'PATCH',
+      body: formData,
+      headers: {
+        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content,
+        'Accept': 'text/vnd.turbo-stream.html'
+      }
+    })
+    .then(function(response) { return response.text(); })
+    .then(function(html) {
+      Turbo.renderStreamMessage(html);
+    })
+    .catch(function(error) {
+      console.error('Error updating bug:', error);
+      alert('Failed to update bug. Please try again.');
+    });
+  }

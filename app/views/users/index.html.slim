@@ -6,11 +6,11 @@
         div
           h1.display-6.fw-bold.text-dark
             i.bi.bi-people-fill.me-2
-            | Quản lý Users
-          p.text-muted Danh sách tất cả users trong hệ thống
+            | User Management
+          p.text-muted List of all users in the system
         = link_to new_user_path, class: "btn btn-primary btn-lg" do
           i.bi.bi-person-plus-fill.me-2
-          | Tạo User mới
+          | Create New User
 
   / Users Table
   .row
@@ -23,11 +23,11 @@
                 tr
                   th.px-4 #
                   th Email
-                  th Tên
+                  th Name
                   th Role
                   th Provider
-                  th Ngày tạo
-                  th.text-center Thao tác
+                  th Created At
+                  th.text-center Actions
               tbody
                 - if @users.any?
                   - @users.each_with_index do |user, index|
@@ -51,18 +51,18 @@
                       td.text-muted = user.created_at.strftime("%d/%m/%Y %H:%M")
                       td.text-center
                         .btn-group role="group"
-                          = link_to user_path(user), class: "btn btn-sm btn-outline-primary", title: "Xem chi tiết" do
+                          = link_to user_path(user), class: "btn btn-sm btn-outline-primary", title: "View Details" do
                             i.bi.bi-eye
-                          = link_to edit_user_path(user), class: "btn btn-sm btn-outline-warning", title: "Chỉnh sửa" do
+                          = link_to edit_user_path(user), class: "btn btn-sm btn-outline-warning", title: "Edit" do
                             i.bi.bi-pencil
-                          = link_to user_path(user), data: { turbo_method: :delete, turbo_confirm: "Bạn có chắc muốn xóa user này?" }, class: "btn btn-sm btn-outline-danger", title: "Xóa" do
+                          = link_to user_path(user), data: { turbo_method: :delete, turbo_confirm: "Are you sure you want to delete this user?" }, class: "btn btn-sm btn-outline-danger", title: "Delete" do
                             i.bi.bi-trash
                 - else
                   tr
                     td.text-center.py-5 colspan="7"
                       .text-muted
                         i.bi.bi-inbox.display-4.d-block.mb-3
-                        | Chưa có user nào trong hệ thống
+                        | No users in the system yet
 
   / Pagination (if needed later)
   / .row.mt-4

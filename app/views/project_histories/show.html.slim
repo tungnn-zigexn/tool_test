@@ -53,7 +53,7 @@
             - if @project
               .fw-semibold= link_to @project.name, @project, class: "text-decoration-none"
             - else
-              .fw-semibold.text-muted.fst-italic (Project đã bị xóa)
+              .fw-semibold.text-muted.fst-italic (Project has been deleted)
           .mb-3
             .text-muted.small.mb-1 Action
             .fw-semibold= @project_history.action_description

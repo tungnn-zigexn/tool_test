@@ -4,7 +4,7 @@
     .col
       h1.display-5.fw-bold.text-dark
         | 👨‍💼 Admin Dashboard
-      p.text-muted Chào mừng, #{current_user.name || current_user.email}
+      p.text-muted Welcome, #{current_user.name || current_user.email}
 
   / Stats Cards
   .row.g-4.mb-4
@@ -13,7 +13,7 @@
         .card-body
           .d-flex.justify-content-between.align-items-center
             div
-              h6.text-white-50.mb-1 Tổng Users
+              h6.text-white-50.mb-1 Total Users
               h2.fw-bold.mb-0 = @users_count
             .fs-1
               i.bi.bi-people-fill
@@ -23,7 +23,7 @@
         .card-body
           .d-flex.justify-content-between.align-items-center
             div
-              h6.text-white-50.mb-1 Tổng Projects
+              h6.text-white-50.mb-1 Total Projects
               h2.fw-bold.mb-0 = @projects_count
             .fs-1
               i.bi.bi-folder-fill
@@ -33,7 +33,7 @@
         .card-body
           .d-flex.justify-content-between.align-items-center
             div
-              h6.text-white-50.mb-1 Tổng Tasks
+              h6.text-white-50.mb-1 Total Tasks
               h2.fw-bold.mb-0 = @tasks_count
             .fs-1
               i.bi.bi-list-check
@@ -43,17 +43,17 @@
     .col
       .card.border-0.shadow-sm
         .card-header.bg-white.border-0.py-3
-          h5.mb-0.fw-bold 🚀 Thao tác nhanh
+          h5.mb-0.fw-bold 🚀 Quick Actions
         .card-body
           .row.g-3
             .col-md-6
               = link_to new_user_path, class: "btn btn-primary btn-lg w-100 d-flex align-items-center justify-content-center" do
                 i.bi.bi-person-plus-fill.me-2
-                | Tạo User mới
+                | Create New User
             .col-md-6
               = link_to new_project_path, class: "btn btn-success btn-lg w-100 d-flex align-items-center justify-content-center" do
                 i.bi.bi-folder-plus.me-2
-                | Tạo Project mới
+                | Create New Project
 
   / Recent Users and Projects
   .row.g-4
@@ -62,17 +62,17 @@
       .card.border-0.shadow-sm
         .card-header.bg-white.border-bottom.py-3
           .d-flex.justify-content-between.align-items-center
-            h5.mb-0.fw-bold 👥 Users gần đây
-            = link_to "Xem tất cả", users_path, class: "btn btn-sm btn-outline-primary"
+            h5.mb-0.fw-bold 👥 Recent Users
+            = link_to "View All", users_path, class: "btn btn-sm btn-outline-primary"
         .card-body.p-0
           .table-responsive
             table.table.table-hover.mb-0
               thead.table-light
                 tr
                   th Email
-                  th Tên
+                  th Name
                   th Role
-                  th Ngày tạo
+                  th Created At
               tbody
                 - if @recent_users.any?
                   - @recent_users.each do |user|
@@ -91,23 +91,23 @@
                 - else
                   tr
                     td.text-center.py-4 colspan="4"
-                      .text-muted Chưa có user nào
+                      .text-muted No users yet
 
     / Recent Projects
     .col-md-6
       .card.border-0.shadow-sm
         .card-header.bg-white.border-bottom.py-3
           .d-flex.justify-content-between.align-items-center
-            h5.mb-0.fw-bold 📁 Projects gần đây
-            = link_to "Xem tất cả", projects_path, class: "btn btn-sm btn-outline-success"
+            h5.mb-0.fw-bold 📁 Recent Projects
+            = link_to "View All", projects_path, class: "btn btn-sm btn-outline-success"
         .card-body.p-0
           .table-responsive
             table.table.table-hover.mb-0
               thead.table-light
                 tr
-                  th Tên Project
+                  th Project Name
                   th Tasks
-                  th Ngày tạo
+                  th Created At
               tbody
                 - if @recent_projects.any?
                   - @recent_projects.each do |project|
@@ -121,6 +121,6 @@
                 - else
                   tr
                     td.text-center.py-4 colspan="3"
-                      .text-muted Chưa có project nào
+                      .text-muted No projects yet
 
 

@@ -13,7 +13,7 @@ document.addEventListener("turbo:before-fetch-request", (event) => {
   const timeoutMs = 20000;
   const timeoutId = setTimeout(() => {
     const confirmReload = confirm(
-      "Yêu cầu đang phản hồi chậm. Trang web có thể đang gặp sự cố. Bạn có muốn tải lại trang ngay bây giờ không?"
+      "The request is responding slowly. The website may be experiencing issues. Do you want to reload the page now?"
     );
     if (confirmReload) {
       window.location.reload();

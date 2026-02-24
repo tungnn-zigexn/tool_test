@@ -8,7 +8,6 @@
 
 - test_cases_array.each_with_index do |tc, i|
   - title = tc.title.to_s.strip
-  - steps_count = [tc.test_steps.count, 1].max
   
   - if title != current_title
     - if i > 0
@@ -17,7 +16,7 @@
     - row_start_index = i
     - total_tr_span = 0
   
-  - total_tr_span += steps_count
+  - total_tr_span += 1
   
   - if i == test_cases_array.size - 1
     - row_metadata[row_start_index] = { rowspan: total_tr_span }
@@ -34,6 +33,8 @@ div data-controller="media-preview spreadsheet-toolbar"
       i.bi.bi-type-italic
     button.btn.btn-sm.btn-light type="button" tabindex="-1" title="Underline" data-action="mousedown->spreadsheet-toolbar#format" data-command="underline"
       i.bi.bi-type-underline
+    button.btn.btn-sm.btn-light type="button" tabindex="-1" title="Insert Link" data-action="mousedown->spreadsheet-toolbar#formatLink"
+      i.bi.bi-link-45deg
     .vr.mx-1
     span.small.text-muted.me-1 Text:
     button.btn.btn-sm.btn-light.p-1 type="button" tabindex="-1" title="Black" data-action="mousedown->spreadsheet-toolbar#format" data-command="foreColor" data-value="#000000" style="width: 24px; height: 24px;"
@@ -87,6 +88,7 @@ div data-controller="media-preview spreadsheet-toolbar"
           - devices.each do |device|
             th.text-center.device-column = format_device_name(device)
           th.note-column Note
+          th.actions-column Actions
       tbody#test-cases-spreadsheet-list
         - test_cases_array.each_with_index do |tc, index|
           = render partial: 'test_cases/spreadsheet_row', locals: { test_case: tc, index: global_start_index + index + 1, devices: devices, row_info: row_metadata[index] }

@@ -2,22 +2,24 @@
   .d-flex.justify-content-between.align-items-center.mb-4
     h1.h4.fw-bold.mb-0
       i.bi.bi-bell.me-2
-      | Tất cả thông báo
-    = link_to "Đánh dấu tất cả đã đọc", mark_all_read_notifications_path, method: :post, class: "btn btn-outline-primary btn-sm", data: { turbo: false }
+      | All Notifications
+    = link_to "Mark all as read", mark_all_read_notifications_path, method: :post, class: "btn btn-outline-primary btn-sm", data: { turbo: false }
 
   .card.border-0.shadow-sm
     .card-body.p-0
       - if @notifications.any?
         ul.list-group.list-group-flush
           - @notifications.each do |n|
-            li.list-group-item.list-group-item-action
-              = link_to (n.link.presence || "#"), class: "text-decoration-none text-dark d-block" do
+            - read = @read_ids.include?(n.id)
+            li.list-group-item.list-group-item-action class=(read ? "notification-read" : "notification-unread") data-notification-id=n.id
+              = link_to read_and_go_notification_path(n), class: "text-decoration-none d-block #{read ? 'text-muted' : 'text-dark'}", data: { notification_id: n.id, link: n.link.presence || "#", turbo: false } do
                 .d-flex.justify-content-between.align-items-start
                   .flex-grow-1
-                    span.fw-semibold = n.title
+                    span class=(read ? "fw-normal" : "fw-semibold")
+                      = n.title
                     span.badge.bg-secondary.ms-2 = n.category
                   span.small.text-muted = n.created_at.strftime("%d/%m/%Y %H:%M")
                 - if n.message.present?
                   .small.text-muted.mt-1 = n.message
       - else
-        .p-4.text-center.text-muted Chưa có thông báo nào.
+        .p-4.text-center.text-muted No notifications yet.

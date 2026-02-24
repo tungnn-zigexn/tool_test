@@ -67,6 +67,24 @@ class Bug < ApplicationRecord
     end
   end
 
+  def bug_type_display
+    case bug_type
+    when 'new_bug' then 'New Bug'
+    when 'old_bug' then 'Old Bug'
+    when 'improve' then 'Improve'
+    else bug_type&.humanize || 'N/A'
+    end
+  end
+
+  def bug_type_color
+    case bug_type
+    when 'new_bug' then 'danger'
+    when 'old_bug' then 'warning'
+    when 'improve' then 'info'
+    else 'secondary'
+    end
+  end
+
   def application_display
     case application
     when 'sp_pc' then 'SP + PC'

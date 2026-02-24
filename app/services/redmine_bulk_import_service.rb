@@ -56,22 +56,29 @@ class RedmineBulkImportService
     testing_issues = fetch_all_testing_issues(limit: limit, offset: offset)
     return false if testing_issues.nil?
 
+    imported_redmine_ids = @project.tasks.where.not(redmine_id: nil).where(parent_id: nil).pluck(:redmine_id).map(&:to_s).to_set
+
     @found_count = testing_issues.length
     yield @found_count if block_given?
 
     if testing_issues.empty?
-      @errors << 'No issues found with subject starting with "4. Testing"'
       Rails.logger.info 'No "4. Testing" issues found in response'
       return true
     end
 
-    Rails.logger.info "Found #{testing_issues.length} issues matching '4. Testing', importing..."
+    Rails.logger.info "Found #{testing_issues.length} issues matching '4. Testing', importing (skip already imported)..."
 
     testing_issues.each do |issue_data|
+      redmine_id = issue_data['id'].to_s
+      if imported_redmine_ids.include?(redmine_id)
+        @skipped_count += 1
+        next
+      end
       import_single_issue(issue_data)
+      imported_redmine_ids.add(redmine_id)
     end
 
-    Rails.logger.info "Bulk import completed: #{@imported_tasks.length} tasks imported"
+    Rails.logger.info "Bulk import completed: #{@imported_tasks.length} imported, #{@skipped_count} skipped (already existed)"
     true
   rescue StandardError => e
     error_msg = ensure_utf8(e.message)

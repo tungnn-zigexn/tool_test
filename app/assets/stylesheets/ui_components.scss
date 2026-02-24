@@ -235,6 +235,40 @@
   }
 }
 
+.cell-history-indicator {
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 6px; 
+  margin: 0;
+  z-index: 1000;
+  color: #dc3545 !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none !important;
+  opacity: 1 !important;
+  transition: all 0.2s ease;
+  line-height: 1;
+
+  i.bi-clock-history {
+    font-size: 1rem !important; // Slightly larger for visibility
+    color: #dc3545 !important; 
+    pointer-events: none;
+  }
+
+  &:hover {
+    background: rgba(220, 53, 69, 0.1) !important;
+    transform: scale(1.1);
+    border-bottom-left-radius: 50%;
+  }
+}
+
+// Ensure it stays visible on row hover
+.test-case-row:hover .cell-history-indicator {
+  opacity: 1 !important;
+}
+
 .spreadsheet-container {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
   border-radius: 12px;

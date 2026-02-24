@@ -10,11 +10,11 @@
             = link_to @task.project.name, project_path(@task.project)
           li.breadcrumb-item
             = link_to @task.title, project_task_path(@task.project, @task)
-          li.breadcrumb-item.active aria-current="page" Tạo Test Run mới
+          li.breadcrumb-item.active aria-current="page" Create New Test Run
 
       h1.display-6.fw-bold.text-dark
         i.bi.bi-play-circle.me-2
-        | Tạo Test Run mới
+        | Create New Test Run
 
   / Form
   .row.justify-content-center
@@ -24,31 +24,31 @@
           = form_for [@task.project, @task, @test_run], html: { class: 'needs-validation' } do |f|
             / Name
             .mb-3
-              = f.label :name, "Tên Test Run *", class: 'form-label fw-semibold'
-              = f.text_field :name, class: 'form-control form-control-lg', placeholder: 'Ví dụ: Sprint 10 - Regression Test', required: true
+              = f.label :name, "Test Run Name *", class: 'form-label fw-semibold'
+              = f.text_field :name, class: 'form-control form-control-lg', placeholder: 'e.g.: Sprint 10 - Regression Test', required: true
               - if @test_run.errors[:name].any?
                 .invalid-feedback.d-block = @test_run.errors[:name].join(', ')
 
             / Description
             .mb-3
-              = f.label :description, "Mô tả", class: 'form-label fw-semibold'
-              = f.text_area :description, class: 'form-control', rows: 4, placeholder: 'Mô tả chi tiết về test run này...'
+              = f.label :description, "Description", class: 'form-label fw-semibold'
+              = f.text_area :description, class: 'form-control', rows: 4, placeholder: 'Detailed description about this test run...'
 
             / Executed At
             .mb-3
-              = f.label :executed_at, "Thời gian thực hiện", class: 'form-label fw-semibold'
+              = f.label :executed_at, "Execution Time", class: 'form-label fw-semibold'
               = f.datetime_local_field :executed_at, class: 'form-control', value: Time.current.strftime('%Y-%m-%dT%H:%M')
 
             / Info
             .alert.alert-info
               i.bi.bi-info-circle.me-2
-              strong Lưu ý:
-              | Sau khi tạo test run, bạn có thể chọn test cases và ghi nhận kết quả test.
+              strong Note:
+              | After creating the test run, you can select test cases and record test results.
 
             / Buttons
             .d-flex.gap-2
-              = f.submit "Tạo Test Run", class: 'btn btn-success btn-lg px-5'
-              = link_to "Hủy", project_task_path(@task.project, @task), class: 'btn btn-outline-secondary btn-lg'
+              = f.submit "Create Test Run", class: 'btn btn-success btn-lg px-5'
+              = link_to "Cancel", project_task_path(@task.project, @task), class: 'btn btn-outline-secondary btn-lg'
 
 
 

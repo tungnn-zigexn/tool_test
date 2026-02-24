@@ -28,7 +28,7 @@ class Task < ApplicationRecord
 
     return unless due_date < start_date
 
-    errors.add(:due_date, 'phải lớn hơn hoặc bằng ngày bắt đầu')
+    errors.add(:due_date, 'must be greater than or equal to the start date')
   end
 
   public
