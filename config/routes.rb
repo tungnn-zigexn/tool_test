@@ -149,6 +149,7 @@ Rails.application.routes.draw do
   # Global notifications (header dropdown)
   resources :notifications, only: [:index] do
     collection do
+      get :unread_count
       post :mark_all_read
     end
     member do

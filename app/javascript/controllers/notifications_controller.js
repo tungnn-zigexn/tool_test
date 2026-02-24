@@ -96,6 +96,7 @@ export default class extends Controller {
   showCronjobToast(title, message, link) {
     if (typeof window.showToast !== "function") return
     const fullMessage = message && message !== title ? title + " — " + message : title
-    window.showToast(fullMessage, "info", 8000, { link: link })
+    // Gray style like notifications page, show only a few seconds
+    window.showToast(fullMessage, "secondary", 2000, { link: link })
   }
 }

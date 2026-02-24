@@ -7,13 +7,27 @@ export default class extends Controller {
     this.markingInProgress = false
     this.boundHandleClick = this.handleClick.bind(this)
     this.boundMarkAllRead = this.markAllRead.bind(this)
+    this.boundRefreshBadge = this.refreshBadgeFromServer.bind(this)
     document.addEventListener("click", this.boundHandleClick, true)
     document.addEventListener("submit", this.boundMarkAllRead, true)
+    document.addEventListener("turbo:load", this.boundRefreshBadge)
+    this.refreshBadgeFromServer()
   }
 
   disconnect() {
     document.removeEventListener("click", this.boundHandleClick, true)
     document.removeEventListener("submit", this.boundMarkAllRead, true)
+    document.removeEventListener("turbo:load", this.boundRefreshBadge)
+  }
+
+  refreshBadgeFromServer() {
+    fetch("/notifications/unread_count", { headers: { Accept: "application/json" }, credentials: "same-origin" })
+      .then((r) => r.json())
+      .then((data) => {
+        const n = data.unread_count != null ? data.unread_count : 0
+        this.updateBadge(n)
+      })
+      .catch(() => {})
   }
 
   markAllRead(event) {

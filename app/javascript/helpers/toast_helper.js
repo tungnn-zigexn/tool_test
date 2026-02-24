@@ -42,6 +42,11 @@ export function showToast(message, type = 'info', delay = 5000, options = {}) {
       bgClass: 'bg-info text-white',
       icon: 'bi-info-circle-fill',
       closeClass: 'btn-close-white'
+    },
+    secondary: {
+      bgClass: 'bg-secondary text-white',
+      icon: 'bi-bell-fill',
+      closeClass: 'btn-close-white'
     }
   }
 
