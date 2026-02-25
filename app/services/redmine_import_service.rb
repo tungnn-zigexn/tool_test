@@ -1,4 +1,9 @@
 class RedmineImportService
+  SHARED_SPREADSHEET_IDS = %w[
+    1yvPy4pD5_Gv_I15xkLwJsTR6Y3iS1vD8fxe_Bzk4kho
+    1stxO5v-bIYVzZh6PtvGm8YwU6nyrhddsKA6JdIYHcBI
+    1E9zDs5Tx-Ti6Xt5P8blSWtfj980lFWyqwOzVTm_AxD8
+  ].freeze
   attr_reader :errors, :task, :project
 
   def initialize(redmine_id, project_id)
@@ -135,6 +140,8 @@ class RedmineImportService
   def import_subtasks_from_sheets
     return unless @task.testcase_link.present?
     return if @task.parent_id.present?
+    # Skip subtask creation only for the shared spreadsheet
+    return if shared_spreadsheet?(@task.testcase_link)
 
     sheet_names = fetch_sheet_names_for_subtasks
     return unless sheet_names&.length.to_i > 1
@@ -176,20 +183,72 @@ class RedmineImportService
 
     Rails.logger.info "Found testcase link: #{@task.testcase_link}, start import test cases..."
 
-    # Import test cases from Google Sheet
     spreadsheet_id = extract_spreadsheet_id(@task.testcase_link)
-    import_service = TestCaseImportService.new(@task, spreadsheet_id)
+    is_shared = shared_spreadsheet?(@task.testcase_link)
+    sheet_filter = is_shared ? resolve_sheet_name_from_gid(@task.testcase_link, spreadsheet_id) : nil
+
+    # Skip import if shared spreadsheet but no matching sheet found
+    if is_shared && sheet_filter.nil?
+      puts "    [SKIP TC] No matching sheet in shared spreadsheet for this task"
+      return
+    end
+
+    import_service = TestCaseImportService.new(
+      @task, spreadsheet_id, sheet_name_filter: sheet_filter
+    )
 
     if import_service.import
       Rails.logger.info "Import test cases successfully: #{import_service.imported_count} test cases"
-
       @task.update(number_of_test_cases: import_service.imported_count)
     else
-      import_service.errors.each do |err|
-        @errors << ensure_utf8(err)
-      end
+      import_service.errors.each { |err| @errors << ensure_utf8(err) }
       Rails.logger.warn "Import test cases failed: #{import_service.errors.join(', ')}"
     end
+  end
+
+  def extract_gid(url)
+    return nil if url.blank?
+
+    match = url.match(/gid=(\d+)/)
+    match ? match[1] : nil
+  end
+
+  def shared_spreadsheet?(url)
+    SHARED_SPREADSHEET_IDS.any? { |id| url.to_s.include?(id) }
+  end
+
+  # For the shared spreadsheet: resolve which sheet tab to import.
+  # Strategy 1: Use gid from URL to find matching sheet tab.
+  # Strategy 2: Extract #XXXX from task title and match by sheet name.
+  def resolve_sheet_name_from_gid(url, spreadsheet_id)
+    return nil unless shared_spreadsheet?(url)
+
+    sheets_info = GoogleSheetService.new.get_sheets_info(spreadsheet_id)
+    return nil unless sheets_info
+
+    # Strategy 1: Match by gid from URL
+    gid = extract_gid(url)
+    if gid
+      matched = sheets_info.find { |s| s[:sheet_id] == gid }
+      if matched
+        puts "    [SHEET] Resolved gid=#{gid} → '#{matched[:title]}'"
+        return matched[:title]
+      end
+    end
+
+    # Strategy 2: Match by #XXXX number from task title
+    title_match = @task.title.to_s.match(/#(\d+)/)
+    if title_match
+      issue_num = title_match[1]
+      matched = sheets_info.find { |s| s[:title].include?(issue_num) }
+      if matched
+        puts "    [SHEET] Matched issue ##{issue_num} → '#{matched[:title]}'"
+        return matched[:title]
+      end
+    end
+
+    puts "    [SHEET] No matching sheet found for '#{@task.title.to_s.truncate(50)}'"
+    nil
   end
 
   def import_bugs_if_available

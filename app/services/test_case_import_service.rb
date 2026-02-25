@@ -1,10 +1,11 @@
 class TestCaseImportService
   attr_reader :errors, :imported_count, :skipped_count
 
-  def initialize(task, spreadsheet_id, wipe_existing: false)
+  def initialize(task, spreadsheet_id, wipe_existing: false, sheet_name_filter: nil)
     @task = task
     @spreadsheet_id = spreadsheet_id
     @wipe_existing = wipe_existing
+    @sheet_name_filter = sheet_name_filter
     @google_service = GoogleSheetService.new
     @errors = []
     @imported_count = 0
@@ -17,14 +18,22 @@ class TestCaseImportService
     Rails.logger.info "Start import test cases from Google Sheet: #{@spreadsheet_id}"
 
     begin
-      all_sheet_data = fetch_sheet_data
+      all_sheet_data = if @sheet_name_filter.present?
+                         fetch_single_sheet_data
+                       else
+                         fetch_sheet_data
+                       end
       return false unless all_sheet_data
 
-      # Detect single sheet mode (excluding system sheets)
-      valid_sheet_names = all_sheet_data.keys.reject do |n|
-        n.downcase.match?(/summary|template|settings|master|instruction/i)
+      if @sheet_name_filter.present?
+        @is_single_sheet = true
+      else
+        # Detect single sheet mode (excluding system sheets)
+        valid_sheet_names = all_sheet_data.keys.reject do |n|
+          n.downcase.match?(/summary|template|settings|master|instruction/i)
+        end
+        @is_single_sheet = valid_sheet_names.length <= 1
       end
-      @is_single_sheet = valid_sheet_names.length <= 1
 
       ensure_subtasks_exist(all_sheet_data.keys)
 
@@ -113,6 +122,50 @@ class TestCaseImportService
       return nil
     end
     data
+  end
+
+  # Fetch only the matching sheet to avoid reading all 117 sheets
+  def fetch_single_sheet_data
+    # First get sheet names (1 API call) to find the matching one
+    sheet_names = @google_service.get_all_sheet_names(@spreadsheet_id)
+    unless sheet_names
+      @errors << 'Cannot get sheet names from Google Sheet'
+      return nil
+    end
+
+    # Find the matching sheet name
+    target = sheet_names.find { |n| n.include?(@sheet_name_filter) || n.gsub('#', '').strip == @sheet_name_filter }
+    unless target
+      Rails.logger.warn "No sheet matching '#{@sheet_name_filter}' in #{sheet_names.length} sheets"
+      @errors << "No sheet matching '##{@sheet_name_filter}' found"
+      return nil
+    end
+
+    Rails.logger.info "Fetching only sheet '#{target}' (filter: #{@sheet_name_filter})"
+
+    # Fetch only that one sheet's data (1 API call)
+    data = @google_service.get_filtered_sheet_data(@spreadsheet_id, target, nil, {
+      header_rows_count: 4,
+      filter_column_index: 1,
+      valid_filter_values: %w[Feature Data UI]
+    })
+
+    data ? { target => data } : nil
+  end
+
+  def filter_sheets_by_name(all_sheet_data)
+    matched = all_sheet_data.select do |name, _data|
+      name.include?(@sheet_name_filter) || @sheet_name_filter.include?(name.gsub('#', ''))
+    end
+
+    if matched.empty?
+      Rails.logger.warn "No sheet matching filter '#{@sheet_name_filter}' found. " \
+                        "Available: #{all_sheet_data.keys.join(', ')}"
+      return all_sheet_data.slice(all_sheet_data.keys.first)
+    end
+
+    Rails.logger.info "Filtered to #{matched.keys.length} sheet(s) matching '#{@sheet_name_filter}'"
+    matched
   end
 
   def process_all_sheets(all_sheet_data)

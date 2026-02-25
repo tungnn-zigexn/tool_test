@@ -5,6 +5,8 @@ require 'googleauth'
 class GoogleSheetService
   SCOPE = Google::Apis::SheetsV4::AUTH_SPREADSHEETS_READONLY
   CREDENTIALS_PATH = Rails.root.join('config', 'google_credentials.json')
+  QUOTA_RETRY_WAIT = 65 # seconds to wait when quota is exceeded (limit resets per minute)
+  MAX_RETRIES = 3
 
   def initialize
     @service = Google::Apis::SheetsV4::SheetsService.new
@@ -29,25 +31,22 @@ class GoogleSheetService
 
     all_data = {}
 
-    begin
-      puts "Reading #{ranges_to_fetch.length} ranges..."
+    puts "Reading #{ranges_to_fetch.length} ranges..."
 
-      response = @service.batch_get_spreadsheet_values(spreadsheet_id, ranges: ranges_to_fetch)
-
-      response.value_ranges.each do |value_range|
-        range_name = value_range.range
-        values = value_range.values || []
-
-        puts "Successfully read #{values.length} rows from range: #{range_name}."
-        all_data[range_name] = values
-      end
-
-      all_data
-    rescue Google::Apis::Error => e
-      puts "Error when call Google Sheets API (batch_get): #{e.message}"
-      Rails.logger.error "GoogleSheetService: Error API (batch_get): #{e.message}"
-      nil
+    response = with_quota_retry('batch_get') do
+      @service.batch_get_spreadsheet_values(spreadsheet_id, ranges: ranges_to_fetch)
     end
+    return nil unless response
+
+    response.value_ranges.each do |value_range|
+      range_name = value_range.range
+      values = value_range.values || []
+
+      puts "Successfully read #{values.length} rows from range: #{range_name}."
+      all_data[range_name] = values
+    end
+
+    all_data
   end
 
   def get_filtered_sheet_data(spreadsheet_id, sheet_name, columns_range, options = {})
@@ -68,39 +67,62 @@ class GoogleSheetService
   end
 
   def get_data(spreadsheet_id, range_name)
-    response = @service.get_spreadsheet_values(spreadsheet_id, range_name)
+    response = with_quota_retry('get_data') do
+      @service.get_spreadsheet_values(spreadsheet_id, range_name)
+    end
+    return nil unless response
 
     response.values || []
-  rescue Google::Apis::Error => e
-    puts "Error when call Google Sheets API (get_data): #{e.message}"
-    Rails.logger.error "GoogleSheetService: Error API (get_data): #{e.message}"
-    nil
   end
 
   def get_all_sheet_names(spreadsheet_id)
-    response = @service.get_spreadsheet(spreadsheet_id, fields: 'sheets(properties.title)')
+    response = with_quota_retry('get_sheet_names') do
+      @service.get_spreadsheet(spreadsheet_id, fields: 'sheets(properties.title)')
+    end
+    return nil unless response
+
     response.sheets.map { |sheet| ensure_utf8(sheet.properties.title) }
-  rescue Google::Apis::Error => e
-    puts "Error when get sheet names: #{e.message}"
-    Rails.logger.error "GoogleSheetService: Error get sheet names: #{e.message}"
-    nil
   end
 
   def get_sheets_info(spreadsheet_id)
-    response = @service.get_spreadsheet(spreadsheet_id, fields: 'sheets(properties(title,sheetId))')
+    response = with_quota_retry('get_sheets_info') do
+      @service.get_spreadsheet(spreadsheet_id, fields: 'sheets(properties(title,sheetId))')
+    end
+    return nil unless response
+
     response.sheets.map do |sheet|
       {
         title: ensure_utf8(sheet.properties.title),
         sheet_id: sheet.properties.sheet_id.to_s
       }
     end
-  rescue Google::Apis::Error => e
-    puts "Error when get sheets info: #{e.message}"
-    Rails.logger.error "GoogleSheetService: Error get sheets info: #{e.message}"
-    nil
   end
 
   private
+
+  # Retry block when Google Sheets quota is exceeded.
+  # Waits 65 seconds (quota resets per minute) then retries up to MAX_RETRIES times.
+  def with_quota_retry(operation)
+    retries = 0
+    begin
+      yield
+    rescue Google::Apis::RateLimitError => e
+      retries += 1
+      if retries <= MAX_RETRIES
+        puts "  [QUOTA] #{operation}: Rate limit hit. Waiting #{QUOTA_RETRY_WAIT}s... (retry #{retries}/#{MAX_RETRIES})"
+        sleep(QUOTA_RETRY_WAIT)
+        retry
+      else
+        puts "  [QUOTA] #{operation}: Max retries exceeded. #{e.message}"
+        Rails.logger.error "GoogleSheetService: Quota exceeded after #{MAX_RETRIES} retries: #{e.message}"
+        nil
+      end
+    rescue Google::Apis::Error => e
+      puts "Error in #{operation}: #{e.message}"
+      Rails.logger.error "GoogleSheetService: Error in #{operation}: #{e.message}"
+      nil
+    end
+  end
 
   def process_all_sheets(spreadsheet_id, all_sheet_names)
     filter_options = {
