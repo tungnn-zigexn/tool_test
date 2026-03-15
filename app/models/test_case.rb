@@ -89,7 +89,9 @@ class TestCase < ApplicationRecord
 
   after_save :update_task_counter
   after_destroy :update_task_counter
-  after_update :sync_grouped_titles, if: :saved_change_to_title?
+  
+  attr_accessor :skip_title_sync
+  after_update :sync_grouped_titles, if: -> { saved_change_to_title? && !skip_title_sync }
 
   private
 

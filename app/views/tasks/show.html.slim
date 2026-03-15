@@ -1,4 +1,4 @@
-.container-fluid.px-4.py-4
+.container-fluid.px-4.py-4 data-controller="layout-toggle" data-layout-toggle-hidden-by-default-value="#{@all_test_cases.any?}"
   = turbo_stream_from @task
   #flash-messages
   / Breadcrumb
@@ -13,7 +13,7 @@
         = @task.title.truncate(50)
 
   / Task Header
-  .card.border-0.shadow-sm.mb-4
+  .card.border-0.shadow-sm.mb-4 data-layout-toggle-target="section"
     .card-header.text-white.p-4 style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"
       / Layer 1: Title
       h1.h3.fw-bold.mb-3.text-break= @task.title
@@ -205,6 +205,10 @@
                 | Page #{@test_cases_page}/#{@total_tc_pages}
             
             .d-flex.align-items-center.gap-2.ms-auto
+              button.btn.btn-outline-primary.btn-sm.d-inline-flex.align-items-center data-action="click->layout-toggle#toggle"
+                i.bi.bi-eye-slash.me-1 data-layout-toggle-target="icon"
+                span data-layout-toggle-target="buttonLabel" Hide Details
+              
               - if @show_archived
                 = link_to project_task_path(@project, @task, show_archived: 0, tc_page: 1), class: "btn btn-primary btn-sm d-inline-flex align-items-center" do
                   i.bi.bi-eye-fill.me-1
@@ -256,7 +260,8 @@
 
 
   / Activity History Section
-  = render 'shared/activity_timeline', logs: ActivityLog.where(trackable_type: 'Task', trackable_id: @task.id).limit(10)
+  div data-layout-toggle-target="section"
+    = render 'shared/activity_timeline', logs: ActivityLog.where(trackable_type: 'Task', trackable_id: @task.id).limit(10)
 
   / Import Test Cases Modal
   .modal.fade#importTestCasesModal tabindex="-1" aria-hidden="true" data-controller="import-progress" data-import-progress-estimated-time-value="45"

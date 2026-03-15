@@ -395,3 +395,17 @@
     }
   }
 }
+
+.function-group-btn {
+  opacity: 0.3;
+  transition: opacity 0.2s;
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  
+  &:hover {
+    opacity: 1 !important;
+  }
+}

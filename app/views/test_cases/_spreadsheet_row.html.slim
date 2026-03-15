@@ -15,12 +15,19 @@ tr.test-case-row id="test-case-row-#{test_case.id}" class=(test_case.deleted? ? 
 
   - row_info = local_assigns[:row_info] || {}
   - unless row_info[:hide]
-    td.align-middle.text-break.position-relative rowspan=row_info[:rowspan] style="max-width: 250px; overflow: hidden;"
+    td.align-middle.text-break.position-relative rowspan=row_info[:rowspan] style="max-width: 250px; overflow: hidden;" data-controller="function-group" data-function-group-test-case-id-value=test_case.id data-function-group-project-id-value=test_case.task.project_id data-function-group-task-id-value=test_case.task.id
       a.cell-history-indicator href="#" title="View history" data-bs-toggle="modal" data-bs-target="#testCaseHistoryModal" onclick="event.preventDefault(); var c = document.getElementById('historyModalContent'); c.innerHTML='<div class=\'modal-body p-5 text-center\'><div class=\'spinner-border text-primary\' role=\'status\'></div><p class=\'mt-2\'>Loading...</p></div>'; fetch('#{history_project_task_test_case_path(test_case.task.project, test_case.task, test_case)}').then(function(r){return r.text()}).then(function(html){c.innerHTML=html}).catch(function(e){c.innerHTML='<div class=\'modal-body p-4\'><div class=\'alert alert-danger\'>Error: '+e.message+'</div></div>'});"
         i.bi.bi-clock-history
       div.p-2
         .fw-bold.mb-1 id="test-case-#{test_case.id}-title" data-editable-cell-target="display" data-action="click->editable-cell#edit" data-field="title" title=strip_tags(test_case.title.to_s)
           == format_content_with_media_links(test_case.title)
+        .d-flex.gap-1.mt-1
+          - if row_info[:rowspan] && row_info[:rowspan] > 1
+            button.btn.btn-outline-danger.border-0.p-0.function-group-btn type="button" title="Split: Tách TC này ra khỏi nhóm" data-action="click->function-group#split"
+              i.bi.bi-scissors style="font-size: 0.8rem;"
+          - unless test_case.deleted?
+            button.btn.btn-outline-primary.border-0.p-0.function-group-btn type="button" title="Merge: Gộp TC này với hàng trên" data-action="click->function-group#merge"
+              i.bi.bi-link style="font-size: 0.8rem;"
 
   - if step
     / Actions column for this step

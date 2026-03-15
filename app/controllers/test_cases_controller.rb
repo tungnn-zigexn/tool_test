@@ -80,6 +80,7 @@ class TestCasesController < ApplicationController
 
   # PATCH/PUT /projects/:project_id/tasks/:task_id/test_cases/:id
   def update
+    @test_case.skip_title_sync = true if params[:skip_title_sync].present?
     if @test_case.update(test_case_params)
       set_existing_titles
       set_spreadsheet_data
